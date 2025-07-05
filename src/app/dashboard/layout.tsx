@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { signOut, updateProfile } from 'firebase/auth';
 
 const navItems = [
   { label: '🏠 Dashboard', href: '/dashboard' },
   { label: '➕ Create Form', href: '/dashboard/create' },
-  { label: '🧾 My Forms', href: '/my-forms' }, // ✅ Fixed path
+  { label: '🧾 My Forms', href: '/my-forms' },
   { label: '📥 Orders', href: '/dashboard/orders' },
   { label: '📊 Analytics', href: '/dashboard/analytics' },
   { label: '👤 Profile', href: '/dashboard/profile' },
@@ -50,25 +50,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ☰
         </button>
 
-        {/* Overlay */}
         {mobileOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-40 z-40"
-            onClick={closeDrawer}
-          />
+          <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={closeDrawer} />
         )}
 
-        {/* Drawer */}
         <div
           className={`fixed top-0 left-0 z-50 w-64 h-full bg-white shadow-lg transform transition-transform duration-300 ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <SidebarContent
-            pathname={pathname}
-            user={user}
-            handleLogout={handleLogout}
-          />
+          <SidebarContent pathname={pathname} user={user} handleLogout={handleLogout} />
         </div>
       </div>
 
@@ -87,6 +78,32 @@ function SidebarContent({
   user: any;
   handleLogout: () => void;
 }) {
+  const [displayName, setDisplayName] = useState('');
+
+  useEffect(() => {
+    const askForName = async () => {
+      if (user && !user.displayName) {
+        const name = prompt('Enter your name to personalize your dashboard:');
+        if (name) {
+          try {
+            await updateProfile(auth.currentUser!, { displayName: name });
+            setDisplayName(name);
+          } catch (err) {
+            console.error('Failed to update profile name:', err);
+          }
+        }
+      } else if (user?.displayName) {
+        setDisplayName(user.displayName);
+      }
+    };
+
+    askForName();
+  }, [user]);
+
+  const initials = displayName
+    ? displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'WO';
+
   return (
     <div className="h-full flex flex-col justify-between space-y-6">
       <div>
@@ -111,18 +128,20 @@ function SidebarContent({
         </nav>
       </div>
 
-      <div className="border-t pt-4">
-        <p className="text-xs text-gray-500 mb-1">Logged in as</p>
-        <p className="text-sm font-semibold mb-2">
-          {user?.phoneNumber || 'Guest'}
-        </p>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-red-600 hover:underline"
-        >
-          🚪 Logout
-        </button>
+      <div className="border-t pt-4 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold">
+          {initials}
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold">{displayName || user?.phoneNumber}</p>
+          <button
+            onClick={handleLogout}
+            className="text-xs text-red-600 hover:underline mt-1"
+          >
+            🚪 Logout
+          </button>
+        </div>
       </div>
     </div>
   );
-        }
+      }
