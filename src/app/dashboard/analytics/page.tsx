@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firestore';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useUser } from '@/hooks/useUser';
 
@@ -15,12 +15,12 @@ interface FormAnalytics {
 }
 
 export default function AnalyticsPage() {
-  const { user } = useUser();
+  const { user, loading: authLoading } = useUser();
   const [forms, setForms] = useState<FormAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading || !user) return;
 
     const fetchAnalytics = async () => {
       try {
@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
           const d = doc.data();
           return {
             id: doc.id,
-            title: d.title || 'Untitled Form',
+            title: d.businessName || 'Untitled Form',
             slug: d.slug,
             views: d.views || 0,
             clicks: d.clicks || 0,
@@ -41,23 +41,23 @@ export default function AnalyticsPage() {
 
         setForms(data);
       } catch (err) {
-        console.error('Error fetching analytics:', err);
+        console.error('❌ Error fetching analytics:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchAnalytics();
-  }, [user]);
+  }, [user, authLoading]);
 
   return (
     <main className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-indigo-700 mb-6">📊 Form Analytics</h1>
 
       {loading ? (
-        <p>Loading analytics...</p>
+        <p className="text-gray-500">Loading analytics...</p>
       ) : forms.length === 0 ? (
-        <p>No forms found. Create one first!</p>
+        <p className="text-gray-500">No forms found. Create one first!</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {forms.map((form) => (
@@ -84,4 +84,4 @@ export default function AnalyticsPage() {
       )}
     </main>
   );
-            }
+}
