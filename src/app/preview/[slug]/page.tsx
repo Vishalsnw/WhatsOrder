@@ -61,9 +61,9 @@ export default function PreviewOrderPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-8 flex flex-col">
-      <div className="bg-white p-6 rounded-xl shadow max-w-md mx-auto w-full space-y-5">
-        <h2 className="text-2xl font-bold text-green-600 text-center">
+    <main className="min-h-screen bg-gray-50 px-4 py-8 flex flex-col">
+      <div className="bg-white p-6 rounded-xl shadow-lg max-w-md mx-auto w-full space-y-5">
+        <h2 className="text-2xl font-bold text-indigo-600 text-center">
           🛒 Order from {businessName}
         </h2>
 
@@ -82,12 +82,12 @@ export default function PreviewOrderPage() {
                   className="w-16 h-16 object-cover rounded-lg border"
                 />
               ) : (
-                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs border">
+                <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-gray-500 text-xs border">
                   No Image
                 </div>
               )}
               <div className="flex-1">
-                <p className="font-semibold">{product.name}</p>
+                <p className="font-semibold text-gray-800">{product.name}</p>
                 <p className="text-sm text-gray-600">₹{product.price}</p>
               </div>
               <input
@@ -124,7 +124,7 @@ export default function PreviewOrderPage() {
         <button
           onClick={handlePlaceOrder}
           disabled={!parsedProducts.length}
-          className="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700"
+          className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700"
         >
           Place Order on WhatsApp
         </button>
@@ -132,7 +132,7 @@ export default function PreviewOrderPage() {
 
       {/* Branding Footer */}
       <div className="text-center text-xs text-gray-400 mt-6">
-        Made with 💚 using <strong>WhatsOrder</strong> — Free Version
+        Made with 💜 using <strong>WhatsOrder</strong> — Free Version
       </div>
     </main>
   );
