@@ -15,11 +15,22 @@ export default function HomePage() {
 
   const handleProductChange = (
     index: number,
-    field: 'name' | 'price' | 'image',
+    field: 'name' | 'price',
     value: string
   ) => {
     const updated = [...products];
     updated[index][field] = value;
+    setProducts(updated);
+  };
+
+  const handleImageUpload = (index: number, file: File | null) => {
+    const updated = [...products];
+    if (file) {
+      const imageURL = URL.createObjectURL(file);
+      updated[index].image = imageURL;
+    } else {
+      updated[index].image = '';
+    }
     setProducts(updated);
   };
 
@@ -34,7 +45,7 @@ export default function HomePage() {
       .filter(p => p.name.trim() && p.price.trim())
       .map(p =>
         `${encodeURIComponent(p.name.trim())}-${p.price.trim()}${
-          p.image ? `-${encodeURIComponent(p.image.trim())}` : ''
+          p.image ? `-${encodeURIComponent(p.image)}` : ''
         }`
       )
       .join(',');
@@ -82,7 +93,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-green-600 text-white py-4 px-6 shadow-md flex items-center justify-between">
+      <header className="bg-indigo-600 text-white py-4 px-6 shadow-md flex items-center justify-between">
         <h1 className="text-lg font-bold">📋 WhatsOrder</h1>
         <div className="text-2xl">☰</div>
       </header>
@@ -99,7 +110,7 @@ export default function HomePage() {
             placeholder="Business Name (e.g. Vishal Tiffin)"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-green-400"
+            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-indigo-400"
             required
           />
           <input
@@ -107,14 +118,15 @@ export default function HomePage() {
             placeholder="WhatsApp Number (e.g. 91XXXXXXXXXX)"
             value={whatsappNumber}
             onChange={(e) => setWhatsappNumber(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-green-400"
+            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-indigo-400"
             required
           />
 
+          {/* Products */}
           <div>
             <h3 className="text-sm font-medium text-gray-600 mb-2">🛍️ Products</h3>
             {products.map((product, index) => (
-              <div key={index} className="space-y-2 mb-3">
+              <div key={index} className="space-y-2 mb-3 border border-gray-200 rounded-lg p-3">
                 <input
                   type="text"
                   placeholder="Product Name"
@@ -130,18 +142,24 @@ export default function HomePage() {
                   className="w-full border border-gray-300 px-3 py-2 rounded-md"
                 />
                 <input
-                  type="text"
-                  placeholder="Image URL (optional)"
-                  value={product.image}
-                  onChange={(e) => handleProductChange(index, 'image', e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded-md"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(index, e.target.files?.[0] || null)}
+                  className="w-full"
                 />
+                {product.image && (
+                  <img
+                    src={product.image}
+                    alt="Preview"
+                    className="w-full h-32 object-cover rounded-md border"
+                  />
+                )}
               </div>
             ))}
             <button
               type="button"
               onClick={addProduct}
-              className="text-sm text-green-600 hover:underline mt-2"
+              className="text-sm text-indigo-600 hover:underline mt-2"
             >
               + Add More Product
             </button>
@@ -149,7 +167,7 @@ export default function HomePage() {
 
           <button
             onClick={handleGenerateLink}
-            className="bg-green-600 text-white w-full py-2 rounded-md font-semibold hover:bg-green-700"
+            className="bg-indigo-600 text-white w-full py-2 rounded-md font-semibold hover:bg-indigo-700"
           >
             Generate Link
           </button>
@@ -177,4 +195,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-               }
+}
