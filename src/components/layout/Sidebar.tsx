@@ -1,16 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 
 const navItems = [
   { label: '🏠 Dashboard', href: '/dashboard' },
   { label: '➕ Create Form', href: '/dashboard/create' },
-  { label: '🧾 My Forms', href: '/dashboard/forms' },
+  { label: '🧾 My Forms', href: '/my-forms' }, // ✅ Fixed path
   { label: '📥 Orders', href: '/dashboard/orders' },
   { label: '📊 Analytics', href: '/dashboard/analytics' },
   { label: '👤 Profile', href: '/dashboard/profile' },
@@ -60,4 +59,4 @@ export default function Sidebar() {
       </div>
     </aside>
   );
-          }
+}
