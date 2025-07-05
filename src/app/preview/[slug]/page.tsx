@@ -17,8 +17,10 @@ export default function PreviewOrderPage() {
   const parsedProducts: Product[] = productsParam
     .split(',')
     .map((entry) => {
-      const [name, price] = entry.split('-').map(decodeURIComponent);
-      return { name, price: Number(price) };
+      const [rawName, rawPrice] = entry.split('-');
+      const name = decodeURIComponent(rawName || '').trim();
+      const price = Number(rawPrice?.trim());
+      return { name, price };
     })
     .filter((p) => p.name && !isNaN(p.price));
 
@@ -41,6 +43,11 @@ export default function PreviewOrderPage() {
       .map((p, i) => (quantities[i] > 0 ? `- ${quantities[i]}x ${p.name}` : ''))
       .filter(Boolean)
       .join('\n');
+
+    if (!orderLines) {
+      alert('Please select at least one item.');
+      return;
+    }
 
     const message = `Hello ${businessName},\nI'd like to order:\n${orderLines}\n\nName: ${name}\nAddress: ${address}`;
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
@@ -95,6 +102,7 @@ export default function PreviewOrderPage() {
 
         <button
           onClick={handlePlaceOrder}
+          disabled={!parsedProducts.length}
           className="w-full bg-green-600 text-white font-semibold py-2 rounded hover:bg-green-700"
         >
           Place Order
@@ -102,4 +110,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-      }
+  }
