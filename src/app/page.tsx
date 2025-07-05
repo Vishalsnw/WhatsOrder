@@ -1,36 +1,57 @@
-import Link from 'next/link';
+'use client';
 
-export default function Home() {
+import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+
+export default function OrderPage() {
+  const searchParams = useSearchParams();
+  const phone = searchParams.get('phone');
+
+  const [product, setProduct] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const message = `Hello, I want to order: ${product}`;
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    setSubmitted(true);
+  };
+
+  if (!phone) {
+    return (
+      <div className="text-center p-4">
+        <h2 className="text-xl font-bold text-red-600">❌ Phone number is missing in the URL</h2>
+        <p>Add ?phone=91XXXXXXXXXX in the URL</p>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md w-full">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          🛍️ WhatsOrder — Take WhatsApp Orders Easily
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Accept product orders from your customers directly on WhatsApp. No coding, no setup — just
-          share your link and start receiving orders!
-        </p>
+      <div className="bg-white p-6 rounded shadow max-w-md w-full text-center">
+        <h2 className="text-2xl font-bold mb-4">🛒 Order on WhatsApp</h2>
 
-        <div className="flex flex-col gap-3">
-          <Link
-            href="/order?phone=919975859935"
-            className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition"
-          >
-            Try Order Form
-          </Link>
-          <Link
-            href="https://wa.me/919999888877"
-            target="_blank"
-            className="border border-green-600 text-green-600 px-6 py-3 rounded hover:bg-green-50 transition"
-          >
-            Contact on WhatsApp
-          </Link>
-        </div>
-
-        <p className="text-xs text-gray-400 mt-6">
-          Built with 💚 for small businesses. Powered by Next.js & Vercel.
-        </p>
+        {submitted ? (
+          <p className="text-green-600 font-medium">✅ Redirecting to WhatsApp...</p>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="text"
+              placeholder="Enter product name"
+              value={product}
+              onChange={(e) => setProduct(e.target.value)}
+              required
+              className="w-full border px-4 py-2 rounded"
+            />
+            <button
+              type="submit"
+              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
+            >
+              Order via WhatsApp
+            </button>
+          </form>
+        )}
       </div>
     </main>
   );
