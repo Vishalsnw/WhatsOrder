@@ -21,7 +21,7 @@ export default function MyFormsPage() {
     if (!loading && user) {
       const fetchForms = async () => {
         try {
-          const q = query(collection(db, 'forms'), where('uid', '==', user.uid));
+          const q = query(collection(db, 'forms'), where('owner', '==', user.uid)); // ✅ fixed field
           const snap = await getDocs(q);
           const result: Form[] = snap.docs.map((doc) => ({
             id: doc.id,
@@ -30,7 +30,7 @@ export default function MyFormsPage() {
           }));
           setForms(result);
         } catch (err) {
-          console.error('Error fetching forms:', err);
+          console.error('❌ Error fetching forms:', err);
         } finally {
           setLoadingForms(false);
         }
@@ -41,7 +41,7 @@ export default function MyFormsPage() {
   }, [user, loading]);
 
   if (loading || loadingForms) {
-    return <div className="text-center mt-10 text-gray-500">Loading forms...</div>;
+    return <div className="text-center mt-10 text-gray-500">⏳ Loading your forms...</div>;
   }
 
   return (
@@ -55,22 +55,24 @@ export default function MyFormsPage() {
           {forms.map((form) => (
             <li key={form.id} className="bg-white rounded-xl shadow p-4">
               <div className="text-lg font-semibold text-gray-800">{form.businessName}</div>
-              <Link
-                href={`/preview/${form.slug}?id=${form.id}`}
-                className="text-sm text-blue-600 hover:underline"
-              >
-                View Form
-              </Link>
-              <Link
-                href={`/dashboard/forms/${form.id}/edit`}
-                className="ml-4 text-sm text-green-600 hover:underline"
-              >
-                Edit
-              </Link>
+              <div className="mt-1 space-x-4">
+                <Link
+                  href={`/preview/${form.slug}?id=${form.id}`}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  🔗 View
+                </Link>
+                <Link
+                  href={`/dashboard/forms/${form.id}/edit`}
+                  className="text-sm text-green-600 hover:underline"
+                >
+                  ✏️ Edit
+                </Link>
+              </div>
             </li>
           ))}
         </ul>
       )}
     </div>
   );
-          }
+                }
