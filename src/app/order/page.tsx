@@ -1,58 +1,71 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 export default function OrderPage() {
-  const [name, setName] = useState('');
+  const searchParams = useSearchParams();
+  const phoneNumber = searchParams.get('phone') || '919999888877'; // Default number if not in URL
+
   const [product, setProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [name, setName] = useState('');
+  const [note, setNote] = useState('');
 
-  const handleSubmit = () => {
-    const phone = '91xxxxxxxxxx'; // 🔁 Replace with your WhatsApp number
-    const msg = `Order Details:\n\n👤 Name: ${name}\n📦 Product: ${product}\n🔢 Quantity: ${quantity}`;
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const message = `🛒 *New Order from ${name || 'Customer'}*\n\n📦 *Product*: ${product}\n🔢 *Quantity*: ${quantity}\n📝 *Note*: ${note}`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    window.open(whatsappURL, '_blank');
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="max-w-md w-full bg-white shadow-md rounded p-6 space-y-4">
-        <h1 className="text-xl font-bold text-center text-green-600">WhatsApp Order Form</h1>
-
-        <input
-          type="text"
-          placeholder="Your Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 border rounded"
-          required
-        />
-
-        <input
-          type="text"
-          placeholder="Product Name"
-          value={product}
-          onChange={(e) => setProduct(e.target.value)}
-          className="w-full px-4 py-2 border rounded"
-          required
-        />
-
-        <input
-          type="number"
-          placeholder="Quantity"
-          value={quantity}
-          onChange={(e) => setQuantity(parseInt(e.target.value))}
-          className="w-full px-4 py-2 border rounded"
-          min={1}
-        />
-
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-        >
-          Submit via WhatsApp
-        </button>
+    <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6">
+        <h1 className="text-2xl font-bold text-center text-green-600 mb-6">
+          Place Your Order
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Your Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-2 border rounded"
+          />
+          <input
+            type="text"
+            placeholder="Product Name"
+            required
+            value={product}
+            onChange={(e) => setProduct(e.target.value)}
+            className="w-full px-4 py-2 border rounded"
+          />
+          <input
+            type="number"
+            placeholder="Quantity"
+            min="1"
+            required
+            value={quantity}
+            onChange={(e) => setQuantity(parseInt(e.target.value))}
+            className="w-full px-4 py-2 border rounded"
+          />
+          <textarea
+            placeholder="Additional Notes (optional)"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="w-full px-4 py-2 border rounded"
+          />
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white font-semibold py-2 rounded hover:bg-green-700"
+          >
+            Send on WhatsApp
+          </button>
+        </form>
       </div>
     </main>
   );
-        }
+}
