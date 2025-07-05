@@ -1,10 +1,8 @@
 // src/lib/storage.ts
 
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { app } from './firebase';
-
-const storage = getStorage(app);
+import { storage } from './firebase';
 
 /**
  * Uploads a file to Firebase Storage and returns its public download URL.
@@ -12,7 +10,7 @@ const storage = getStorage(app);
  * @param path - Optional subfolder path (e.g. "product-images/")
  * @returns string - The public download URL
  */
-export const uploadImageAndGetUrl = async (file: File, path: string = 'uploads/') => {
+export const uploadImage = async (file: File, path: string = 'uploads/'): Promise<string> => {
   try {
     const fileId = uuidv4();
     const storageRef = ref(storage, `${path}${fileId}-${file.name}`);
