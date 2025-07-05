@@ -1,7 +1,9 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss';
 
 const config: Config = {
-  content: ['./src/**/*.{ts,tsx}'],
+  content: [
+    './src/**/*.{js,ts,jsx,tsx}', // Scan all app files for Tailwind classes
+  ],
   theme: {
     extend: {},
   },
