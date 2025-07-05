@@ -8,24 +8,26 @@ export default function OrderForm() {
   const phoneNumber = searchParams.get('phone') || '919999888877';
 
   const [product, setProduct] = useState('');
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number>(1);
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const message = `🛒 *New Order from ${name || 'Customer'}*\n\n📦 *Product*: ${product}\n🔢 *Quantity*: ${quantity}\n📝 *Note*: ${note}`;
+    if (!product.trim() || quantity < 1) return;
+
+    const message = `🛒 *New Order from ${name || 'Customer'}*\n\n📦 *Product*: ${product.trim()}\n🔢 *Quantity*: ${quantity}\n📝 *Note*: ${note || '-'}`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappURL, '_blank');
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
       <div className="max-w-md w-full bg-white shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold text-center text-green-600 mb-6">
-          Place Your Order
+          📦 Place Your Order
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -46,10 +48,13 @@ export default function OrderForm() {
           <input
             type="number"
             placeholder="Quantity"
-            min="1"
+            min={1}
             required
             value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value))}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              if (!isNaN(val)) setQuantity(val);
+            }}
             className="w-full px-4 py-2 border rounded"
           />
           <textarea
@@ -68,4 +73,4 @@ export default function OrderForm() {
       </div>
     </main>
   );
-}
+            }
