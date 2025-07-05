@@ -1,1 +1,15 @@
-export const metadata = { title: 'WhatsOrder', description: 'Accept WhatsApp orders' };\nexport default function RootLayout({ children }: { children: React.ReactNode }) { return (<html lang='en'><body>{children}</body></html>); }
+import './globals.css';
+import { ReactNode } from 'react';
+
+export const metadata = {
+  title: 'WhatsOrder',
+  description: 'Simple WhatsApp order form for small businesses',
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
