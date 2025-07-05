@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firestore';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { uploadImage } from '@/lib/storage';
 
@@ -35,7 +35,7 @@ export default function EditFormPage() {
         if (snap.exists()) {
           const data = snap.data();
           setBizName(data.businessName || '');
-          setWhatsapp(data.phone || '');
+          setWhatsapp(data.whatsappNumber || '');
           setProducts(
             data.products.map((p: any) => ({
               name: p.name,
@@ -49,7 +49,7 @@ export default function EditFormPage() {
           router.push('/dashboard');
         }
       } catch (err) {
-        console.error(err);
+        console.error('Error loading form:', err);
         alert('Failed to load form.');
         router.push('/dashboard');
       } finally {
@@ -80,6 +80,7 @@ export default function EditFormPage() {
 
     try {
       setSaving(true);
+
       const updatedProducts = await Promise.all(
         products.map(async (p) => {
           let imageUrl = p.image;
@@ -96,14 +97,18 @@ export default function EditFormPage() {
 
       await updateDoc(doc(db, 'forms', id as string), {
         businessName: bizName.trim(),
-        phone: whatsapp.trim(),
+        whatsappNumber: whatsapp.trim(),
         products: updatedProducts,
       });
 
-      const slug = bizName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const slug = bizName
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
       router.push(`/preview/${slug}?id=${id}`);
     } catch (err) {
-      console.error(err);
+      console.error('Error updating form:', err);
       alert('Failed to update form.');
     } finally {
       setSaving(false);
@@ -123,7 +128,7 @@ export default function EditFormPage() {
         placeholder="Business Name"
         value={bizName}
         onChange={(e) => setBizName(e.target.value)}
-        className="w-full"
+        className="w-full border rounded px-3 py-2"
       />
 
       <input
@@ -131,7 +136,7 @@ export default function EditFormPage() {
         placeholder="WhatsApp Number"
         value={whatsapp}
         onChange={(e) => setWhatsapp(e.target.value)}
-        className="w-full"
+        className="w-full border rounded px-3 py-2"
       />
 
       <div>
@@ -143,17 +148,21 @@ export default function EditFormPage() {
               placeholder="Product Name"
               value={p.name}
               onChange={(e) => handleChange(i, 'name', e.target.value)}
-              className="w-full"
+              className="w-full border rounded px-3 py-2"
             />
             <input
               type="number"
               placeholder="Price"
               value={p.price}
               onChange={(e) => handleChange(i, 'price', e.target.value)}
-              className="w-full"
+              className="w-full border rounded px-3 py-2"
             />
             {p.image && (
-              <img src={p.image} alt="Product" className="w-full h-32 object-cover rounded-md border" />
+              <img
+                src={p.image}
+                alt="Product"
+                className="w-full h-32 object-cover rounded-md border"
+              />
             )}
             <input
               type="file"
@@ -174,4 +183,4 @@ export default function EditFormPage() {
       </button>
     </div>
   );
-}
+              }
