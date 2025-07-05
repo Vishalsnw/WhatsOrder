@@ -2,12 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom global styles (optional) */
+/* Global Base Styling */
 body {
-  @apply bg-gray-100 text-gray-800;
+  @apply bg-gradient-to-br from-green-50 to-white text-gray-800 antialiased;
   font-family: 'Inter', sans-serif;
+  line-height: 1.6;
 }
 
-input, textarea {
-  @apply focus:outline-none focus:ring-2 focus:ring-green-400;
+/* Inputs, Textareas, Selects */
+input,
+textarea,
+select {
+  @apply border border-gray-300 px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  @apply text-gray-800 font-semibold;
+}
+
+/* Buttons */
+button {
+  @apply transition-all duration-200 ease-in-out active:scale-[0.98] font-medium;
+}
+
+/* Form Section Cards */
+.card {
+  @apply bg-white p-6 rounded-xl shadow-md space-y-4;
+}
+
+/* Product Image Styling */
+img {
+  @apply object-cover rounded-lg shadow-sm;
+}
+
+/* Text Styling */
+label {
+  @apply block mb-1 text-sm text-gray-600 font-medium;
+}
+
+/* Utility Classes */
+.text-link {
+  @apply text-green-600 underline hover:text-green-700 cursor-pointer;
+}
+
+/* Footer Branding */
+.footer {
+  @apply text-center text-xs text-gray-400 mt-6 mb-2;
+}
+
+/* Scrollbar Styling (Webkit) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #10b981; /* green-500 */
+  border-radius: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f3f4f6; /* gray-100 */
 }
