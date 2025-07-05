@@ -1,17 +1,16 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 
 const navItems = [
   { label: '🏠 Dashboard', href: '/dashboard' },
   { label: '➕ Create Form', href: '/dashboard/create' },
-  { label: '🧾 My Forms', href: '/dashboard/forms' },
+  { label: '🧾 My Forms', href: '/my-forms' }, // ✅ Fixed path
   { label: '📥 Orders', href: '/dashboard/orders' },
   { label: '📊 Analytics', href: '/dashboard/analytics' },
   { label: '👤 Profile', href: '/dashboard/profile' },
@@ -89,6 +88,9 @@ function SidebarContent({
                   ? 'bg-indigo-100 text-indigo-700'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
+              onClick={() => {
+                if (typeof window !== 'undefined') window.scrollTo(0, 0);
+              }}
             >
               {item.label}
             </Link>
@@ -108,4 +110,4 @@ function SidebarContent({
       </div>
     </div>
   );
-      }
+}
