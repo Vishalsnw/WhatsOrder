@@ -7,7 +7,7 @@ export default function HomePage() {
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [products, setProducts] = useState([{ name: '', price: '', image: '' }]);
   const [generatedLink, setGeneratedLink] = useState('');
-  const [copied, setCopied] = useState(false); // ✅ Toast feedback
+  const [copied, setCopied] = useState(false);
 
   const handleProductChange = (
     index: number,
@@ -58,7 +58,7 @@ export default function HomePage() {
     }).toString();
 
     const fullURL = `${window.location.origin}/preview/${slug}?${query}`;
-    setGeneratedLink(fullURL); // ✅ No fake short link
+    setGeneratedLink(fullURL);
   };
 
   const handleCopyLink = async () => {
@@ -78,7 +78,7 @@ export default function HomePage() {
           url: generatedLink,
         });
       } catch (err) {
-        console.error('Share cancelled or failed.');
+        console.error('Sharing cancelled or failed.');
       }
     } else {
       alert('Sharing not supported on this device.');
@@ -115,7 +115,7 @@ export default function HomePage() {
             className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-indigo-400"
           />
 
-          {/* Products */}
+          {/* Products Section */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">🛍️ Products</h3>
             {products.map((product, index) => (
@@ -161,6 +161,7 @@ export default function HomePage() {
             </button>
           </div>
 
+          {/* Generate and Copy Link */}
           <button
             onClick={handleGenerateLink}
             className="bg-indigo-600 text-white w-full py-2 rounded-md font-semibold hover:bg-indigo-700"
