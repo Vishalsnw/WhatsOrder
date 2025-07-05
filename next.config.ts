@@ -2,9 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // ✅ Allow local IP access during development (fixes sidebar/login issues)
+  // ✅ You can add other supported experimental options here if needed
   experimental: {
-    allowedDevOrigins: ['http://localhost:3000', 'http://192.168.1.103:3000'],
+    // no custom options here to avoid Vercel build errors
   },
 };
 
