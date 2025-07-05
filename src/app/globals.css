@@ -1,1 +1,13 @@
-@tailwind base;\n@tailwind components;\n@tailwind utilities;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom global styles (optional) */
+body {
+  @apply bg-gray-100 text-gray-800;
+  font-family: 'Inter', sans-serif;
+}
+
+input, textarea {
+  @apply focus:outline-none focus:ring-2 focus:ring-green-400;
+}
