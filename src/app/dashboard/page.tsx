@@ -4,9 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase'; // ✅ Correct import
 
 interface Form {
   id: string;
@@ -21,21 +20,19 @@ export default function DashboardPage() {
   const [forms, setForms] = useState<Form[]>([]);
   const [loadingForms, setLoadingForms] = useState(true);
 
-  // 🔐 Redirect if not logged in
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
-  // 📥 Fetch forms
   useEffect(() => {
     const fetchForms = async () => {
       if (!user) return;
       try {
         const q = query(collection(db, 'forms'), where('owner', '==', user.uid));
         const snapshot = await getDocs(q);
-        const userForms = snapshot.docs.map((doc) => ({
+        const userForms: Form[] = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...(doc.data() as Form),
         }));
@@ -66,13 +63,13 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="max-w-4xl mx-auto bg-white shadow rounded-xl p-6 space-y-6">
-        {/* 👤 Profile */}
+        {/* 👤 Header */}
         <div className="flex items-center justify-between border-b pb-4">
           <div>
             <h1 className="text-xl font-bold text-indigo-700">
-              👋 Welcome, {user.phoneNumber}
+              👋 Welcome, {user.phoneNumber || 'User'}
             </h1>
-            <p className="text-sm text-gray-500">Manage your forms below.</p>
+            <p className="text-sm text-gray-500">Manage your order forms here.</p>
           </div>
           <button
             onClick={handleLogout}
@@ -82,7 +79,7 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* 📄 Forms */}
+        {/* 📋 My Forms */}
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-2">📋 My Forms</h2>
           {loadingForms ? (
@@ -104,7 +101,7 @@ export default function DashboardPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      View Form
+                      🔗 View Form
                     </a>
                   </div>
                   <span className="text-xs text-gray-400">
@@ -121,4 +118,4 @@ export default function DashboardPage() {
       </div>
     </main>
   );
-    }
+      }
