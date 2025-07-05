@@ -6,6 +6,7 @@ import { useUser } from '@/hooks/useUser';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import Link from 'next/link';
 
 interface Form {
   id: string;
@@ -20,12 +21,14 @@ export default function DashboardPage() {
   const [forms, setForms] = useState<Form[]>([]);
   const [loadingForms, setLoadingForms] = useState(true);
 
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
+  // Fetch user's forms from Firestore
   useEffect(() => {
     const fetchForms = async () => {
       if (!user) return;
@@ -63,7 +66,7 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="max-w-4xl mx-auto bg-white shadow rounded-xl p-6 space-y-6">
-        {/* 👤 Header */}
+        {/* Header */}
         <div className="flex items-center justify-between border-b pb-4">
           <div>
             <h1 className="text-xl font-bold text-indigo-700">
@@ -79,9 +82,18 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* 📋 My Forms */}
+        {/* My Forms Section */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">📋 My Forms</h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-800">📋 My Forms</h2>
+            <Link
+              href="/my-forms"
+              className="text-sm text-blue-600 underline hover:text-blue-800"
+            >
+              View All Forms
+            </Link>
+          </div>
+
           {loadingForms ? (
             <p className="text-gray-500">Loading forms...</p>
           ) : forms.length === 0 ? (
@@ -118,4 +130,4 @@ export default function DashboardPage() {
       </div>
     </main>
   );
-      }
+          }
