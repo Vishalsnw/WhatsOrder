@@ -24,14 +24,14 @@ export default function HomePage() {
   };
 
   const handleImageUpload = (index: number, file: File | null) => {
-    const updated = [...products];
-    if (file) {
-      const imageURL = URL.createObjectURL(file);
-      updated[index].image = imageURL;
-    } else {
-      updated[index].image = '';
-    }
-    setProducts(updated);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const updated = [...products];
+      updated[index].image = reader.result as string;
+      setProducts(updated);
+    };
+    reader.readAsDataURL(file);
   };
 
   const addProduct = () => {
@@ -42,8 +42,8 @@ export default function HomePage() {
     if (!businessName.trim() || !whatsappNumber.trim()) return;
 
     const validProducts = products
-      .filter(p => p.name.trim() && p.price.trim())
-      .map(p =>
+      .filter((p) => p.name.trim() && p.price.trim())
+      .map((p) =>
         `${encodeURIComponent(p.name.trim())}-${p.price.trim()}${
           p.image ? `-${encodeURIComponent(p.image)}` : ''
         }`
@@ -63,7 +63,6 @@ export default function HomePage() {
 
     const fullURL = `${window.location.origin}/preview/${slug}?${query}`;
     const shortURL = generateHashLink(fullURL);
-
     setGeneratedLink(shortURL);
   };
 
@@ -91,7 +90,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100">
+    <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-indigo-600 text-white py-4 px-6 shadow-md flex items-center justify-between">
         <h1 className="text-lg font-bold">📋 WhatsOrder</h1>
@@ -101,7 +100,7 @@ export default function HomePage() {
       {/* Content */}
       <div className="p-4 max-w-md mx-auto">
         <div className="bg-white p-5 rounded-2xl shadow space-y-6">
-          <h2 className="text-xl font-semibold text-center text-gray-700">
+          <h2 className="text-xl font-semibold text-center text-gray-800">
             Create Your Order Form
           </h2>
 
@@ -111,7 +110,6 @@ export default function HomePage() {
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
             className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-indigo-400"
-            required
           />
           <input
             type="tel"
@@ -119,12 +117,11 @@ export default function HomePage() {
             value={whatsappNumber}
             onChange={(e) => setWhatsappNumber(e.target.value)}
             className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-indigo-400"
-            required
           />
 
           {/* Products */}
           <div>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">🛍️ Products</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">🛍️ Products</h3>
             {products.map((product, index) => (
               <div key={index} className="space-y-2 mb-3 border border-gray-200 rounded-lg p-3">
                 <input
@@ -150,7 +147,7 @@ export default function HomePage() {
                 {product.image && (
                   <img
                     src={product.image}
-                    alt="Preview"
+                    alt="Product Preview"
                     className="w-full h-32 object-cover rounded-md border"
                   />
                 )}
@@ -174,7 +171,9 @@ export default function HomePage() {
 
           {generatedLink && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm text-center text-blue-600 break-all">{generatedLink}</p>
+              <p className="text-sm text-center text-blue-600 break-all">
+                {generatedLink}
+              </p>
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyLink}
@@ -195,4 +194,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-}
+      }
