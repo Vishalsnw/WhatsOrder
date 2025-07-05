@@ -11,5 +11,5 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'off',
     '@next/next/no-img-element': 'warn',
     'react-hooks/exhaustive-deps': 'warn',
-  }
+  },
 };
