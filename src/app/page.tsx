@@ -6,7 +6,7 @@ import { useUser } from '@/hooks/useUser';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export default function HomePage() {
+export default function LoginPage() {
   const { user } = useUser();
   const router = useRouter();
 
@@ -46,9 +46,9 @@ export default function HomePage() {
     if (!businessName.trim() || !whatsappNumber.trim()) return;
 
     const validProducts = products
-      .filter((p) => p.name.trim() && p.price.trim())
+      .filter((p) => p.name.trim() && p.price.toString().trim())
       .map((p) =>
-        `${encodeURIComponent(p.name.trim())}-${p.price.trim()}${
+        `${encodeURIComponent(p.name.trim())}-${p.price}${
           p.image ? `-${encodeURIComponent(p.image)}` : ''
         }`
       )
@@ -76,7 +76,7 @@ export default function HomePage() {
           businessName,
           whatsappNumber,
           slug,
-          products: products.filter((p) => p.name.trim() && p.price.trim()),
+          products: products.filter((p) => p.name.trim() && p.price.toString().trim()),
           createdAt: serverTimestamp(),
         });
 
@@ -221,4 +221,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-                                    }
+                              }
