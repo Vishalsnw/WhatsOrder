@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 interface Product {
   name: string;
   price: number;
+  image?: string;
 }
 
 export default function PreviewOrderPage() {
@@ -17,10 +18,10 @@ export default function PreviewOrderPage() {
   const parsedProducts: Product[] = productsParam
     .split(',')
     .map((entry) => {
-      const [rawName, rawPrice] = entry.split('-');
-      const name = decodeURIComponent(rawName || '').trim();
-      const price = Number(rawPrice?.trim());
-      return { name, price };
+      const parts = entry.split('-').map(decodeURIComponent);
+      const [name, priceStr, image] = parts;
+      const price = Number(priceStr?.trim());
+      return { name: name?.trim(), price, image: image?.trim() };
     })
     .filter((p) => p.name && !isNaN(p.price));
 
@@ -38,6 +39,11 @@ export default function PreviewOrderPage() {
     setQuantities(newQuantities);
   };
 
+  const total = parsedProducts.reduce(
+    (sum, product, i) => sum + (quantities[i] || 0) * product.price,
+    0
+  );
+
   const handlePlaceOrder = () => {
     const orderLines = parsedProducts
       .map((p, i) => (quantities[i] > 0 ? `- ${quantities[i]}x ${p.name}` : ''))
@@ -49,14 +55,14 @@ export default function PreviewOrderPage() {
       return;
     }
 
-    const message = `Hello ${businessName},\nI'd like to order:\n${orderLines}\n\nName: ${name}\nAddress: ${address}`;
+    const message = `Hello ${businessName},\nI'd like to order:\n${orderLines}\n\nTotal: ₹${total}\n\nName: ${name}\nAddress: ${address}`;
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
-      <div className="bg-white p-6 rounded shadow-md max-w-md w-full space-y-4">
+    <main className="min-h-screen bg-gray-100 px-4 py-8 flex flex-col">
+      <div className="bg-white p-6 rounded shadow-md max-w-md mx-auto w-full space-y-4">
         <h2 className="text-2xl font-bold text-green-600 text-center">
           🛒 Order from {businessName}
         </h2>
@@ -67,9 +73,20 @@ export default function PreviewOrderPage() {
           parsedProducts.map((product, index) => (
             <div
               key={index}
-              className="flex justify-between items-center border p-2 rounded"
+              className="flex gap-4 border p-3 rounded items-center"
             >
-              <div>
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-16 h-16 object-cover rounded"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">
+                  No Image
+                </div>
+              )}
+              <div className="flex-1">
                 <p className="font-semibold">{product.name}</p>
                 <p className="text-sm text-gray-600">₹{product.price}</p>
               </div>
@@ -100,14 +117,23 @@ export default function PreviewOrderPage() {
           className="w-full border px-4 py-2 rounded"
         />
 
+        <div className="text-right font-semibold text-lg text-gray-700">
+          Total: ₹{total}
+        </div>
+
         <button
           onClick={handlePlaceOrder}
           disabled={!parsedProducts.length}
           className="w-full bg-green-600 text-white font-semibold py-2 rounded hover:bg-green-700"
         >
-          Place Order
+          Place Order on WhatsApp
         </button>
+      </div>
+
+      {/* Branding Footer */}
+      <div className="text-center text-xs text-gray-400 mt-6">
+        Made with 💚 using <strong>WhatsOrder</strong> — Free Version
       </div>
     </main>
   );
-  }
+        }
