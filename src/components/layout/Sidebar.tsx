@@ -17,8 +17,8 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
   const router = useRouter();
+  const { user } = useUser();
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -35,7 +35,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-3 py-2 rounded-md font-medium ${
+              className={`block px-3 py-2 rounded-md font-medium transition-colors ${
                 pathname === item.href
                   ? 'bg-indigo-100 text-indigo-700'
                   : 'text-gray-700 hover:bg-gray-100'
@@ -47,16 +47,20 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      <div className="pt-6 border-t">
-        <p className="text-xs text-gray-500 mb-1">Logged in as</p>
-        <p className="text-sm font-semibold truncate">{user?.phoneNumber || 'Guest'}</p>
-        <button
-          onClick={handleLogout}
-          className="mt-2 text-sm text-red-600 hover:underline"
-        >
-          🚪 Logout
-        </button>
-      </div>
+      {user?.uid && (
+        <div className="pt-6 border-t">
+          <p className="text-xs text-gray-500 mb-1">Logged in as</p>
+          <p className="text-sm font-semibold truncate">
+            {user.displayName || user.phoneNumber || 'User'}
+          </p>
+          <button
+            onClick={handleLogout}
+            className="mt-2 text-sm text-red-600 hover:underline"
+          >
+            🚪 Logout
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
