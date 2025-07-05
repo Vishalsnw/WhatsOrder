@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
-import { db } from '@/lib/firestore';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function HomePage() {
   const { user } = useUser();
@@ -72,8 +72,7 @@ export default function HomePage() {
       setSaving(true);
 
       if (validProducts.length && user?.uid) {
-        await addDoc(collection(db, 'forms'), {
-          owner: user.uid,
+        await addDoc(collection(db, 'users', user.uid, 'forms'), {
           businessName,
           whatsappNumber,
           slug,
@@ -81,9 +80,8 @@ export default function HomePage() {
           createdAt: serverTimestamp(),
         });
 
-        // 🟢 Show toast
         alert('✅ Form saved successfully! Redirecting to dashboard...');
-        setTimeout(() => router.push('/dashboard'), 2000);
+        setTimeout(() => router.push('/dashboard'), 1500);
       }
     } catch (err) {
       console.error('❌ Error saving form:', err);
@@ -135,17 +133,16 @@ export default function HomePage() {
             placeholder="Business Name (e.g. Vishal Tiffin)"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            className="w-full"
+            className="w-full border px-3 py-2 rounded-md"
           />
           <input
             type="tel"
             placeholder="WhatsApp Number (e.g. 91XXXXXXXXXX)"
             value={whatsappNumber}
             onChange={(e) => setWhatsappNumber(e.target.value)}
-            className="w-full"
+            className="w-full border px-3 py-2 rounded-md"
           />
 
-          {/* Products */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">🛍️ Products</h3>
             {products.map((product, index) => (
@@ -158,14 +155,14 @@ export default function HomePage() {
                   placeholder="Product Name"
                   value={product.name}
                   onChange={(e) => handleProductChange(index, 'name', e.target.value)}
-                  className="w-full"
+                  className="w-full border px-3 py-1.5 rounded"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={product.price}
                   onChange={(e) => handleProductChange(index, 'price', e.target.value)}
-                  className="w-full"
+                  className="w-full border px-3 py-1.5 rounded"
                 />
                 <input
                   type="file"
@@ -201,7 +198,9 @@ export default function HomePage() {
 
           {generatedLink && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm text-center text-blue-600 break-all">{generatedLink}</p>
+              <p className="text-sm text-center text-blue-600 break-words">
+                {generatedLink}
+              </p>
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyLink}
@@ -222,4 +221,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-    }
+                                    }
