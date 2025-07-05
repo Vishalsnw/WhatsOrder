@@ -10,10 +10,10 @@ export default function HomePage() {
 
   const router = useRouter();
 
-  const handleProductChange = (index: number, field: string, value: string) => {
-    const newProducts = [...products];
-    newProducts[index][field] = value;
-    setProducts(newProducts);
+  const handleProductChange = (index: number, field: 'name' | 'price', value: string) => {
+    const updated = [...products];
+    updated[index][field] = value;
+    setProducts(updated);
   };
 
   const addProduct = () => {
@@ -23,11 +23,11 @@ export default function HomePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!businessName || !whatsappNumber) return;
+    if (!businessName.trim() || !whatsappNumber.trim()) return;
 
     const validProducts = products
       .filter(p => p.name.trim() && p.price.trim())
-      .map(p => `${encodeURIComponent(p.name)}-${p.price.trim()}`)
+      .map(p => `${p.name.trim()}-${p.price.trim()}`)
       .join(',');
 
     const slug = businessName
@@ -37,7 +37,7 @@ export default function HomePage() {
 
     const query = new URLSearchParams({
       phone: whatsappNumber.trim(),
-      biz: encodeURIComponent(businessName.trim()),
+      biz: businessName.trim(),
       products: validProducts,
     }).toString();
 
@@ -47,7 +47,9 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white p-6 rounded shadow max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center text-green-600 mb-4">📋 Create Your Order Form</h1>
+        <h1 className="text-2xl font-bold text-center text-green-600 mb-4">
+          📋 Create Your Order Form
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -108,4 +110,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-      }
+          }
