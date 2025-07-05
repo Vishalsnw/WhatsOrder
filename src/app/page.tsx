@@ -1,14 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const [businessName, setBusinessName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [products, setProducts] = useState([{ name: '', price: '' }]);
-
-  const router = useRouter();
+  const [generatedLink, setGeneratedLink] = useState('');
 
   const handleProductChange = (index: number, field: 'name' | 'price', value: string) => {
     const updated = [...products];
@@ -20,14 +18,12 @@ export default function HomePage() {
     setProducts([...products, { name: '', price: '' }]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleGenerateLink = () => {
     if (!businessName.trim() || !whatsappNumber.trim()) return;
 
     const validProducts = products
       .filter(p => p.name.trim() && p.price.trim())
-      .map(p => `${p.name.trim()}-${p.price.trim()}`)
+      .map(p => `${encodeURIComponent(p.name.trim())}-${p.price.trim()}`)
       .join(',');
 
     const slug = businessName
@@ -37,11 +33,35 @@ export default function HomePage() {
 
     const query = new URLSearchParams({
       phone: whatsappNumber.trim(),
-      biz: businessName.trim(),
+      biz: encodeURIComponent(businessName.trim()),
       products: validProducts,
     }).toString();
 
-    router.push(`/preview/${slug}?${query}`);
+    const fullLink = `${window.location.origin}/preview/${slug}?${query}`;
+    setGeneratedLink(fullLink);
+  };
+
+  const handleCopyLink = () => {
+    if (generatedLink) {
+      navigator.clipboard.writeText(generatedLink);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  const handleShare = async () => {
+    if (navigator.share && generatedLink) {
+      try {
+        await navigator.share({
+          title: 'My Order Form',
+          text: 'Check out this order form',
+          url: generatedLink,
+        });
+      } catch (err) {
+        alert('Sharing cancelled or failed.');
+      }
+    } else {
+      alert('Sharing not supported on this device.');
+    }
   };
 
   return (
@@ -51,22 +71,22 @@ export default function HomePage() {
           📋 Create Your Order Form
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <input
             type="text"
             placeholder="Business Name (e.g. Vishal Tiffin)"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            required
             className="w-full border px-4 py-2 rounded"
+            required
           />
           <input
             type="tel"
             placeholder="WhatsApp Number (e.g. 91XXXXXXXXXX)"
             value={whatsappNumber}
             onChange={(e) => setWhatsappNumber(e.target.value)}
-            required
             className="w-full border px-4 py-2 rounded"
+            required
           />
 
           <div className="space-y-2">
@@ -79,7 +99,6 @@ export default function HomePage() {
                   value={product.name}
                   onChange={(e) => handleProductChange(index, 'name', e.target.value)}
                   className="flex-1 border px-2 py-1 rounded"
-                  required
                 />
                 <input
                   type="number"
@@ -87,7 +106,6 @@ export default function HomePage() {
                   value={product.price}
                   onChange={(e) => handleProductChange(index, 'price', e.target.value)}
                   className="w-24 border px-2 py-1 rounded"
-                  required
                 />
               </div>
             ))}
@@ -101,13 +119,33 @@ export default function HomePage() {
           </div>
 
           <button
-            type="submit"
+            onClick={handleGenerateLink}
             className="bg-green-600 text-white px-6 py-2 rounded w-full hover:bg-green-700"
           >
-            Generate Order Form
+            Generate Link
           </button>
-        </form>
+
+          {generatedLink && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm break-all text-blue-600 underline">{generatedLink}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopyLink}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                >
+                  Copy
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="flex-1 bg-purple-600 text-white py-2 rounded hover:bg-purple-700"
+                >
+                  Share
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
-          }
+      }
