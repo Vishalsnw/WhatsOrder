@@ -1,13 +1,21 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/hooks/useUser';
+import { db } from '@/lib/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 export default function HomePage() {
+  const { user } = useUser();
+  const router = useRouter();
+
   const [businessName, setBusinessName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [products, setProducts] = useState([{ name: '', price: '', image: '' }]);
   const [generatedLink, setGeneratedLink] = useState('');
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleProductChange = (
     index: number,
@@ -34,7 +42,7 @@ export default function HomePage() {
     setProducts([...products, { name: '', price: '', image: '' }]);
   };
 
-  const handleGenerateLink = () => {
+  const handleGenerateLink = async () => {
     if (!businessName.trim() || !whatsappNumber.trim()) return;
 
     const validProducts = products
@@ -59,6 +67,30 @@ export default function HomePage() {
 
     const fullURL = `${window.location.origin}/preview/${slug}?${query}`;
     setGeneratedLink(fullURL);
+
+    try {
+      setSaving(true);
+
+      if (validProducts.length && user?.uid) {
+        await addDoc(collection(db, 'forms'), {
+          owner: user.uid,
+          businessName,
+          whatsappNumber,
+          slug,
+          products: products.filter((p) => p.name.trim() && p.price.trim()),
+          createdAt: serverTimestamp(),
+        });
+
+        // 🟢 Show toast
+        alert('✅ Form saved successfully! Redirecting to dashboard...');
+        setTimeout(() => router.push('/dashboard'), 2000);
+      }
+    } catch (err) {
+      console.error('❌ Error saving form:', err);
+      alert('❌ Failed to save form. Try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCopyLink = async () => {
@@ -78,7 +110,7 @@ export default function HomePage() {
           url: generatedLink,
         });
       } catch (err) {
-        console.error('Sharing cancelled or failed.');
+        console.error('Share cancelled or failed.');
       }
     } else {
       alert('Sharing not supported on this device.');
@@ -87,13 +119,11 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-indigo-600 text-white py-4 px-6 shadow-md flex items-center justify-between">
         <h1 className="text-lg font-bold">📋 WhatsOrder</h1>
         <div className="text-2xl">☰</div>
       </header>
 
-      {/* Content */}
       <div className="p-4 max-w-md mx-auto">
         <div className="bg-white p-5 rounded-2xl shadow space-y-6">
           <h2 className="text-xl font-semibold text-center text-gray-800">
@@ -105,17 +135,17 @@ export default function HomePage() {
             placeholder="Business Name (e.g. Vishal Tiffin)"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-indigo-400"
+            className="w-full"
           />
           <input
             type="tel"
             placeholder="WhatsApp Number (e.g. 91XXXXXXXXXX)"
             value={whatsappNumber}
             onChange={(e) => setWhatsappNumber(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-indigo-400"
+            className="w-full"
           />
 
-          {/* Products Section */}
+          {/* Products */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">🛍️ Products</h3>
             {products.map((product, index) => (
@@ -128,14 +158,14 @@ export default function HomePage() {
                   placeholder="Product Name"
                   value={product.name}
                   onChange={(e) => handleProductChange(index, 'name', e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded-md"
+                  className="w-full"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={product.price}
                   onChange={(e) => handleProductChange(index, 'price', e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded-md"
+                  className="w-full"
                 />
                 <input
                   type="file"
@@ -161,19 +191,17 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* Generate and Copy Link */}
           <button
             onClick={handleGenerateLink}
+            disabled={saving}
             className="bg-indigo-600 text-white w-full py-2 rounded-md font-semibold hover:bg-indigo-700"
           >
-            Generate Link
+            {saving ? 'Saving...' : 'Generate Link'}
           </button>
 
           {generatedLink && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm text-center text-blue-600 break-all">
-                {generatedLink}
-              </p>
+              <p className="text-sm text-center text-blue-600 break-all">{generatedLink}</p>
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyLink}
@@ -194,4 +222,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-}
+    }
