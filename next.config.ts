@@ -1,9 +1,7 @@
-import type { NextConfig } from 'next'
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  swcMinify: true,
+};
 
-const nextConfig: NextConfig = {
-  experimental: {
-    optimizeCss: false, // ⚠️ Disables LightningCSS to fix Termux build error
-  },
-}
-
-export default nextConfig
+module.exports = nextConfig;
