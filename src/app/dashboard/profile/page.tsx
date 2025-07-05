@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useUser } from '@/hooks/useUser';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firestore';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
@@ -15,26 +15,32 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
+  // 🔐 Redirect unauthenticated users
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
+  // 📥 Load existing profile
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
 
-      const ref = doc(db, 'users', user.uid);
-      const snap = await getDoc(ref);
+      try {
+        const ref = doc(db, 'users', user.uid);
+        const snap = await getDoc(ref);
 
-      if (snap.exists()) {
-        const data = snap.data();
-        setBizName(data.businessName || '');
-        setPhone(data.phone || '');
+        if (snap.exists()) {
+          const data = snap.data();
+          setBizName(data.businessName || '');
+          setPhone(data.phone || '');
+        }
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      } finally {
+        setLoadingProfile(false);
       }
-
-      setLoadingProfile(false);
     };
 
     if (user) {
@@ -42,9 +48,10 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  // 💾 Save profile
   const handleSave = async () => {
     if (!bizName.trim() || !phone.trim()) {
-      alert('Please enter both name and phone number');
+      alert('Please enter both business name and WhatsApp number.');
       return;
     }
 
@@ -55,17 +62,19 @@ export default function ProfilePage() {
         businessName: bizName.trim(),
         phone: phone.trim(),
       });
-      alert('Profile saved successfully!');
+      alert('✅ Profile saved successfully!');
     } catch (err) {
-      console.error(err);
-      alert('Failed to save profile');
+      console.error('Error saving profile:', err);
+      alert('❌ Failed to save profile.');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading || loadingProfile) {
-    return <div className="text-center mt-10 text-gray-500">Loading profile...</div>;
+    return (
+      <div className="text-center mt-10 text-gray-500">Loading profile...</div>
+    );
   }
 
   return (
@@ -77,7 +86,7 @@ export default function ProfilePage() {
         placeholder="Business Name"
         value={bizName}
         onChange={(e) => setBizName(e.target.value)}
-        className="w-full"
+        className="w-full border rounded px-3 py-2"
       />
 
       <input
@@ -85,7 +94,7 @@ export default function ProfilePage() {
         placeholder="WhatsApp Number"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
-        className="w-full"
+        className="w-full border rounded px-3 py-2"
       />
 
       <button
@@ -97,4 +106,4 @@ export default function ProfilePage() {
       </button>
     </div>
   );
-          }
+  }
