@@ -2,56 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global Base Styling */
+/* 🌿 Global Base Styling */
 body {
   @apply bg-gradient-to-br from-green-50 to-white text-gray-800 antialiased;
   font-family: 'Inter', sans-serif;
   line-height: 1.6;
+  scroll-behavior: smooth;
 }
 
-/* Inputs, Textareas, Selects */
+/* 🧾 Inputs, Textareas, Selects */
 input,
 textarea,
 select {
   @apply border border-gray-300 px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200;
 }
 
-/* Headings */
+/* 📝 Headings */
 h1, h2, h3, h4 {
   @apply text-gray-800 font-semibold;
 }
 
-/* Buttons */
+/* 🔘 Buttons */
 button {
-  @apply transition-all duration-200 ease-in-out active:scale-[0.98] font-medium;
+  @apply transition-all duration-200 ease-in-out active:scale-[0.98] font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400;
 }
 
-/* Form Section Cards */
+/* 🧩 Form Section Cards */
 .card {
   @apply bg-white p-6 rounded-xl shadow-md space-y-4;
 }
 
-/* Product Image Styling */
+/* 🖼️ Product Image Styling */
 img {
   @apply object-cover rounded-lg shadow-sm;
 }
 
-/* Text Styling */
+/* 🏷️ Labels */
 label {
   @apply block mb-1 text-sm text-gray-600 font-medium;
 }
 
-/* Utility Classes */
+/* 🔗 Utility Links */
 .text-link {
   @apply text-green-600 underline hover:text-green-700 cursor-pointer;
 }
 
-/* Footer Branding */
+/* 📌 Footer Branding */
 .footer {
   @apply text-center text-xs text-gray-400 mt-6 mb-2;
 }
 
-/* Scrollbar Styling (Webkit) */
+/* 🖱️ Scrollbar Styling (for WebKit browsers) */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -62,3 +63,16 @@ label {
 ::-webkit-scrollbar-track {
   background: #f3f4f6; /* gray-100 */
 }
+
+/* 📦 Utility Extras */
+.container {
+  @apply max-w-4xl mx-auto px-4;
+}
+
+.section-title {
+  @apply text-lg font-bold text-gray-700 mb-2;
+}
+
+input[type="file"] {
+  @apply bg-white text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100;
+  }
