@@ -62,7 +62,7 @@ export default function PreviewOrderPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8 flex flex-col">
-      <div className="bg-white p-6 rounded-xl shadow-lg max-w-md mx-auto w-full space-y-5">
+      <div className="bg-white p-6 rounded-xl shadow-lg max-w-md mx-auto w-full space-y-6">
         <h2 className="text-2xl font-bold text-indigo-600 text-center">
           🛒 Order from {businessName}
         </h2>
@@ -73,7 +73,7 @@ export default function PreviewOrderPage() {
           parsedProducts.map((product, index) => (
             <div
               key={index}
-              className="flex gap-4 border border-gray-200 p-3 rounded-lg items-center"
+              className="flex gap-4 border border-gray-200 p-3 rounded-lg items-center bg-gray-50"
             >
               {product.image ? (
                 <img
@@ -97,7 +97,7 @@ export default function PreviewOrderPage() {
                 onChange={(e) =>
                   handleQuantityChange(index, parseInt(e.target.value) || 0)
                 }
-                className="w-16 text-center border rounded px-2 py-1"
+                className="w-16 text-center border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-indigo-400"
               />
             </div>
           ))
@@ -108,13 +108,13 @@ export default function PreviewOrderPage() {
           placeholder="Your Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border border-gray-300 px-4 py-2 rounded-md"
+          className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring focus:ring-indigo-400"
         />
         <textarea
           placeholder="Your Address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          className="w-full border border-gray-300 px-4 py-2 rounded-md"
+          className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring focus:ring-indigo-400"
         />
 
         <div className="text-right font-semibold text-lg text-gray-800">
@@ -124,16 +124,16 @@ export default function PreviewOrderPage() {
         <button
           onClick={handlePlaceOrder}
           disabled={!parsedProducts.length}
-          className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700"
+          className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 transition-all duration-200"
         >
           Place Order on WhatsApp
         </button>
       </div>
 
-      {/* Branding Footer */}
-      <div className="text-center text-xs text-gray-400 mt-6">
-        Made with 💜 using <strong>WhatsOrder</strong> — Free Version
+      {/* Footer */}
+      <div className="text-center text-xs text-gray-400 mt-6 mb-2">
+        Made with 💜 using <strong>WhatsOrder</strong>
       </div>
     </main>
   );
-    }
+                  }
