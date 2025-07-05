@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firestore';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { useUser } from '@/hooks/useUser';
 import { useRouter } from 'next/navigation';
@@ -25,12 +25,14 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
+  // 🔐 Redirect if not logged in
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
+  // 📥 Fetch orders for logged in user
   useEffect(() => {
     const fetchOrders = async () => {
       if (!user) return;
@@ -41,29 +43,27 @@ export default function OrdersPage() {
         const snap = await getDocs(q);
         const orderList: Order[] = [];
 
-        snap.forEach((doc) => {
-          const data = doc.data();
+        snap.forEach((docSnap) => {
+          const data = docSnap.data();
           orderList.push({
-            id: doc.id,
-            customerName: data.customerName,
-            address: data.address,
-            total: data.total,
-            products: data.products,
+            id: docSnap.id,
+            customerName: data.customerName || 'Unnamed',
+            address: data.address || 'N/A',
+            total: data.total || 0,
+            products: data.products || [],
             timestamp: data.timestamp?.toDate?.() || new Date(),
           });
         });
 
         setOrders(orderList);
       } catch (err) {
-        console.error('Failed to fetch orders:', err);
+        console.error('❌ Failed to fetch orders:', err);
       } finally {
         setLoadingOrders(false);
       }
     };
 
-    if (user) {
-      fetchOrders();
-    }
+    if (user) fetchOrders();
   }, [user]);
 
   if (loading || loadingOrders) {
@@ -88,15 +88,17 @@ export default function OrdersPage() {
               <ul className="text-sm text-gray-700 list-disc pl-4">
                 {order.products.map((p, i) => (
                   <li key={i}>
-                    {p.quantity}x {p.name}
+                    {p.quantity}× {p.name}
                   </li>
                 ))}
               </ul>
-              <div className="text-right font-semibold text-green-600">Total: ₹{order.total}</div>
+              <div className="text-right font-semibold text-green-600">
+                Total: ₹{order.total}
+              </div>
             </div>
           ))}
         </div>
       )}
     </div>
   );
-}
+                }
