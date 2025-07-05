@@ -65,19 +65,26 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-6 rounded shadow max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center text-green-600 mb-4">
-          📋 Create Your Order Form
-        </h1>
+    <main className="min-h-screen bg-gray-100">
+      {/* Header */}
+      <header className="bg-green-600 text-white py-4 px-6 shadow-md flex items-center justify-between">
+        <h1 className="text-lg font-bold">📋 WhatsOrder</h1>
+        <div className="text-2xl">☰</div>
+      </header>
 
-        <div className="space-y-4">
+      {/* Content Card */}
+      <div className="p-4 max-w-md mx-auto">
+        <div className="bg-white p-5 rounded-2xl shadow space-y-6">
+          <h2 className="text-xl font-semibold text-center text-gray-700">
+            Create Your Order Form
+          </h2>
+
           <input
             type="text"
             placeholder="Business Name (e.g. Vishal Tiffin)"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            className="w-full border px-4 py-2 rounded"
+            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-green-400"
             required
           />
           <input
@@ -85,34 +92,35 @@ export default function HomePage() {
             placeholder="WhatsApp Number (e.g. 91XXXXXXXXXX)"
             value={whatsappNumber}
             onChange={(e) => setWhatsappNumber(e.target.value)}
-            className="w-full border px-4 py-2 rounded"
+            className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring focus:ring-green-400"
             required
           />
 
-          <div className="space-y-2">
-            <h2 className="font-semibold text-gray-700">🛍️ Products</h2>
+          {/* Product Section */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-600 mb-2">🛍️ Products</h3>
             {products.map((product, index) => (
-              <div key={index} className="flex space-x-2">
+              <div key={index} className="flex space-x-2 mb-2">
                 <input
                   type="text"
                   placeholder="Product Name"
                   value={product.name}
                   onChange={(e) => handleProductChange(index, 'name', e.target.value)}
-                  className="flex-1 border px-2 py-1 rounded"
+                  className="flex-1 border border-gray-300 px-3 py-2 rounded-md"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={product.price}
                   onChange={(e) => handleProductChange(index, 'price', e.target.value)}
-                  className="w-24 border px-2 py-1 rounded"
+                  className="w-24 border border-gray-300 px-3 py-2 rounded-md"
                 />
               </div>
             ))}
             <button
               type="button"
               onClick={addProduct}
-              className="text-green-600 text-sm underline hover:text-green-700"
+              className="text-sm text-green-600 hover:underline mt-2"
             >
               + Add More Product
             </button>
@@ -120,24 +128,26 @@ export default function HomePage() {
 
           <button
             onClick={handleGenerateLink}
-            className="bg-green-600 text-white px-6 py-2 rounded w-full hover:bg-green-700"
+            className="bg-green-600 text-white w-full py-2 rounded-md font-semibold hover:bg-green-700"
           >
             Generate Link
           </button>
 
           {generatedLink && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm break-all text-blue-600 underline">{generatedLink}</p>
+              <p className="text-sm text-center text-blue-600 break-all">
+                {generatedLink}
+              </p>
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyLink}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
                 >
                   Copy
                 </button>
                 <button
                   onClick={handleShare}
-                  className="flex-1 bg-purple-600 text-white py-2 rounded hover:bg-purple-700"
+                  className="flex-1 bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700"
                 >
                   Share
                 </button>
@@ -148,4 +158,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-      }
+}
