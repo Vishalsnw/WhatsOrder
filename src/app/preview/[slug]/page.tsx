@@ -1,22 +1,34 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const sampleProducts = [
-  { name: 'Veg Thali', price: 120 },
-  { name: 'Sweet Dish', price: 50 },
-  { name: 'Chapati Pack (4 pc)', price: 30 },
-];
+interface Product {
+  name: string;
+  price: number;
+}
 
 export default function PreviewOrderPage() {
   const searchParams = useSearchParams();
   const businessName = decodeURIComponent(searchParams.get('biz') || 'Business');
   const phone = searchParams.get('phone') || '919999888877';
+  const productsParam = searchParams.get('products') || '';
 
-  const [quantities, setQuantities] = useState<number[]>(sampleProducts.map(() => 0));
+  const parsedProducts: Product[] = productsParam
+    .split(',')
+    .map((entry) => {
+      const [name, price] = entry.split('-').map(decodeURIComponent);
+      return { name, price: Number(price) };
+    })
+    .filter((p) => p.name && !isNaN(p.price));
+
+  const [quantities, setQuantities] = useState<number[]>([]);
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
+
+  useEffect(() => {
+    setQuantities(parsedProducts.map(() => 0));
+  }, [productsParam]);
 
   const handleQuantityChange = (index: number, value: number) => {
     const newQuantities = [...quantities];
@@ -25,7 +37,7 @@ export default function PreviewOrderPage() {
   };
 
   const handlePlaceOrder = () => {
-    const orderLines = sampleProducts
+    const orderLines = parsedProducts
       .map((p, i) => (quantities[i] > 0 ? `- ${quantities[i]}x ${p.name}` : ''))
       .filter(Boolean)
       .join('\n');
@@ -42,21 +54,30 @@ export default function PreviewOrderPage() {
           🛒 Order from {businessName}
         </h2>
 
-        {sampleProducts.map((product, index) => (
-          <div key={product.name} className="flex justify-between items-center border p-2 rounded">
-            <div>
-              <p className="font-semibold">{product.name}</p>
-              <p className="text-sm text-gray-600">₹{product.price}</p>
+        {parsedProducts.length === 0 ? (
+          <p className="text-center text-red-500">⚠️ No products found in URL</p>
+        ) : (
+          parsedProducts.map((product, index) => (
+            <div
+              key={index}
+              className="flex justify-between items-center border p-2 rounded"
+            >
+              <div>
+                <p className="font-semibold">{product.name}</p>
+                <p className="text-sm text-gray-600">₹{product.price}</p>
+              </div>
+              <input
+                type="number"
+                min={0}
+                value={quantities[index] || 0}
+                onChange={(e) =>
+                  handleQuantityChange(index, parseInt(e.target.value) || 0)
+                }
+                className="w-16 text-center border rounded px-2 py-1"
+              />
             </div>
-            <input
-              type="number"
-              min={0}
-              value={quantities[index]}
-              onChange={(e) => handleQuantityChange(index, parseInt(e.target.value))}
-              className="w-16 text-center border rounded px-2 py-1"
-            />
-          </div>
-        ))}
+          ))
+        )}
 
         <input
           type="text"
@@ -81,4 +102,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-    }
+      }
