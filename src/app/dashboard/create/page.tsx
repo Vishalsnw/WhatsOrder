@@ -13,27 +13,33 @@ export default function CreateFormPage() {
 
   const [bizName, setBizName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [products, setProducts] = useState([{ name: '', price: '', image: '', file: null as File | null }]);
+  const [products, setProducts] = useState([
+    { name: '', price: '', image: '', file: null as File | null },
+  ]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
-    if (user) {
-      setWhatsapp(user.phone);
+    if (user?.phoneNumber) {
+      setWhatsapp(user.phoneNumber);
     }
   }, [user, loading, router]);
 
-  const handleProductChange = (i: number, field: 'name' | 'price', value: string) => {
+  const handleProductChange = (
+    index: number,
+    field: 'name' | 'price',
+    value: string
+  ) => {
     const updated = [...products];
-    updated[i][field] = value;
+    updated[index][field] = value;
     setProducts(updated);
   };
 
-  const handleFileChange = (i: number, file: File | null) => {
+  const handleFileChange = (index: number, file: File | null) => {
     const updated = [...products];
-    updated[i].file = file;
+    updated[index].file = file;
     setProducts(updated);
   };
 
@@ -49,6 +55,7 @@ export default function CreateFormPage() {
 
     try {
       setSaving(true);
+
       const uploadedProducts = await Promise.all(
         products.map(async (p) => {
           let imageUrl = '';
@@ -63,18 +70,23 @@ export default function CreateFormPage() {
         })
       );
 
+      const slug = bizName
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
       const docRef = await addDoc(collection(db, 'forms'), {
-        uid: user?.uid,
+        owner: user?.uid || '',
         businessName: bizName.trim(),
-        phone: whatsapp.trim(),
+        whatsappNumber: whatsapp.trim(),
+        slug,
         products: uploadedProducts,
         createdAt: serverTimestamp(),
       });
 
-      const slug = bizName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       router.push(`/preview/${slug}?id=${docRef.id}`);
     } catch (err) {
-      console.error(err);
+      console.error('🔥 Error creating form:', err);
       alert('Failed to create form.');
     } finally {
       setSaving(false);
@@ -90,14 +102,14 @@ export default function CreateFormPage() {
         placeholder="Business Name"
         value={bizName}
         onChange={(e) => setBizName(e.target.value)}
-        className="w-full"
+        className="w-full border rounded px-3 py-2"
       />
       <input
         type="tel"
         placeholder="WhatsApp Number"
         value={whatsapp}
         onChange={(e) => setWhatsapp(e.target.value)}
-        className="w-full"
+        className="w-full border rounded px-3 py-2"
       />
 
       <div>
@@ -109,14 +121,14 @@ export default function CreateFormPage() {
               placeholder="Product Name"
               value={p.name}
               onChange={(e) => handleProductChange(i, 'name', e.target.value)}
-              className="w-full"
+              className="w-full border rounded px-3 py-2"
             />
             <input
               type="number"
               placeholder="Price"
               value={p.price}
               onChange={(e) => handleProductChange(i, 'price', e.target.value)}
-              className="w-full"
+              className="w-full border rounded px-3 py-2"
             />
             <input
               type="file"
@@ -144,4 +156,4 @@ export default function CreateFormPage() {
       </button>
     </div>
   );
-                            }
+        }
