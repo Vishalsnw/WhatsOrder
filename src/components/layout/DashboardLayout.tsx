@@ -1,16 +1,16 @@
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useState } from 'react';
-import Link from 'next/link';
 
 const navItems = [
   { label: '🏠 Dashboard', href: '/dashboard' },
   { label: '➕ Create Form', href: '/dashboard/create' },
-  { label: '🧾 My Forms', href: '/my-forms' }, // ✅ Fixed path
+  { label: '🧾 My Forms', href: '/my-forms' },
   { label: '📥 Orders', href: '/dashboard/orders' },
   { label: '📊 Analytics', href: '/dashboard/analytics' },
   { label: '👤 Profile', href: '/dashboard/profile' },
@@ -18,8 +18,8 @@ const navItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useUser();
   const router = useRouter();
+  const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -34,7 +34,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar - Desktop */}
       <aside className="w-64 hidden md:block bg-white border-r p-5 shadow-sm space-y-4">
-        <SidebarContent pathname={pathname} user={user} handleLogout={handleLogout} />
+        <SidebarContent
+          pathname={pathname}
+          user={user}
+          handleLogout={handleLogout}
+          onNavigate={() => {}}
+        />
       </aside>
 
       {/* Sidebar - Mobile */}
@@ -47,7 +52,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </button>
 
         {mobileOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={closeDrawer}></div>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-40 z-40"
+            onClick={closeDrawer}
+          />
         )}
 
         <div
@@ -55,7 +63,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <SidebarContent pathname={pathname} user={user} handleLogout={handleLogout} />
+          <SidebarContent
+            pathname={pathname}
+            user={user}
+            handleLogout={handleLogout}
+            onNavigate={closeDrawer}
+          />
         </div>
       </div>
 
@@ -69,10 +82,12 @@ function SidebarContent({
   pathname,
   user,
   handleLogout,
+  onNavigate,
 }: {
   pathname: string;
   user: any;
   handleLogout: () => void;
+  onNavigate: () => void;
 }) {
   return (
     <div className="space-y-6 h-full flex flex-col justify-between">
@@ -90,6 +105,7 @@ function SidebarContent({
               }`}
               onClick={() => {
                 if (typeof window !== 'undefined') window.scrollTo(0, 0);
+                onNavigate(); // 👈 Auto-close drawer on mobile
               }}
             >
               {item.label}
@@ -99,8 +115,10 @@ function SidebarContent({
       </div>
 
       <div className="border-t pt-4">
-        <p className="text-xs text-gray-500 mb-2">Logged in as</p>
-        <p className="text-sm font-semibold">{user?.phoneNumber || 'Guest'}</p>
+        <p className="text-xs text-gray-500 mb-1">Logged in as</p>
+        <p className="text-sm font-semibold truncate">
+          {user?.displayName || user?.phoneNumber || 'WhatsOrder'}
+        </p>
         <button
           onClick={handleLogout}
           className="mt-2 text-sm text-red-600 hover:underline"
