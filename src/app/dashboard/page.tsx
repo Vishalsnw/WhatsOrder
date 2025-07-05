@@ -6,13 +6,13 @@ import { useUser } from '@/hooks/useUser';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firestore';
+import { db } from '@/lib/firebase'; // ✅ Correct import
 
 interface Form {
   id: string;
-  title: string;
+  businessName: string;
   slug: string;
-  createdAt: string;
+  createdAt?: { toDate: () => Date };
 }
 
 export default function DashboardPage() {
@@ -30,28 +30,24 @@ export default function DashboardPage() {
 
   // 📥 Fetch forms
   useEffect(() => {
-    if (user) {
-      const fetchForms = async () => {
-        try {
-          const q = query(
-            collection(db, 'forms'),
-            where('owner', '==', user.uid)
-          );
-          const snapshot = await getDocs(q);
-          const userForms = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...(doc.data() as any),
-          }));
-          setForms(userForms);
-        } catch (error) {
-          console.error('Failed to fetch forms:', error);
-        } finally {
-          setLoadingForms(false);
-        }
-      };
+    const fetchForms = async () => {
+      if (!user) return;
+      try {
+        const q = query(collection(db, 'forms'), where('owner', '==', user.uid));
+        const snapshot = await getDocs(q);
+        const userForms = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Form),
+        }));
+        setForms(userForms);
+      } catch (error) {
+        console.error('❌ Failed to fetch forms:', error);
+      } finally {
+        setLoadingForms(false);
+      }
+    };
 
-      fetchForms();
-    }
+    fetchForms();
   }, [user]);
 
   const handleLogout = async () => {
@@ -101,7 +97,7 @@ export default function DashboardPage() {
                   className="p-4 border border-gray-200 rounded-lg flex items-center justify-between"
                 >
                   <div>
-                    <h3 className="font-semibold text-gray-800">{form.title}</h3>
+                    <h3 className="font-semibold text-gray-800">{form.businessName}</h3>
                     <a
                       href={`/preview/${form.slug}`}
                       className="text-sm text-green-600 underline"
@@ -112,7 +108,10 @@ export default function DashboardPage() {
                     </a>
                   </div>
                   <span className="text-xs text-gray-400">
-                    Created: {new Date(form.createdAt).toLocaleDateString()}
+                    Created:{' '}
+                    {form.createdAt?.toDate
+                      ? form.createdAt.toDate().toLocaleDateString()
+                      : 'N/A'}
                   </span>
                 </li>
               ))}
@@ -122,4 +121,4 @@ export default function DashboardPage() {
       </div>
     </main>
   );
-          }
+                  }
