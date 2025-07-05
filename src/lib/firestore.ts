@@ -92,3 +92,6 @@ export const deleteOrderForm = async (
   const ref = doc(db, 'users', uid, 'forms', formId);
   await deleteDoc(ref);
 };
+
+// ✅ Export db for external usage (needed by pages like `page.tsx`)
+export { db };
