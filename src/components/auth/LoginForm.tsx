@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
+import { db } from '@/lib/firestore';
 import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   ConfirmationResult,
   onAuthStateChanged,
 } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -20,18 +22,19 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
 
-  // 🔍 Check if user already logged in
+  // ✅ Check for existing user login
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setLoggedInUser(user.phoneNumber || null);
-        router.push('/'); // ✅ Redirect to homepage
+        router.push('/dashboard'); // ✅ Redirect to dashboard
       }
     });
 
     return () => unsubscribe();
   }, [router]);
 
+  // ✅ Send OTP
   const sendOTP = async () => {
     if (!phone || phone.length < 10) {
       alert('Please enter a valid phone number');
@@ -40,13 +43,16 @@ export default function LoginForm() {
 
     try {
       setLoading(true);
-      const recaptcha = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => {},
-      });
+
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+          callback: () => {},
+        });
+      }
 
       const fullPhone = phone.startsWith('+') ? phone : `+${phone}`;
-      const confirmation = await signInWithPhoneNumber(auth, fullPhone, recaptcha);
+      const confirmation = await signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier);
       setConfirmationResult(confirmation);
       setStep('verify-otp');
     } catch (err) {
@@ -57,6 +63,7 @@ export default function LoginForm() {
     }
   };
 
+  // ✅ Verify OTP and save user
   const verifyOTP = async () => {
     if (!otp || !confirmationResult) return;
 
@@ -64,8 +71,15 @@ export default function LoginForm() {
       setLoading(true);
       const result = await confirmationResult.confirm(otp);
       const user = result.user;
-      alert(`Welcome! Logged in as ${user.phoneNumber}`);
-      router.push('/'); // ✅ Redirect to homepage
+
+      // ✅ Save to Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        phone: user.phoneNumber,
+        createdAt: serverTimestamp(),
+      });
+
+      alert(`✅ Logged in as ${user.phoneNumber}`);
+      router.push('/dashboard');
     } catch (err) {
       console.error('OTP Verification Failed:', err);
       alert('Invalid OTP. Please try again.');
@@ -120,8 +134,8 @@ export default function LoginForm() {
         </>
       )}
 
-      {/* 🔒 Hidden ReCAPTCHA */}
+      {/* 🔐 Hidden Recaptcha */}
       <div id="recaptcha-container"></div>
     </div>
   );
-  }
+          }
