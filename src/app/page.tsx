@@ -2,20 +2,29 @@
 
 import { useState } from 'react';
 
+function generateHashLink(url: string) {
+  const hash = btoa(url).slice(0, 8); // simple hash using base64
+  return `${window.location.origin}/#${hash}`;
+}
+
 export default function HomePage() {
   const [businessName, setBusinessName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
-  const [products, setProducts] = useState([{ name: '', price: '' }]);
+  const [products, setProducts] = useState([{ name: '', price: '', image: '' }]);
   const [generatedLink, setGeneratedLink] = useState('');
 
-  const handleProductChange = (index: number, field: 'name' | 'price', value: string) => {
+  const handleProductChange = (
+    index: number,
+    field: 'name' | 'price' | 'image',
+    value: string
+  ) => {
     const updated = [...products];
     updated[index][field] = value;
     setProducts(updated);
   };
 
   const addProduct = () => {
-    setProducts([...products, { name: '', price: '' }]);
+    setProducts([...products, { name: '', price: '', image: '' }]);
   };
 
   const handleGenerateLink = () => {
@@ -23,7 +32,11 @@ export default function HomePage() {
 
     const validProducts = products
       .filter(p => p.name.trim() && p.price.trim())
-      .map(p => `${encodeURIComponent(p.name.trim())}-${p.price.trim()}`)
+      .map(p =>
+        `${encodeURIComponent(p.name.trim())}-${p.price.trim()}${
+          p.image ? `-${encodeURIComponent(p.image.trim())}` : ''
+        }`
+      )
       .join(',');
 
     const slug = businessName
@@ -37,8 +50,10 @@ export default function HomePage() {
       products: validProducts,
     }).toString();
 
-    const fullLink = `${window.location.origin}/preview/${slug}?${query}`;
-    setGeneratedLink(fullLink);
+    const fullURL = `${window.location.origin}/preview/${slug}?${query}`;
+    const shortURL = generateHashLink(fullURL);
+
+    setGeneratedLink(shortURL);
   };
 
   const handleCopyLink = () => {
@@ -72,7 +87,7 @@ export default function HomePage() {
         <div className="text-2xl">☰</div>
       </header>
 
-      {/* Content Card */}
+      {/* Content */}
       <div className="p-4 max-w-md mx-auto">
         <div className="bg-white p-5 rounded-2xl shadow space-y-6">
           <h2 className="text-xl font-semibold text-center text-gray-700">
@@ -96,24 +111,30 @@ export default function HomePage() {
             required
           />
 
-          {/* Product Section */}
           <div>
             <h3 className="text-sm font-medium text-gray-600 mb-2">🛍️ Products</h3>
             {products.map((product, index) => (
-              <div key={index} className="flex space-x-2 mb-2">
+              <div key={index} className="space-y-2 mb-3">
                 <input
                   type="text"
                   placeholder="Product Name"
                   value={product.name}
                   onChange={(e) => handleProductChange(index, 'name', e.target.value)}
-                  className="flex-1 border border-gray-300 px-3 py-2 rounded-md"
+                  className="w-full border border-gray-300 px-3 py-2 rounded-md"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={product.price}
                   onChange={(e) => handleProductChange(index, 'price', e.target.value)}
-                  className="w-24 border border-gray-300 px-3 py-2 rounded-md"
+                  className="w-full border border-gray-300 px-3 py-2 rounded-md"
+                />
+                <input
+                  type="text"
+                  placeholder="Image URL (optional)"
+                  value={product.image}
+                  onChange={(e) => handleProductChange(index, 'image', e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-2 rounded-md"
                 />
               </div>
             ))}
@@ -135,9 +156,7 @@ export default function HomePage() {
 
           {generatedLink && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm text-center text-blue-600 break-all">
-                {generatedLink}
-              </p>
+              <p className="text-sm text-center text-blue-600 break-all">{generatedLink}</p>
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyLink}
@@ -158,4 +177,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-}
+               }
