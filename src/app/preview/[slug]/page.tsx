@@ -62,7 +62,7 @@ export default function PreviewOrderPage() {
 
   return (
     <main className="min-h-screen bg-gray-100 px-4 py-8 flex flex-col">
-      <div className="bg-white p-6 rounded shadow-md max-w-md mx-auto w-full space-y-4">
+      <div className="bg-white p-6 rounded-xl shadow max-w-md mx-auto w-full space-y-5">
         <h2 className="text-2xl font-bold text-green-600 text-center">
           🛒 Order from {businessName}
         </h2>
@@ -73,16 +73,16 @@ export default function PreviewOrderPage() {
           parsedProducts.map((product, index) => (
             <div
               key={index}
-              className="flex gap-4 border p-3 rounded items-center"
+              className="flex gap-4 border border-gray-200 p-3 rounded-lg items-center"
             >
               {product.image ? (
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-16 h-16 object-cover rounded"
+                  className="w-16 h-16 object-cover rounded-lg border"
                 />
               ) : (
-                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">
+                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs border">
                   No Image
                 </div>
               )}
@@ -108,23 +108,23 @@ export default function PreviewOrderPage() {
           placeholder="Your Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full border px-4 py-2 rounded"
+          className="w-full border border-gray-300 px-4 py-2 rounded-md"
         />
         <textarea
           placeholder="Your Address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          className="w-full border px-4 py-2 rounded"
+          className="w-full border border-gray-300 px-4 py-2 rounded-md"
         />
 
-        <div className="text-right font-semibold text-lg text-gray-700">
+        <div className="text-right font-semibold text-lg text-gray-800">
           Total: ₹{total}
         </div>
 
         <button
           onClick={handlePlaceOrder}
           disabled={!parsedProducts.length}
-          className="w-full bg-green-600 text-white font-semibold py-2 rounded hover:bg-green-700"
+          className="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700"
         >
           Place Order on WhatsApp
         </button>
@@ -136,4 +136,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-        }
+    }
