@@ -1,12 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useUser } from '@/hooks/useUser';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 
 const navItems = [
   { label: '🏠 Dashboard', href: '/dashboard' },
@@ -19,22 +19,26 @@ const navItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useUser();
   const router = useRouter();
+  const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
-  };
 
   const toggleDrawer = () => setMobileOpen(!mobileOpen);
   const closeDrawer = () => setMobileOpen(false);
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar - Desktop */}
-      <aside className="w-64 hidden md:block bg-white border-r p-5 shadow-sm space-y-4">
+      <aside className="w-64 hidden md:block bg-white border-r p-5 shadow-sm">
         <SidebarContent pathname={pathname} user={user} handleLogout={handleLogout} />
       </aside>
 
@@ -42,26 +46,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="md:hidden">
         <button
           onClick={toggleDrawer}
-          className="m-4 text-indigo-600 focus:outline-none fixed top-2 left-2 z-50"
+          className="fixed top-3 left-3 z-50 bg-white border rounded-md p-2 shadow"
         >
           ☰
         </button>
 
+        {/* Overlay */}
         {mobileOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={closeDrawer}></div>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-40 z-40"
+            onClick={closeDrawer}
+          />
         )}
 
+        {/* Drawer */}
         <div
           className={`fixed top-0 left-0 z-50 w-64 h-full bg-white shadow-lg transform transition-transform duration-300 ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <SidebarContent pathname={pathname} user={user} handleLogout={handleLogout} />
+          <SidebarContent
+            pathname={pathname}
+            user={user}
+            handleLogout={handleLogout}
+          />
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 p-5 w-full">{children}</main>
+      <main className="flex-1 p-4">{children}</main>
     </div>
   );
 }
@@ -76,7 +89,7 @@ function SidebarContent({
   handleLogout: () => void;
 }) {
   return (
-    <div className="space-y-6 h-full flex flex-col justify-between">
+    <div className="h-full flex flex-col justify-between space-y-6">
       <div>
         <h2 className="text-xl font-bold text-indigo-700 mb-4">📋 WhatsOrder</h2>
         <nav className="space-y-2">
@@ -89,6 +102,9 @@ function SidebarContent({
                   ? 'bg-indigo-100 text-indigo-700'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
+              onClick={() => {
+                if (typeof window !== 'undefined') window.scrollTo(0, 0);
+              }}
             >
               {item.label}
             </Link>
@@ -97,15 +113,17 @@ function SidebarContent({
       </div>
 
       <div className="border-t pt-4">
-        <p className="text-xs text-gray-500 mb-2">Logged in as</p>
-        <p className="text-sm font-semibold">{user?.phoneNumber || 'Guest'}</p>
+        <p className="text-xs text-gray-500 mb-1">Logged in as</p>
+        <p className="text-sm font-semibold mb-2">
+          {user?.phoneNumber || 'Guest'}
+        </p>
         <button
           onClick={handleLogout}
-          className="mt-2 text-sm text-red-600 hover:underline"
+          className="text-sm text-red-600 hover:underline"
         >
           🚪 Logout
         </button>
       </div>
     </div>
   );
-}
+      }
