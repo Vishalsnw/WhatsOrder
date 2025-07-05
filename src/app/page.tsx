@@ -2,16 +2,12 @@
 
 import { useState } from 'react';
 
-function generateHashLink(url: string) {
-  const hash = btoa(url).slice(0, 8); // simple hash using base64
-  return `${window.location.origin}/#${hash}`;
-}
-
 export default function HomePage() {
   const [businessName, setBusinessName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [products, setProducts] = useState([{ name: '', price: '', image: '' }]);
   const [generatedLink, setGeneratedLink] = useState('');
+  const [copied, setCopied] = useState(false); // ✅ Toast feedback
 
   const handleProductChange = (
     index: number,
@@ -57,19 +53,19 @@ export default function HomePage() {
 
     const query = new URLSearchParams({
       phone: whatsappNumber.trim(),
-      biz: encodeURIComponent(businessName.trim()),
+      biz: businessName.trim(),
       products: validProducts,
     }).toString();
 
     const fullURL = `${window.location.origin}/preview/${slug}?${query}`;
-    const shortURL = generateHashLink(fullURL);
-    setGeneratedLink(shortURL);
+    setGeneratedLink(fullURL); // ✅ No fake short link
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     if (generatedLink) {
-      navigator.clipboard.writeText(generatedLink);
-      alert('Link copied to clipboard!');
+      await navigator.clipboard.writeText(generatedLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -82,7 +78,7 @@ export default function HomePage() {
           url: generatedLink,
         });
       } catch (err) {
-        alert('Sharing cancelled or failed.');
+        console.error('Share cancelled or failed.');
       }
     } else {
       alert('Sharing not supported on this device.');
@@ -123,7 +119,10 @@ export default function HomePage() {
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">🛍️ Products</h3>
             {products.map((product, index) => (
-              <div key={index} className="space-y-2 mb-3 border border-gray-200 rounded-lg p-3">
+              <div
+                key={index}
+                className="space-y-2 mb-3 border border-gray-200 rounded-lg p-3"
+              >
                 <input
                   type="text"
                   placeholder="Product Name"
@@ -179,7 +178,7 @@ export default function HomePage() {
                   onClick={handleCopyLink}
                   className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
                 >
-                  Copy
+                  {copied ? 'Copied!' : 'Copy'}
                 </button>
                 <button
                   onClick={handleShare}
@@ -194,4 +193,4 @@ export default function HomePage() {
       </div>
     </main>
   );
-      }
+}
