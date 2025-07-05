@@ -38,7 +38,9 @@ export default function PreviewOrderPage() {
   return (
     <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
       <div className="bg-white p-6 rounded shadow-md max-w-md w-full space-y-4">
-        <h2 className="text-2xl font-bold text-green-600 text-center">🛒 Order from {businessName}</h2>
+        <h2 className="text-2xl font-bold text-green-600 text-center">
+          🛒 Order from {businessName}
+        </h2>
 
         {sampleProducts.map((product, index) => (
           <div key={product.name} className="flex justify-between items-center border p-2 rounded">
@@ -79,4 +81,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-                }
+    }
