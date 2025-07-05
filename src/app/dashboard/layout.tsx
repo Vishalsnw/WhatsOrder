@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -11,7 +10,7 @@ import { signOut } from 'firebase/auth';
 const navItems = [
   { label: '🏠 Dashboard', href: '/dashboard' },
   { label: '➕ Create Form', href: '/dashboard/create' },
-  { label: '🧾 My Forms', href: '/dashboard/forms' },
+  { label: '🧾 My Forms', href: '/my-forms' }, // ✅ Fixed path
   { label: '📥 Orders', href: '/dashboard/orders' },
   { label: '📊 Analytics', href: '/dashboard/analytics' },
   { label: '👤 Profile', href: '/dashboard/profile' },
@@ -126,4 +125,4 @@ function SidebarContent({
       </div>
     </div>
   );
-      }
+        }
