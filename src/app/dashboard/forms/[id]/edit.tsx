@@ -6,9 +6,11 @@ import { useUser } from '@/hooks/useUser';
 import { db } from '@/lib/firestore';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { uploadImage } from '@/lib/storage';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 export default function EditFormPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = typeof params.id === 'string' ? params.id : params.id?.[0];
   const router = useRouter();
   const { user, loading } = useUser();
 
@@ -28,8 +30,10 @@ export default function EditFormPage() {
 
   useEffect(() => {
     const loadData = async () => {
+      if (!id) return;
+
       try {
-        const ref = doc(db, 'forms', id as string);
+        const ref = doc(db, 'forms', id);
         const snap = await getDoc(ref);
 
         if (snap.exists()) {
@@ -37,7 +41,7 @@ export default function EditFormPage() {
           setBizName(data.businessName || '');
           setWhatsapp(data.whatsappNumber || '');
           setProducts(
-            data.products.map((p: any) => ({
+            (data.products || []).map((p: any) => ({
               name: p.name,
               price: p.price,
               image: p.image,
@@ -57,18 +61,18 @@ export default function EditFormPage() {
       }
     };
 
-    if (id) loadData();
+    loadData();
   }, [id, router]);
 
-  const handleChange = (i: number, field: 'name' | 'price', value: string) => {
+  const handleChange = (index: number, field: 'name' | 'price', value: string) => {
     const updated = [...products];
-    updated[i][field] = value;
+    updated[index][field] = value;
     setProducts(updated);
   };
 
-  const handleFileChange = (i: number, file: File | null) => {
+  const handleFileChange = (index: number, file: File | null) => {
     const updated = [...products];
-    updated[i].file = file;
+    updated[index].file = file;
     setProducts(updated);
   };
 
@@ -82,20 +86,21 @@ export default function EditFormPage() {
       setSaving(true);
 
       const updatedProducts = await Promise.all(
-        products.map(async (p) => {
-          let imageUrl = p.image;
-          if (p.file) {
-            imageUrl = await uploadImage(p.file);
+        products.map(async (product) => {
+          let imageUrl = product.image;
+          if (product.file) {
+            imageUrl = await uploadImage(product.file);
           }
+
           return {
-            name: p.name.trim(),
-            price: Number(p.price),
+            name: product.name.trim(),
+            price: Number(product.price),
             image: imageUrl,
           };
         })
       );
 
-      await updateDoc(doc(db, 'forms', id as string), {
+      await updateDoc(doc(db, 'forms', id!), {
         businessName: bizName.trim(),
         whatsappNumber: whatsapp.trim(),
         products: updatedProducts,
@@ -115,72 +120,79 @@ export default function EditFormPage() {
     }
   };
 
-  if (loadingData) {
-    return <div className="text-center mt-10 text-gray-500">Loading...</div>;
-  }
-
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold text-indigo-600 text-center">✏️ Edit Form</h1>
+    <DashboardLayout>
+      {loadingData ? (
+        <div className="text-center mt-10 text-gray-500">⏳ Loading form...</div>
+      ) : (
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+          <h1 className="text-2xl font-bold text-indigo-600 text-center">✏️ Edit Form</h1>
 
-      <input
-        type="text"
-        placeholder="Business Name"
-        value={bizName}
-        onChange={(e) => setBizName(e.target.value)}
-        className="w-full border rounded px-3 py-2"
-      />
+          <input
+            type="text"
+            placeholder="Business Name"
+            value={bizName}
+            onChange={(e) => setBizName(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
 
-      <input
-        type="tel"
-        placeholder="WhatsApp Number"
-        value={whatsapp}
-        onChange={(e) => setWhatsapp(e.target.value)}
-        className="w-full border rounded px-3 py-2"
-      />
+          <input
+            type="tel"
+            placeholder="WhatsApp Number"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
 
-      <div>
-        <h3 className="text-gray-700 font-semibold mb-2">🛍️ Products</h3>
-        {products.map((p, i) => (
-          <div key={i} className="space-y-2 mb-4 border p-3 rounded-lg">
-            <input
-              type="text"
-              placeholder="Product Name"
-              value={p.name}
-              onChange={(e) => handleChange(i, 'name', e.target.value)}
-              className="w-full border rounded px-3 py-2"
-            />
-            <input
-              type="number"
-              placeholder="Price"
-              value={p.price}
-              onChange={(e) => handleChange(i, 'price', e.target.value)}
-              className="w-full border rounded px-3 py-2"
-            />
-            {p.image && (
-              <img
-                src={p.image}
-                alt="Product"
-                className="w-full h-32 object-cover rounded-md border"
-              />
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileChange(i, e.target.files?.[0] || null)}
-              className="w-full"
-            />
+          <div>
+            <h3 className="text-gray-700 font-semibold mb-2">🛍️ Products</h3>
+            {products.map((product, index) => (
+              <div key={index} className="space-y-2 mb-4 border p-3 rounded-lg">
+                <input
+                  type="text"
+                  placeholder="Product Name"
+                  value={product.name}
+                  onChange={(e) => handleChange(index, 'name', e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                />
+
+                <input
+                  type="number"
+                  placeholder="Price"
+                  value={product.price}
+                  onChange={(e) => handleChange(index, 'price', e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                />
+
+                {product.image && (
+                  <img
+                    src={product.image}
+                    alt="Product"
+                    className="w-full h-32 object-cover rounded-md border"
+                  />
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    handleFileChange(index, e.target.files?.[0] || null)
+                  }
+                  className="w-full"
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <button
-        onClick={handleUpdate}
-        disabled={saving}
-        className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-      >
-        {saving ? 'Saving...' : 'Update Form'}
-      </button>
-    </div>
+          <button
+            onClick={handleUpdate}
+            disabled={saving}
+            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+          >
+            {saving ? 'Saving...' : 'Update Form'}
+          </button>
+        </div>
+      )}
+    </DashboardLayout>
   );
-              }
+                        }
