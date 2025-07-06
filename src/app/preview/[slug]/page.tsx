@@ -9,10 +9,10 @@ interface Product {
   image?: string;
 }
 
+// ✅ Type guard to validate Product shape
 function isValidProduct(p: any): p is Product {
   return (
     p &&
-    typeof p === 'object' &&
     typeof p.name === 'string' &&
     typeof p.price === 'number' &&
     (typeof p.image === 'string' || typeof p.image === 'undefined')
@@ -26,7 +26,7 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts = useMemo(() => {
+  const parsedProducts = useMemo<Product[]>(() => {
     if (!productsParam) return [];
 
     const raw = productsParam.split(',').map((entry) => {
@@ -34,14 +34,13 @@ export default function PreviewOrderPage() {
         const [name, priceStr, image] = entry.split('-').map(decodeURIComponent);
         const price = Number(priceStr?.trim());
         if (!name || isNaN(price)) return null;
-        const product = { name: name.trim(), price, image: image?.trim() };
-        return isValidProduct(product) ? product : null;
+        return { name: name.trim(), price, image: image?.trim() };
       } catch {
         return null;
       }
     });
 
-    return raw.filter((item): item is Product => item !== null);
+    return raw.filter(isValidProduct);
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -53,13 +52,13 @@ export default function PreviewOrderPage() {
   }, [parsedProducts]);
 
   const handleQuantityChange = (index: number, value: number) => {
-    const updated = [...quantities];
-    updated[index] = value;
-    setQuantities(updated);
+    const newQuantities = [...quantities];
+    newQuantities[index] = value;
+    setQuantities(newQuantities);
   };
 
   const total = parsedProducts.reduce(
-    (sum, p, i) => sum + (quantities[i] || 0) * p.price,
+    (sum, product, i) => sum + (quantities[i] || 0) * product.price,
     0
   );
 
@@ -154,4 +153,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-              }
+      }
