@@ -10,13 +10,15 @@ interface Product {
 }
 
 // ✅ Correct custom type guard
-function isValidProduct(p: any): p is Product {
+function isValidProduct(p: unknown): p is Product {
   return (
     typeof p === 'object' &&
     p !== null &&
-    typeof p.name === 'string' &&
-    typeof p.price === 'number' &&
-    (typeof p.image === 'string' || typeof p.image === 'undefined')
+    'name' in p &&
+    'price' in p &&
+    typeof (p as Product).name === 'string' &&
+    typeof (p as Product).price === 'number' &&
+    (!('image' in p) || typeof (p as Product).image === 'string')
   );
 }
 
@@ -27,10 +29,10 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts = useMemo((): Product[] => {
+  const parsedProducts = useMemo(() => {
     if (!productsParam) return [];
 
-    const products = productsParam
+    const productArray = productsParam
       .split(',')
       .map((entry) => {
         try {
@@ -45,7 +47,7 @@ export default function PreviewOrderPage() {
       })
       .filter(isValidProduct); // ✅ Type guard filters out nulls
 
-    return products;
+    return productArray;
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -158,4 +160,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-}
+    }
