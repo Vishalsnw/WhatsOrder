@@ -16,7 +16,7 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts: Product[] = useMemo(() => {
+  const parsedProducts = useMemo<Product[]>(() => {
     if (!productsParam) return [];
 
     return productsParam
@@ -145,4 +145,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-      }
+          }
