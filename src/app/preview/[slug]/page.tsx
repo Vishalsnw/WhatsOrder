@@ -26,7 +26,7 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts = useMemo<Product[]>(() => {
+  const parsedProducts = useMemo(() => {
     if (!productsParam) return [];
 
     const rawProducts = productsParam.split(',').map((entry) => {
@@ -42,7 +42,7 @@ export default function PreviewOrderPage() {
     });
 
     const filtered = rawProducts.filter((p): p is Product => isValidProduct(p));
-    return filtered;
+    return filtered as Product[];
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
