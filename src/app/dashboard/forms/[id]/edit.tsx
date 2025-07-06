@@ -8,6 +8,13 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { uploadImage } from '@/lib/storage';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
+interface Product {
+  name: string;
+  price: number | string;
+  image: string;
+  file?: File | null;
+}
+
 export default function EditFormPage() {
   const params = useParams();
   const id = typeof params.id === 'string' ? params.id : params.id?.[0];
@@ -16,9 +23,7 @@ export default function EditFormPage() {
 
   const [bizName, setBizName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [products, setProducts] = useState<
-    { name: string; price: number | string; image: string; file?: File | null }[]
-  >([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -64,7 +69,11 @@ export default function EditFormPage() {
     loadData();
   }, [id, router]);
 
-  const handleChange = (index: number, field: 'name' | 'price', value: string) => {
+  const handleChange = (
+    index: number,
+    field: 'name' | 'price',
+    value: string
+  ) => {
     const updated = [...products];
     updated[index][field] = value;
     setProducts(updated);
@@ -195,4 +204,4 @@ export default function EditFormPage() {
       )}
     </DashboardLayout>
   );
-                        }
+      }
