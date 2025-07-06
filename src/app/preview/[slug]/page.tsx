@@ -9,14 +9,13 @@ interface Product {
   image?: string;
 }
 
-// ✅ Safe and accurate type guard
 function isValidProduct(p: any): p is Product {
   return (
     p &&
     typeof p === 'object' &&
     typeof p.name === 'string' &&
     typeof p.price === 'number' &&
-    ('image' in p ? typeof p.image === 'string' : true)
+    (typeof p.image === 'string' || typeof p.image === 'undefined')
   );
 }
 
@@ -27,20 +26,22 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts: Product[] = useMemo(() => {
+  const parsedProducts = useMemo(() => {
     if (!productsParam) return [];
 
-    return productsParam.split(',').map((entry) => {
+    const raw = productsParam.split(',').map((entry) => {
       try {
-        const parts = entry.split('-').map(decodeURIComponent);
-        const [name, priceStr, image] = parts;
+        const [name, priceStr, image] = entry.split('-').map(decodeURIComponent);
         const price = Number(priceStr?.trim());
+        if (!name || isNaN(price)) return null;
         const product = { name: name.trim(), price, image: image?.trim() };
         return isValidProduct(product) ? product : null;
       } catch {
         return null;
       }
-    }).filter((p): p is Product => p !== null);
+    });
+
+    return raw.filter((item): item is Product => item !== null);
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -52,13 +53,13 @@ export default function PreviewOrderPage() {
   }, [parsedProducts]);
 
   const handleQuantityChange = (index: number, value: number) => {
-    const newQuantities = [...quantities];
-    newQuantities[index] = value;
-    setQuantities(newQuantities);
+    const updated = [...quantities];
+    updated[index] = value;
+    setQuantities(updated);
   };
 
   const total = parsedProducts.reduce(
-    (sum, product, i) => sum + (quantities[i] || 0) * product.price,
+    (sum, p, i) => sum + (quantities[i] || 0) * p.price,
     0
   );
 
@@ -153,4 +154,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-                                            }
+              }
