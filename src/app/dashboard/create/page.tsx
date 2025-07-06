@@ -59,17 +59,20 @@ export default function CreateFormPage() {
   };
 
   const handleCreateForm = async () => {
-    if (!bizName.trim() || !whatsapp.trim()) {
+    const trimmedBiz = bizName.trim();
+    const trimmedPhone = whatsapp.trim();
+
+    if (!trimmedBiz || !trimmedPhone) {
       alert('Please fill business name and WhatsApp number.');
       return;
     }
 
     const validProducts = products.filter(
-      (p) => p.name.trim() && p.price.trim()
+      (p) => p.name.trim() && p.price.trim() && !isNaN(Number(p.price))
     );
 
     if (validProducts.length === 0) {
-      alert('Please add at least one product with name and price.');
+      alert('Please add at least one product with valid name and price.');
       return;
     }
 
@@ -90,15 +93,15 @@ export default function CreateFormPage() {
         })
       );
 
-      const slug = bizName
+      const slug = trimmedBiz
         .toLowerCase()
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9-]/g, '');
 
       const docRef = await addDoc(collection(db, 'forms'), {
         owner: user?.uid || '',
-        businessName: bizName.trim(),
-        whatsappNumber: whatsapp.trim(),
+        businessName: trimmedBiz,
+        whatsappNumber: trimmedPhone,
         slug,
         products: uploadedProducts,
         createdAt: serverTimestamp(),
@@ -115,7 +118,9 @@ export default function CreateFormPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold text-indigo-600 text-center">📋 Create Order Form</h1>
+      <h1 className="text-2xl font-bold text-indigo-600 text-center">
+        📋 Create Order Form
+      </h1>
 
       <input
         type="text"
@@ -130,19 +135,17 @@ export default function CreateFormPage() {
         placeholder="e.g. +91XXXXXXXXXX"
         value={whatsapp}
         onChange={(e) => {
-          const value = e.target.value;
-          const formatted = value.startsWith('+91')
-            ? value
-            : `+91${value.replace(/^\+?91/, '')}`;
-          setWhatsapp(formatted);
+          const value = e.target.value.replace(/^\+?91/, '');
+          setWhatsapp('+91' + value.slice(0, 10));
         }}
         className="w-full border rounded px-3 py-2"
+        maxLength={13}
       />
 
       <div>
         <h3 className="text-gray-700 font-semibold mb-2">🛍️ Products</h3>
         {products.map((p, i) => (
-          <div key={i} className="space-y-2 mb-4 border p-3 rounded-lg">
+          <div key={i} className="space-y-2 mb-4 border p-3 rounded-lg bg-gray-50">
             <input
               type="text"
               placeholder="Product Name"
@@ -153,6 +156,7 @@ export default function CreateFormPage() {
             <input
               type="number"
               placeholder="Price"
+              min="1"
               value={p.price}
               onChange={(e) => handleProductChange(i, 'price', e.target.value)}
               className="w-full border rounded px-3 py-2"
@@ -164,9 +168,9 @@ export default function CreateFormPage() {
               className="w-full"
             />
             {p.file && (
-              <p className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500">
                 Selected file: {p.file.name}
-              </p>
+              </div>
             )}
           </div>
         ))}
@@ -188,4 +192,4 @@ export default function CreateFormPage() {
       </button>
     </div>
   );
-        }
+  }
