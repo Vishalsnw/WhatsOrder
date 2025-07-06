@@ -9,7 +9,6 @@ interface Product {
   image?: string;
 }
 
-// ✅ Type guard to validate Product shape
 function isValidProduct(p: any): p is Product {
   return (
     p &&
@@ -26,7 +25,7 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts = useMemo<Product[]>(() => {
+  const parsedProducts: Product[] = useMemo(() => {
     if (!productsParam) return [];
 
     const raw = productsParam.split(',').map((entry) => {
@@ -40,7 +39,7 @@ export default function PreviewOrderPage() {
       }
     });
 
-    return raw.filter(isValidProduct);
+    return raw.filter((item): item is Product => isValidProduct(item));
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -153,4 +152,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-      }
+                      }
