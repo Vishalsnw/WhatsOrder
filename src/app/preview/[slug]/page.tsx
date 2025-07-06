@@ -9,13 +9,13 @@ interface Product {
   image?: string;
 }
 
-// ✅ Custom type guard
 function isValidProduct(obj: any): obj is Product {
   return (
-    obj &&
+    typeof obj === 'object' &&
+    obj !== null &&
     typeof obj.name === 'string' &&
     typeof obj.price === 'number' &&
-    (typeof obj.image === 'string' || typeof obj.image === 'undefined')
+    (typeof obj.image === 'string' || obj.image === undefined)
   );
 }
 
@@ -29,24 +29,21 @@ export default function PreviewOrderPage() {
   const parsedProducts: Product[] = useMemo(() => {
     if (!productsParam) return [];
 
-    return productsParam.split(',').map((entry) => {
+    const rawProducts = productsParam.split(',').map((entry) => {
       try {
-        const parts = entry.split('-').map(decodeURIComponent);
-        const [name, priceStr, image] = parts;
-        const price = Number(priceStr?.trim());
+        const [name, priceStr, image] = entry.split('-').map((s) => decodeURIComponent(s.trim()));
+        const price = Number(priceStr);
         if (!name || isNaN(price)) return null;
 
-        const product: Product = {
-          name: name.trim(),
-          price,
-        };
-        if (image?.trim()) product.image = image.trim();
-
+        const product: Product = { name, price };
+        if (image) product.image = image;
         return product;
       } catch {
         return null;
       }
-    }).filter((p): p is Product => isValidProduct(p));
+    });
+
+    return rawProducts.filter((p): p is Product => isValidProduct(p));
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -159,4 +156,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-    }
+                                   }
