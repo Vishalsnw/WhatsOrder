@@ -16,7 +16,6 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  // ✅ Fixed: Let TypeScript infer after filtering out nulls
   const parsedProducts: Product[] = useMemo(() => {
     if (!productsParam) return [];
 
@@ -33,7 +32,7 @@ export default function PreviewOrderPage() {
           return null;
         }
       })
-      .filter(Boolean); // ✅ Removes nulls safely
+      .filter((p): p is Product => p !== null && typeof p.name === 'string' && typeof p.price === 'number');
 
     return products;
   }, [productsParam]);
@@ -148,4 +147,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-    }
+        }
