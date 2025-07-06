@@ -90,17 +90,23 @@ export default function EditFormPage() {
   };
 
   const handleUpdate = async () => {
-    if (!bizName.trim() || !whatsapp.trim()) {
-      alert('Please fill in all required fields.');
+    if (!bizName.trim()) {
+      alert('Please enter your business name.');
+      return;
+    }
+
+    const cleanPhone = whatsapp.replace(/\D/g, '');
+    if (!/^91\d{10}$/.test(cleanPhone)) {
+      alert('Please enter a valid WhatsApp number.');
       return;
     }
 
     const validProducts = products.filter(
-      (p) => p.name.trim() && p.price !== ''
+      (p) => p.name.trim() && !isNaN(Number(p.price)) && Number(p.price) > 0
     );
 
     if (validProducts.length === 0) {
-      alert('Please add at least one product with name and price.');
+      alert('Please add at least one valid product with name and price.');
       return;
     }
 
@@ -124,7 +130,7 @@ export default function EditFormPage() {
 
       await updateDoc(doc(db, 'forms', id!), {
         businessName: bizName.trim(),
-        whatsappNumber: whatsapp.trim(),
+        whatsappNumber: '+91' + cleanPhone.slice(-10),
         products: updatedProducts,
       });
 
@@ -144,7 +150,7 @@ export default function EditFormPage() {
       router.push(
         `/preview/${slug}?biz=${encodeURIComponent(
           bizName
-        )}&phone=${encodeURIComponent(whatsapp)}&products=${encodedProducts}`
+        )}&phone=${encodeURIComponent('+91' + cleanPhone.slice(-10))}&products=${encodedProducts}`
       );
     } catch (err) {
       console.error('Error updating form:', err);
@@ -177,10 +183,11 @@ export default function EditFormPage() {
             placeholder="e.g. +91XXXXXXXXXX"
             value={whatsapp}
             onChange={(e) => {
-              const value = e.target.value.replace(/^\+?91/, '');
-              setWhatsapp('+91' + value.slice(0, 10));
+              const clean = e.target.value.replace(/\D/g, '').slice(-10);
+              setWhatsapp('+91' + clean);
             }}
             className="w-full border rounded px-3 py-2"
+            maxLength={13}
           />
 
           <div>
@@ -213,6 +220,7 @@ export default function EditFormPage() {
                     handleChange(index, 'price', e.target.value)
                   }
                   className="w-full border rounded px-3 py-2"
+                  min="1"
                 />
 
                 {product.image && (
@@ -246,4 +254,4 @@ export default function EditFormPage() {
       )}
     </DashboardLayout>
   );
-             }
+                }
