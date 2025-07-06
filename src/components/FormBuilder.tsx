@@ -54,12 +54,19 @@ export default function FormBuilder() {
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
 
-    const query = new URLSearchParams({
-      whatsapp: whatsapp.trim(),
-      products: JSON.stringify(validProducts),
-    }).toString();
+    const encodedProducts = validProducts
+      .map((p) => {
+        const name = encodeURIComponent(p.name.trim());
+        const price = isNaN(Number(p.price)) ? 0 : Number(p.price);
+        return `${name}-${price}`; // image not included (optional)
+      })
+      .join(',');
 
-    router.push(`/preview/${slug}?${query}`);
+    const url = `/preview/${slug}?biz=${encodeURIComponent(
+      businessName.trim()
+    )}&phone=${whatsapp.trim()}&products=${encodedProducts}`;
+
+    router.push(url);
   };
 
   return (
@@ -137,4 +144,4 @@ export default function FormBuilder() {
       </button>
     </form>
   );
-}
+  }
