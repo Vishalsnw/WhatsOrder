@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface Product {
   name: string;
@@ -11,19 +11,29 @@ interface Product {
 
 export default function PreviewOrderPage() {
   const searchParams = useSearchParams();
+
   const businessName = decodeURIComponent(searchParams.get('biz') || 'Business');
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts: Product[] = productsParam
-    .split(',')
-    .map((entry) => {
-      const parts = entry.split('-').map(decodeURIComponent);
-      const [name, priceStr, image] = parts;
-      const price = Number(priceStr?.trim());
-      return { name: name?.trim(), price, image: image?.trim() };
-    })
-    .filter((p) => p.name && !isNaN(p.price));
+  const parsedProducts: Product[] = useMemo(() => {
+    if (!productsParam) return [];
+
+    return productsParam
+      .split(',')
+      .map((entry) => {
+        try {
+          const parts = entry.split('-').map(decodeURIComponent);
+          const [name, priceStr, image] = parts;
+          const price = Number(priceStr?.trim());
+          if (!name || isNaN(price)) return null;
+          return { name: name.trim(), price, image: image?.trim() };
+        } catch {
+          return null;
+        }
+      })
+      .filter((p): p is Product => p !== null);
+  }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
   const [name, setName] = useState('');
@@ -31,7 +41,7 @@ export default function PreviewOrderPage() {
 
   useEffect(() => {
     setQuantities(parsedProducts.map(() => 0));
-  }, [productsParam]);
+  }, [parsedProducts]);
 
   const handleQuantityChange = (index: number, value: number) => {
     const newQuantities = [...quantities];
@@ -68,7 +78,7 @@ export default function PreviewOrderPage() {
         </h2>
 
         {parsedProducts.length === 0 ? (
-          <p className="text-center text-red-500">⚠️ No products found in URL</p>
+          <p className="text-center text-red-500">⚠️ No products found in link</p>
         ) : (
           parsedProducts.map((product, index) => (
             <div
@@ -130,10 +140,9 @@ export default function PreviewOrderPage() {
         </button>
       </div>
 
-      {/* Footer */}
       <div className="text-center text-xs text-gray-400 mt-6 mb-2">
         Made with 💜 using <strong>WhatsOrder</strong>
       </div>
     </main>
   );
-                           }
+      }
