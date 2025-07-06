@@ -57,8 +57,8 @@ export default function OrderFormEditor({
       updated[index].image = url;
       setProducts(updated);
     } catch (err) {
+      console.error('Image upload failed:', err);
       alert('Image upload failed.');
-      console.error('Image upload error:', err);
     }
   };
 
@@ -76,28 +76,38 @@ export default function OrderFormEditor({
   };
 
   const handlePhoneChange = (value: string) => {
-    if (value.startsWith('+91')) {
-      setPhone(value);
-    } else {
-      setPhone('+91' + value.replace(/^\+?91?/, ''));
-    }
+    const cleanValue = value.replace(/^\+?91/, '');
+    setPhone('+91' + cleanValue);
   };
 
   const handleSubmit = () => {
-    const validProducts = products.filter(
-      (p) =>
+    const validProducts = products.filter((p) => {
+      const price = Number(p.price);
+      const quantity = Number(p.quantity);
+      return (
         p.name.trim() &&
-        p.price.trim() &&
-        !isNaN(Number(p.price)) &&
-        p.quantity.trim() &&
-        !isNaN(Number(p.quantity))
-    );
-    if (!businessName.trim() || !phone.trim() || validProducts.length === 0) {
-      alert(
-        'Please fill all required fields and ensure each product has name, price, and quantity.'
+        !isNaN(price) &&
+        price > 0 &&
+        !isNaN(quantity) &&
+        quantity > 0
       );
+    });
+
+    if (!businessName.trim()) {
+      alert('Please enter your business name.');
       return;
     }
+
+    if (!phone.trim() || !/^\+91\d{10}$/.test(phone)) {
+      alert('Please enter a valid 10-digit WhatsApp number.');
+      return;
+    }
+
+    if (validProducts.length === 0) {
+      alert('Please add at least one valid product.');
+      return;
+    }
+
     onSubmit({
       businessName: businessName.trim(),
       phone: phone.trim(),
@@ -121,10 +131,12 @@ export default function OrderFormEditor({
         value={phone}
         onChange={(e) => handlePhoneChange(e.target.value)}
         className="w-full border px-3 py-2 rounded"
+        maxLength={13}
       />
 
       <div className="space-y-4">
         <h3 className="font-semibold text-sm text-gray-600">🛒 Products</h3>
+
         {products.map((product, index) => (
           <div
             key={index}
@@ -170,6 +182,7 @@ export default function OrderFormEditor({
               }
               className="w-full"
             />
+
             {product.image && (
               <img
                 src={product.image}
@@ -178,13 +191,15 @@ export default function OrderFormEditor({
               />
             )}
 
-            <button
-              type="button"
-              onClick={() => removeProduct(index)}
-              className="text-sm text-red-500 hover:underline absolute top-1 right-2"
-            >
-              Remove
-            </button>
+            {products.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeProduct(index)}
+                className="text-sm text-red-500 hover:underline absolute top-1 right-2"
+              >
+                Remove
+              </button>
+            )}
           </div>
         ))}
 
@@ -207,4 +222,4 @@ export default function OrderFormEditor({
       </button>
     </div>
   );
-                                  }
+              }
