@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { uploadImageAndGetURL } from '@/lib/storage';
+import { uploadImage } from '@/lib/storage';
 
 interface Product {
   name: string;
@@ -48,10 +48,15 @@ export default function OrderFormEditor({
 
   const handleImageUpload = async (index: number, file: File | null) => {
     if (!file) return;
-    const url = await uploadImageAndGetURL(file);
-    const updated = [...products];
-    updated[index].image = url;
-    setProducts(updated);
+    try {
+      const url = await uploadImage(file);
+      const updated = [...products];
+      updated[index].image = url;
+      setProducts(updated);
+    } catch (err) {
+      alert('Image upload failed.');
+      console.error(err);
+    }
   };
 
   const addProduct = () => {
@@ -86,7 +91,7 @@ export default function OrderFormEditor({
         placeholder="Business Name"
         value={businessName}
         onChange={(e) => setBusinessName(e.target.value)}
-        className="w-full"
+        className="w-full border px-3 py-2 rounded"
       />
 
       <input
@@ -94,7 +99,7 @@ export default function OrderFormEditor({
         placeholder="WhatsApp Number"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
-        className="w-full"
+        className="w-full border px-3 py-2 rounded"
       />
 
       <div className="space-y-4">
@@ -111,7 +116,7 @@ export default function OrderFormEditor({
               onChange={(e) =>
                 handleProductChange(index, 'name', e.target.value)
               }
-              className="w-full"
+              className="w-full border px-3 py-2 rounded"
             />
             <input
               type="number"
@@ -120,7 +125,7 @@ export default function OrderFormEditor({
               onChange={(e) =>
                 handleProductChange(index, 'price', e.target.value)
               }
-              className="w-full"
+              className="w-full border px-3 py-2 rounded"
             />
             <input
               type="file"
@@ -166,4 +171,4 @@ export default function OrderFormEditor({
       </button>
     </div>
   );
-                                  }
+      }
