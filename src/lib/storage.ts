@@ -8,7 +8,11 @@ import { storage } from './firebase';
  * @param maxWidth - Maximum width in pixels
  * @param quality - JPEG quality (0 to 1)
  */
-const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<Blob> => {
+const compressImage = (
+  file: File,
+  maxWidth = 800,
+  quality = 0.7
+): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -22,24 +26,24 @@ const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<Blob>
         canvas.height = img.height * scaleFactor;
 
         const ctx = canvas.getContext('2d');
-        if (!ctx) return reject('Canvas context not available.');
+        if (!ctx) return reject(new Error('Canvas context not available.'));
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(
           (blob) => {
             if (blob) resolve(blob);
-            else reject('Failed to compress image.');
+            else reject(new Error('Failed to compress image.'));
           },
           'image/jpeg',
           quality
         );
       };
 
-      img.onerror = () => reject('Image failed to load.');
+      img.onerror = () => reject(new Error('Image failed to load.'));
       img.src = event.target?.result as string;
     };
 
-    reader.onerror = () => reject('File reading failed.');
+    reader.onerror = () => reject(new Error('File reading failed.'));
     reader.readAsDataURL(file);
   });
 };
@@ -51,7 +55,10 @@ const compressImage = (file: File, maxWidth = 800, quality = 0.7): Promise<Blob>
  * @param path - Optional subfolder path (e.g. "product-images/")
  * @returns string - The public download URL
  */
-export const uploadImage = async (file: File, path: string = 'uploads/'): Promise<string> => {
+export const uploadImage = async (
+  file: File,
+  path: string = 'uploads/'
+): Promise<string> => {
   if (!file || !(file instanceof File)) {
     throw new Error('Invalid or missing file for upload.');
   }
@@ -59,7 +66,9 @@ export const uploadImage = async (file: File, path: string = 'uploads/'): Promis
   try {
     const fileId = uuidv4();
     const compressedBlob = await compressImage(file);
-    const safeFileName = file.name.replace(/\s+/g, '_');
+
+    const extension = file.name.split('.').pop() || 'jpg';
+    const safeFileName = file.name.replace(/\s+/g, '_').replace(/[^\w.-]/g, '');
     const filePath = `${path}${fileId}-${safeFileName}`;
     const fileRef = ref(storage, filePath);
 
