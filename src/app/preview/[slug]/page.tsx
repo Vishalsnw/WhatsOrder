@@ -9,16 +9,13 @@ interface Product {
   image?: string;
 }
 
-// ✅ Correct custom type guard
-function isValidProduct(p: unknown): p is Product {
+// ✅ Custom type guard
+function isValidProduct(obj: any): obj is Product {
   return (
-    typeof p === 'object' &&
-    p !== null &&
-    'name' in p &&
-    'price' in p &&
-    typeof (p as Product).name === 'string' &&
-    typeof (p as Product).price === 'number' &&
-    (!('image' in p) || typeof (p as Product).image === 'string')
+    obj &&
+    typeof obj.name === 'string' &&
+    typeof obj.price === 'number' &&
+    (typeof obj.image === 'string' || typeof obj.image === 'undefined')
   );
 }
 
@@ -29,25 +26,23 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts = useMemo(() => {
+  const parsedProducts = useMemo<Product[]>(() => {
     if (!productsParam) return [];
 
-    const productArray = productsParam
-      .split(',')
-      .map((entry) => {
-        try {
-          const parts = entry.split('-').map(decodeURIComponent);
-          const [name, priceStr, image] = parts;
-          const price = Number(priceStr?.trim());
-          if (!name || isNaN(price)) return null;
-          return { name: name.trim(), price, image: image?.trim() };
-        } catch {
-          return null;
-        }
-      })
-      .filter(isValidProduct); // ✅ Type guard filters out nulls
+    const rawProducts = productsParam.split(',').map((entry) => {
+      try {
+        const parts = entry.split('-').map(decodeURIComponent);
+        const [name, priceStr, image] = parts;
+        const price = Number(priceStr?.trim());
+        if (!name || isNaN(price)) return null;
+        return { name: name.trim(), price, image: image?.trim() };
+      } catch {
+        return null;
+      }
+    });
 
-    return productArray;
+    const filtered = rawProducts.filter((p): p is Product => isValidProduct(p));
+    return filtered;
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -160,4 +155,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-    }
+      }
