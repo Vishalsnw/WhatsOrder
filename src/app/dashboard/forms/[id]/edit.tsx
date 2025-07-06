@@ -51,9 +51,9 @@ export default function EditFormPage() {
           );
           setProducts(
             (data.products || []).map((p: any) => ({
-              name: p.name,
-              price: p.price,
-              image: p.image,
+              name: p.name || '',
+              price: p.price || '',
+              image: p.image || '',
               file: null,
             }))
           );
@@ -117,7 +117,7 @@ export default function EditFormPage() {
           return {
             name: product.name.trim(),
             price: Number(product.price),
-            image: imageUrl,
+            image: imageUrl || '',
           };
         })
       );
@@ -133,7 +133,19 @@ export default function EditFormPage() {
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9-]/g, '');
 
-      router.push(`/preview/${slug}?id=${id}`);
+      const encodedProducts = updatedProducts
+        .map((p) =>
+          `${encodeURIComponent(p.name)}-${p.price}${
+            p.image ? `-${encodeURIComponent(p.image)}` : ''
+          }`
+        )
+        .join(',');
+
+      router.push(
+        `/preview/${slug}?biz=${encodeURIComponent(
+          bizName
+        )}&phone=${encodeURIComponent(whatsapp)}&products=${encodedProducts}`
+      );
     } catch (err) {
       console.error('Error updating form:', err);
       alert('Failed to update form.');
@@ -148,7 +160,9 @@ export default function EditFormPage() {
         <div className="text-center mt-10 text-gray-500">⏳ Loading form...</div>
       ) : (
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-          <h1 className="text-2xl font-bold text-indigo-600 text-center">✏️ Edit Form</h1>
+          <h1 className="text-2xl font-bold text-indigo-600 text-center">
+            ✏️ Edit Form
+          </h1>
 
           <input
             type="text"
@@ -163,11 +177,8 @@ export default function EditFormPage() {
             placeholder="e.g. +91XXXXXXXXXX"
             value={whatsapp}
             onChange={(e) => {
-              const value = e.target.value;
-              const formatted = value.startsWith('+91')
-                ? value
-                : `+91${value.replace(/^\+?91/, '')}`;
-              setWhatsapp(formatted);
+              const value = e.target.value.replace(/^\+?91/, '');
+              setWhatsapp('+91' + value.slice(0, 10));
             }}
             className="w-full border rounded px-3 py-2"
           />
@@ -180,12 +191,17 @@ export default function EditFormPage() {
             )}
 
             {products.map((product, index) => (
-              <div key={index} className="space-y-2 mb-4 border p-3 rounded-lg">
+              <div
+                key={index}
+                className="space-y-2 mb-4 border p-3 rounded-lg bg-gray-50"
+              >
                 <input
                   type="text"
                   placeholder="Product Name"
                   value={product.name}
-                  onChange={(e) => handleChange(index, 'name', e.target.value)}
+                  onChange={(e) =>
+                    handleChange(index, 'name', e.target.value)
+                  }
                   className="w-full border rounded px-3 py-2"
                 />
 
@@ -193,7 +209,9 @@ export default function EditFormPage() {
                   type="number"
                   placeholder="Price"
                   value={product.price}
-                  onChange={(e) => handleChange(index, 'price', e.target.value)}
+                  onChange={(e) =>
+                    handleChange(index, 'price', e.target.value)
+                  }
                   className="w-full border rounded px-3 py-2"
                 />
 
@@ -228,4 +246,4 @@ export default function EditFormPage() {
       )}
     </DashboardLayout>
   );
-                }
+             }
