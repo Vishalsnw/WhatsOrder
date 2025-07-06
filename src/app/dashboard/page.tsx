@@ -21,14 +21,12 @@ export default function DashboardPage() {
   const [forms, setForms] = useState<Form[]>([]);
   const [loadingForms, setLoadingForms] = useState(true);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
-  // Fetch user's forms from Firestore
   useEffect(() => {
     const fetchForms = async () => {
       if (!user) return;
@@ -39,7 +37,7 @@ export default function DashboardPage() {
           const data = doc.data() as Omit<Form, 'id'>;
           return {
             ...data,
-            id: doc.id, // ✅ Fix: move `id` after spreading
+            id: doc.id,
           };
         });
         setForms(userForms);
@@ -66,15 +64,15 @@ export default function DashboardPage() {
     );
   }
 
+  const name = user.displayName || user.phoneNumber || 'User';
+
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="max-w-4xl mx-auto bg-white shadow rounded-xl p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between border-b pb-4">
           <div>
-            <h1 className="text-xl font-bold text-indigo-700">
-              👋 Welcome, {user.phoneNumber || 'User'}
-            </h1>
+            <h1 className="text-xl font-bold text-indigo-700">👋 Welcome, {name}</h1>
             <p className="text-sm text-gray-500">Manage your order forms here.</p>
           </div>
           <button
@@ -133,4 +131,4 @@ export default function DashboardPage() {
       </div>
     </main>
   );
-                      }
+          }
