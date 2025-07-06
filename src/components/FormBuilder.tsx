@@ -26,30 +26,36 @@ export default function FormBuilder() {
     field: keyof Product,
     value: string
   ) => {
-    const newProducts = [...products];
-    newProducts[index][field] = value;
-    setProducts(newProducts);
+    const updated = [...products];
+    updated[index][field] = value;
+    setProducts(updated);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validProducts = products.filter((p) => p.name.trim() !== '');
-    if (!businessName.trim()) {
+    const validBusinessName = businessName.trim();
+    const cleanWhatsapp = whatsapp.replace(/^\+?91/, '').slice(0, 10);
+    const finalWhatsapp = '+91' + cleanWhatsapp;
+
+    if (!validBusinessName) {
       alert('Please enter a business name.');
       return;
     }
-    if (!/^\+91\d{10}$/.test(whatsapp.trim())) {
-      alert('Please enter a valid WhatsApp number in +91XXXXXXXXXX format.');
+
+    if (!/^\+91\d{10}$/.test(finalWhatsapp)) {
+      alert('Please enter a valid 10-digit WhatsApp number.');
       return;
     }
+
+    const validProducts = products.filter((p) => p.name.trim());
+
     if (validProducts.length === 0) {
       alert('Please add at least one product with a name.');
       return;
     }
 
-    const slug = businessName
-      .trim()
+    const slug = validBusinessName
       .toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
@@ -57,14 +63,15 @@ export default function FormBuilder() {
     const encodedProducts = validProducts
       .map((p) => {
         const name = encodeURIComponent(p.name.trim());
-        const price = isNaN(Number(p.price)) ? 0 : Number(p.price);
-        return `${name}-${price}`; // image not included (optional)
+        const price = Number(p.price);
+        const safePrice = isNaN(price) ? 0 : price;
+        return `${name}-${safePrice}`;
       })
       .join(',');
 
     const url = `/preview/${slug}?biz=${encodeURIComponent(
-      businessName.trim()
-    )}&phone=${whatsapp.trim()}&products=${encodedProducts}`;
+      validBusinessName
+    )}&phone=${finalWhatsapp}&products=${encodedProducts}`;
 
     router.push(url);
   };
@@ -92,8 +99,8 @@ export default function FormBuilder() {
         placeholder="WhatsApp Number (e.g., +91XXXXXXXXXX)"
         value={whatsapp}
         onChange={(e) => {
-          const value = e.target.value.replace(/^\+?91/, '');
-          setWhatsapp('+91' + value.slice(0, 10));
+          const value = e.target.value.replace(/^\+?91/, '').slice(0, 10);
+          setWhatsapp('+91' + value);
         }}
         required
         maxLength={13}
@@ -117,12 +124,12 @@ export default function FormBuilder() {
             <input
               type="number"
               placeholder="Price (optional)"
+              min="0"
               value={product.price}
               onChange={(e) =>
                 handleChangeProduct(index, 'price', e.target.value)
               }
               className="border px-4 py-2 rounded"
-              min="0"
             />
           </div>
         ))}
@@ -144,4 +151,4 @@ export default function FormBuilder() {
       </button>
     </form>
   );
-  }
+                  }
