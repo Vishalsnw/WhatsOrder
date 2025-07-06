@@ -9,14 +9,14 @@ interface Product {
   image?: string;
 }
 
-// ✅ Custom type guard
+// ✅ Safe and accurate type guard
 function isValidProduct(p: any): p is Product {
   return (
+    p &&
     typeof p === 'object' &&
-    p !== null &&
     typeof p.name === 'string' &&
     typeof p.price === 'number' &&
-    (typeof p.image === 'string' || typeof p.image === 'undefined')
+    ('image' in p ? typeof p.image === 'string' : true)
   );
 }
 
@@ -27,23 +27,20 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts = useMemo(() => {
+  const parsedProducts: Product[] = useMemo(() => {
     if (!productsParam) return [];
 
-    const rawProducts = productsParam.split(',').map((entry) => {
+    return productsParam.split(',').map((entry) => {
       try {
         const parts = entry.split('-').map(decodeURIComponent);
         const [name, priceStr, image] = parts;
         const price = Number(priceStr?.trim());
-        if (!name || isNaN(price)) return null;
-        return { name: name.trim(), price, image: image?.trim() };
+        const product = { name: name.trim(), price, image: image?.trim() };
+        return isValidProduct(product) ? product : null;
       } catch {
         return null;
       }
-    });
-
-    const filtered = rawProducts.filter((p): p is NonNullable<typeof p> => isValidProduct(p));
-    return filtered;
+    }).filter((p): p is Product => p !== null);
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -156,4 +153,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-         }
+                                            }
