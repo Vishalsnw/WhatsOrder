@@ -5,6 +5,7 @@ import { useUser } from '@/hooks/useUser';
 import { db } from '@/lib/firestore';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
   const { user, loading } = useUser();
@@ -38,6 +39,7 @@ export default function ProfilePage() {
         }
       } catch (err) {
         console.error('Failed to load profile:', err);
+        toast.error('Failed to load profile.');
       } finally {
         setLoadingProfile(false);
       }
@@ -51,7 +53,7 @@ export default function ProfilePage() {
   // 💾 Save profile
   const handleSave = async () => {
     if (!bizName.trim() || !phone.trim()) {
-      alert('Please enter both business name and WhatsApp number.');
+      toast.error('Please enter both business name and WhatsApp number.');
       return;
     }
 
@@ -62,10 +64,10 @@ export default function ProfilePage() {
         businessName: bizName.trim(),
         phone: phone.trim(),
       });
-      alert('✅ Profile saved successfully!');
+      toast.success('✅ Profile saved successfully!');
     } catch (err) {
       console.error('Error saving profile:', err);
-      alert('❌ Failed to save profile.');
+      toast.error('❌ Failed to save profile.');
     } finally {
       setSaving(false);
     }
@@ -106,4 +108,4 @@ export default function ProfilePage() {
       </button>
     </div>
   );
-  }
+    }
