@@ -35,10 +35,13 @@ export default function DashboardPage() {
       try {
         const q = query(collection(db, 'forms'), where('owner', '==', user.uid));
         const snapshot = await getDocs(q);
-        const userForms: Form[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Form),
-        }));
+        const userForms: Form[] = snapshot.docs.map((doc) => {
+          const data = doc.data() as Omit<Form, 'id'>;
+          return {
+            ...data,
+            id: doc.id, // ✅ Fix: move `id` after spreading
+          };
+        });
         setForms(userForms);
       } catch (error) {
         console.error('❌ Failed to fetch forms:', error);
@@ -130,4 +133,4 @@ export default function DashboardPage() {
       </div>
     </main>
   );
-          }
+                      }
