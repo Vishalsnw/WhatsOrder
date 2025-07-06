@@ -34,6 +34,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
+  useEffect(() => {
+    const handleRouteChange = () => closeDrawer();
+    router && router.prefetch && handleRouteChange(); // Optional precaution
+  }, [pathname]);
+
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar - Desktop */}
@@ -91,10 +96,11 @@ function SidebarContent({
   }, [user]);
 
   const saveName = async () => {
-    if (!nameInput.trim()) return;
+    const name = nameInput.trim();
+    if (!name) return;
     try {
-      await updateProfile(auth.currentUser!, { displayName: nameInput.trim() });
-      setDisplayName(nameInput.trim());
+      await updateProfile(auth.currentUser!, { displayName: name });
+      setDisplayName(name);
       setShowModal(false);
     } catch (err) {
       console.error('Failed to update name:', err);
@@ -102,7 +108,12 @@ function SidebarContent({
   };
 
   const initials = displayName
-    ? displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    ? displayName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
     : 'WO';
 
   return (
@@ -157,7 +168,9 @@ function SidebarContent({
             {initials}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold">{displayName || user?.phoneNumber}</p>
+            <p className="text-sm font-semibold">
+              {displayName || user?.phoneNumber || 'User'}
+            </p>
             <button
               onClick={handleLogout}
               className="text-xs text-red-600 hover:underline mt-1"
@@ -169,4 +182,4 @@ function SidebarContent({
       </div>
     </>
   );
-      }
+          }
