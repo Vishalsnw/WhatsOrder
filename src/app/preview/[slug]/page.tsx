@@ -9,6 +9,11 @@ interface Product {
   image?: string;
 }
 
+// ✅ Custom type guard to ensure nulls are removed safely
+function isValidProduct(p: any): p is Product {
+  return p && typeof p.name === 'string' && typeof p.price === 'number';
+}
+
 export default function PreviewOrderPage() {
   const searchParams = useSearchParams();
 
@@ -16,7 +21,7 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts: Product[] = useMemo(() => {
+  const parsedProducts = useMemo((): Product[] => {
     if (!productsParam) return [];
 
     const products = productsParam
@@ -32,7 +37,7 @@ export default function PreviewOrderPage() {
           return null;
         }
       })
-      .filter((p): p is Product => p !== null && typeof p.name === 'string' && typeof p.price === 'number');
+      .filter(isValidProduct); // ✅ Use custom type guard
 
     return products;
   }, [productsParam]);
@@ -147,4 +152,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-        }
+          }
