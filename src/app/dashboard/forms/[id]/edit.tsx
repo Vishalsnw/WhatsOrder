@@ -22,7 +22,7 @@ export default function EditFormPage() {
   const { user, loading } = useUser();
 
   const [bizName, setBizName] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
+  const [whatsapp, setWhatsapp] = useState('+91');
   const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -44,7 +44,11 @@ export default function EditFormPage() {
         if (snap.exists()) {
           const data = snap.data();
           setBizName(data.businessName || '');
-          setWhatsapp(data.whatsappNumber || '');
+          setWhatsapp(
+            data.whatsappNumber?.startsWith('+91')
+              ? data.whatsappNumber
+              : `+91${data.whatsappNumber || ''}`
+          );
           setProducts(
             (data.products || []).map((p: any) => ({
               name: p.name,
@@ -147,9 +151,16 @@ export default function EditFormPage() {
 
           <input
             type="tel"
-            placeholder="WhatsApp Number"
+            placeholder="e.g. +91XXXXXXXXXX"
             value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value.startsWith('+91')) {
+                setWhatsapp(value);
+              } else {
+                setWhatsapp('+91' + value.replace(/^\+?91?/, ''));
+              }
+            }}
             className="w-full border rounded px-3 py-2"
           />
 
@@ -204,4 +215,4 @@ export default function EditFormPage() {
       )}
     </DashboardLayout>
   );
-      }
+                     }
