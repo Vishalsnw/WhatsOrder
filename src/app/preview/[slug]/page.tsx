@@ -31,13 +31,12 @@ export default function PreviewOrderPage() {
 
     const rawProducts = productsParam.split(',').map((entry) => {
       try {
-        const [nameRaw, priceStrRaw, imageRaw] = entry.split('-');
+        const parts = entry.split('-');
+        if (parts.length < 2) return null;
 
-        const name = decodeURIComponent((nameRaw || '').trim());
-        const priceStr = decodeURIComponent((priceStrRaw || '').trim());
-        const image = imageRaw ? decodeURIComponent(imageRaw.trim()) : undefined;
-
-        const price = Number(priceStr);
+        const name = decodeURIComponent(parts[0]?.trim());
+        const price = Number(decodeURIComponent(parts[1]?.trim()));
+        const image = parts[2] ? decodeURIComponent(parts.slice(2).join('-').trim()) : undefined;
 
         if (!name || isNaN(price)) return null;
 
@@ -60,7 +59,7 @@ export default function PreviewOrderPage() {
 
   const handleQuantityChange = (index: number, value: number) => {
     const newQuantities = [...quantities];
-    newQuantities[index] = value;
+    newQuantities[index] = Math.max(0, value);
     setQuantities(newQuantities);
   };
 
@@ -77,6 +76,11 @@ export default function PreviewOrderPage() {
 
     if (!orderLines) {
       alert('Please select at least one item.');
+      return;
+    }
+
+    if (!name.trim() || !address.trim()) {
+      alert('Please enter your name and address.');
       return;
     }
 
@@ -135,6 +139,7 @@ export default function PreviewOrderPage() {
           onChange={(e) => setName(e.target.value)}
           className="w-full border border-gray-300 px-4 py-2 rounded-md focus:outline-none focus:ring focus:ring-indigo-400"
         />
+
         <textarea
           placeholder="Your Address"
           value={address}
@@ -160,4 +165,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-                                            }
+                }
