@@ -1,5 +1,3 @@
-// src/lib/storage.ts
-
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from './firebase';
@@ -22,3 +20,6 @@ export const uploadImage = async (file: File, path: string = 'uploads/'): Promis
     throw new Error('Image upload failed');
   }
 };
+
+// ✅ Alias for compatibility with components using this name
+export const uploadImageAndGetURL = uploadImage;
