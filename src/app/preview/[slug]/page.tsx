@@ -15,7 +15,7 @@ function isValidProduct(obj: any): obj is Product {
     obj !== null &&
     typeof obj.name === 'string' &&
     typeof obj.price === 'number' &&
-    (typeof obj.image === 'string' || obj.image === undefined)
+    (typeof obj.image === 'string' || typeof obj.image === 'undefined')
   );
 }
 
@@ -31,13 +31,17 @@ export default function PreviewOrderPage() {
 
     const rawProducts = productsParam.split(',').map((entry) => {
       try {
-        const [name, priceStr, image] = entry.split('-').map((s) => decodeURIComponent(s.trim()));
+        const [nameRaw, priceStrRaw, imageRaw] = entry.split('-');
+
+        const name = decodeURIComponent((nameRaw || '').trim());
+        const priceStr = decodeURIComponent((priceStrRaw || '').trim());
+        const image = imageRaw ? decodeURIComponent(imageRaw.trim()) : undefined;
+
         const price = Number(priceStr);
+
         if (!name || isNaN(price)) return null;
 
-        const product: Product = { name, price };
-        if (image) product.image = image;
-        return product;
+        return { name, price, image };
       } catch {
         return null;
       }
@@ -156,4 +160,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-                                   }
+                                            }
