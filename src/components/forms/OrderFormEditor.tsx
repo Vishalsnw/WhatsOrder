@@ -44,28 +44,15 @@ export default function OrderFormEditor({
   const handleProductChange = (
     index: number,
     field: keyof Product,
-    value: string
+    value: string | File | null
   ) => {
     const updated = [...products];
-    updated[index][field] = value;
-    setProducts(updated);
-  };
-
-  const handleImageUpload = async (index: number, file: File | null) => {
-    if (!file) return;
-    setUploading(true);
-    try {
-      const url = await uploadImage(file);
-      const updated = [...products];
-      updated[index].image = url;
-      updated[index].file = null;
-      setProducts(updated);
-    } catch (err) {
-      console.error('Image upload failed:', err);
-      alert('Image upload failed.');
-    } finally {
-      setUploading(false);
+    if (field === 'file') {
+      updated[index].file = value as File | null;
+    } else {
+      updated[index][field] = value as string;
     }
+    setProducts(updated);
   };
 
   const addProduct = () => {
@@ -83,7 +70,7 @@ export default function OrderFormEditor({
 
   const handlePhoneChange = (value: string) => {
     const cleanValue = value.replace(/^\+?91/, '');
-    setPhone('+91' + cleanValue);
+    setPhone('+91' + cleanValue.slice(0, 10));
   };
 
   const handleSubmit = async () => {
@@ -102,12 +89,12 @@ export default function OrderFormEditor({
     const validProducts: Product[] = [];
 
     for (const product of products) {
+      const name = product.name.trim();
       const price = Number(product.price);
       const quantity = Number(product.quantity);
-      const name = product.name.trim();
 
       if (!name || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
-        continue; // skip invalid product
+        continue;
       }
 
       let imageUrl = product.image || '';
@@ -117,6 +104,8 @@ export default function OrderFormEditor({
         } catch (err) {
           console.error('Image upload failed:', err);
           alert('Image upload failed.');
+          setUploading(false);
+          return;
         }
       }
 
@@ -249,4 +238,4 @@ export default function OrderFormEditor({
       </button>
     </div>
   );
-  }
+        }
