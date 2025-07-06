@@ -1,39 +1,41 @@
 /**
- * Capitalizes the first letter of a string
+ * ✅ Capitalizes the first letter of a string
  */
 export function capitalize(str: string): string {
+  if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**
- * Generates a slug from a given string
+ * ✅ Generates a URL-safe slug from a given string (max 50 chars)
  */
 export function generateSlug(str: string): string {
   return str
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-') // replace non-alphanumeric with dashes
-    .replace(/^-+|-+$/g, '')     // trim starting/ending dashes
-    .substring(0, 50);           // limit length for safety
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
+    .replace(/^-+|-+$/g, '')     // Trim starting/ending hyphens
+    .substring(0, 50);           // Limit length for safety
 }
 
 /**
- * Validates a 10-digit Indian phone number or +91 format
+ * ✅ Validates a 10-digit Indian phone number with or without +91
  */
 export function isValidPhone(phone: string): boolean {
   return /^(\+91)?[6-9]\d{9}$/.test(phone.trim());
 }
 
 /**
- * Encodes text for WhatsApp message
+ * ✅ Creates a WhatsApp message link with a prefilled message
  */
 export function createWhatsAppMessageLink(phone: string, message: string): string {
   const encodedMessage = encodeURIComponent(message);
-  const cleanedPhone = phone.replace(/[^+\d]/g, ''); // remove non-digits except +
+  const cleanedPhone = phone.replace(/[^+\d]/g, ''); // Remove non-digit characters except +
   return `https://wa.me/${cleanedPhone}?text=${encodedMessage}`;
 }
 
 /**
- * Trims object values and removes empty entries
+ * ✅ Trims string values in an object and removes empty ones
  */
 export function cleanObject<T extends Record<string, any>>(obj: T): Partial<T> {
   const cleaned: Partial<T> = {};
@@ -50,7 +52,7 @@ export function cleanObject<T extends Record<string, any>>(obj: T): Partial<T> {
 }
 
 /**
- * Wait for given milliseconds
+ * ✅ Waits for given milliseconds (e.g., await wait(1000))
  */
 export function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
