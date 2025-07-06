@@ -10,12 +10,13 @@ interface Product {
 }
 
 // ✅ Custom type guard
-function isValidProduct(obj: any): obj is Product {
+function isValidProduct(p: any): p is Product {
   return (
-    obj &&
-    typeof obj.name === 'string' &&
-    typeof obj.price === 'number' &&
-    (typeof obj.image === 'string' || typeof obj.image === 'undefined')
+    typeof p === 'object' &&
+    p !== null &&
+    typeof p.name === 'string' &&
+    typeof p.price === 'number' &&
+    (typeof p.image === 'string' || typeof p.image === 'undefined')
   );
 }
 
@@ -41,8 +42,8 @@ export default function PreviewOrderPage() {
       }
     });
 
-    const filtered = rawProducts.filter((p): p is Product => isValidProduct(p));
-    return filtered as Product[];
+    const filtered = rawProducts.filter((p): p is NonNullable<typeof p> => isValidProduct(p));
+    return filtered;
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -155,4 +156,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-      }
+         }
