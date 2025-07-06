@@ -5,7 +5,7 @@ import { useUser } from '@/hooks/useUser';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import Link from 'next/link';
-import DashboardLayout from '@/components/layout/DashboardLayout'; // ✅ import layout
+import DashboardLayout from '@/components/layout/DashboardLayout';
 
 interface Form {
   id: string;
@@ -19,31 +19,35 @@ export default function MyFormsPage() {
   const [loadingForms, setLoadingForms] = useState(true);
 
   useEffect(() => {
-    if (!loading && user) {
-      const fetchForms = async () => {
-        try {
-          const q = query(collection(db, 'forms'), where('owner', '==', user.uid));
-          const snap = await getDocs(q);
-          const result: Form[] = snap.docs.map((doc) => ({
+    const fetchForms = async () => {
+      if (!user) return;
+      try {
+        const q = query(collection(db, 'forms'), where('owner', '==', user.uid));
+        const snap = await getDocs(q);
+        const result: Form[] = snap.docs.map((doc) => {
+          const data = doc.data();
+          return {
             id: doc.id,
-            businessName: doc.data().businessName,
-            slug: doc.data().slug || '',
-          }));
-          setForms(result);
-        } catch (err) {
-          console.error('❌ Error fetching forms:', err);
-        } finally {
-          setLoadingForms(false);
-        }
-      };
+            businessName: data.businessName || 'Untitled',
+            slug: data.slug || '',
+          };
+        });
+        setForms(result);
+      } catch (err) {
+        console.error('❌ Error fetching forms:', err);
+      } finally {
+        setLoadingForms(false);
+      }
+    };
 
+    if (!loading && user) {
       fetchForms();
     }
   }, [user, loading]);
 
   if (loading || loadingForms || !user) {
     return (
-      <DashboardLayout>
+      <DashboardLayout closeDrawer>
         <div className="text-center mt-10 text-gray-500">
           ⏳ Loading your forms...
         </div>
@@ -52,7 +56,7 @@ export default function MyFormsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout closeDrawer>
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <h1 className="text-2xl font-bold text-indigo-700 text-center">📄 My Forms</h1>
 
@@ -86,4 +90,4 @@ export default function MyFormsPage() {
       </div>
     </DashboardLayout>
   );
-}
+        }
