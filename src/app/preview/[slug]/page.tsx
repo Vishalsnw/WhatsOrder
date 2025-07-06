@@ -9,9 +9,15 @@ interface Product {
   image?: string;
 }
 
-// ✅ Custom type guard to ensure nulls are removed safely
+// ✅ Correct custom type guard
 function isValidProduct(p: any): p is Product {
-  return p && typeof p.name === 'string' && typeof p.price === 'number';
+  return (
+    typeof p === 'object' &&
+    p !== null &&
+    typeof p.name === 'string' &&
+    typeof p.price === 'number' &&
+    (typeof p.image === 'string' || typeof p.image === 'undefined')
+  );
 }
 
 export default function PreviewOrderPage() {
@@ -37,7 +43,7 @@ export default function PreviewOrderPage() {
           return null;
         }
       })
-      .filter(isValidProduct); // ✅ Use custom type guard
+      .filter(isValidProduct); // ✅ Type guard filters out nulls
 
     return products;
   }, [productsParam]);
@@ -152,4 +158,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-          }
+}
