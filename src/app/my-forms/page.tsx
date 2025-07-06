@@ -47,7 +47,7 @@ export default function MyFormsPage() {
 
   if (loading || loadingForms || !user) {
     return (
-      <DashboardLayout closeDrawer>
+      <DashboardLayout>
         <div className="text-center mt-10 text-gray-500">
           ⏳ Loading your forms...
         </div>
@@ -56,7 +56,7 @@ export default function MyFormsPage() {
   }
 
   return (
-    <DashboardLayout closeDrawer>
+    <DashboardLayout>
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <h1 className="text-2xl font-bold text-indigo-700 text-center">📄 My Forms</h1>
 
