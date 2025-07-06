@@ -52,13 +52,23 @@ export default function OrderFormEditor({
   const handleImageUpload = async (index: number, file: File | null) => {
     if (!file) return;
     try {
-      const url = await uploadImage(file);
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Upload timeout')), 15000)
+      );
+
+      const upload = uploadImage(file);
+      const url = await Promise.race([upload, timeout]);
+
+      if (!url || typeof url !== 'string') {
+        throw new Error('Upload failed');
+      }
+
       const updated = [...products];
       updated[index].image = url;
       setProducts(updated);
     } catch (err) {
       console.error('Image upload failed:', err);
-      alert('Image upload failed.');
+      alert('Image upload failed. Please try again.');
     }
   };
 
@@ -81,17 +91,24 @@ export default function OrderFormEditor({
   };
 
   const handleSubmit = () => {
-    const validProducts = products.filter((p) => {
-      const price = Number(p.price);
-      const quantity = Number(p.quantity);
-      return (
-        p.name.trim() &&
-        !isNaN(price) &&
-        price > 0 &&
-        !isNaN(quantity) &&
-        quantity > 0
-      );
-    });
+    const validProducts = products
+      .map((p) => ({
+        name: p.name.trim(),
+        price: p.price.trim(),
+        quantity: p.quantity.trim(),
+        image: p.image?.trim() || undefined,
+      }))
+      .filter((p) => {
+        const price = Number(p.price);
+        const quantity = Number(p.quantity);
+        return (
+          p.name &&
+          !isNaN(price) &&
+          price > 0 &&
+          !isNaN(quantity) &&
+          quantity > 0
+        );
+      });
 
     if (!businessName.trim()) {
       alert('Please enter your business name.');
@@ -222,4 +239,4 @@ export default function OrderFormEditor({
       </button>
     </div>
   );
-              }
+        }
