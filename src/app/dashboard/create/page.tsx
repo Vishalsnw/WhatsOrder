@@ -7,14 +7,21 @@ import { uploadImage } from '@/lib/storage';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
+interface ProductInput {
+  name: string;
+  price: string;
+  image: string;
+  file: File | null;
+}
+
 export default function CreateFormPage() {
   const router = useRouter();
   const { user, loading } = useUser();
 
   const [bizName, setBizName] = useState('');
   const [whatsapp, setWhatsapp] = useState('+91');
-  const [products, setProducts] = useState([
-    { name: '', price: '', image: '', file: null as File | null },
+  const [products, setProducts] = useState<ProductInput[]>([
+    { name: '', price: '', image: '', file: null },
   ]);
   const [saving, setSaving] = useState(false);
 
@@ -23,8 +30,11 @@ export default function CreateFormPage() {
       router.push('/login');
     }
 
-    if (user?.phoneNumber && !whatsapp) {
-      setWhatsapp(user.phoneNumber.startsWith('+91') ? user.phoneNumber : `+91${user.phoneNumber}`);
+    if (user?.phoneNumber && whatsapp === '+91') {
+      const formatted = user.phoneNumber.startsWith('+91')
+        ? user.phoneNumber
+        : `+91${user.phoneNumber.replace(/^\+?91/, '')}`;
+      setWhatsapp(formatted);
     }
   }, [user, loading, router]);
 
@@ -54,11 +64,20 @@ export default function CreateFormPage() {
       return;
     }
 
+    const validProducts = products.filter(
+      (p) => p.name.trim() && p.price.trim()
+    );
+
+    if (validProducts.length === 0) {
+      alert('Please add at least one product with name and price.');
+      return;
+    }
+
     try {
       setSaving(true);
 
       const uploadedProducts = await Promise.all(
-        products.map(async (p) => {
+        validProducts.map(async (p) => {
           let imageUrl = '';
           if (p.file) {
             imageUrl = await uploadImage(p.file);
@@ -112,11 +131,10 @@ export default function CreateFormPage() {
         value={whatsapp}
         onChange={(e) => {
           const value = e.target.value;
-          if (value.startsWith('+91')) {
-            setWhatsapp(value);
-          } else {
-            setWhatsapp('+91' + value.replace(/^\+?91?/, ''));
-          }
+          const formatted = value.startsWith('+91')
+            ? value
+            : `+91${value.replace(/^\+?91/, '')}`;
+          setWhatsapp(formatted);
         }}
         className="w-full border rounded px-3 py-2"
       />
@@ -145,6 +163,11 @@ export default function CreateFormPage() {
               onChange={(e) => handleFileChange(i, e.target.files?.[0] || null)}
               className="w-full"
             />
+            {p.file && (
+              <p className="text-sm text-gray-500">
+                Selected file: {p.file.name}
+              </p>
+            )}
           </div>
         ))}
         <button
@@ -165,4 +188,4 @@ export default function CreateFormPage() {
       </button>
     </div>
   );
-  }
+        }
