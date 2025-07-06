@@ -91,7 +91,16 @@ export default function EditFormPage() {
 
   const handleUpdate = async () => {
     if (!bizName.trim() || !whatsapp.trim()) {
-      alert('Please fill in all required fields');
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    const validProducts = products.filter(
+      (p) => p.name.trim() && p.price !== ''
+    );
+
+    if (validProducts.length === 0) {
+      alert('Please add at least one product with name and price.');
       return;
     }
 
@@ -99,7 +108,7 @@ export default function EditFormPage() {
       setSaving(true);
 
       const updatedProducts = await Promise.all(
-        products.map(async (product) => {
+        validProducts.map(async (product) => {
           let imageUrl = product.image;
           if (product.file) {
             imageUrl = await uploadImage(product.file);
@@ -155,17 +164,21 @@ export default function EditFormPage() {
             value={whatsapp}
             onChange={(e) => {
               const value = e.target.value;
-              if (value.startsWith('+91')) {
-                setWhatsapp(value);
-              } else {
-                setWhatsapp('+91' + value.replace(/^\+?91?/, ''));
-              }
+              const formatted = value.startsWith('+91')
+                ? value
+                : `+91${value.replace(/^\+?91/, '')}`;
+              setWhatsapp(formatted);
             }}
             className="w-full border rounded px-3 py-2"
           />
 
           <div>
             <h3 className="text-gray-700 font-semibold mb-2">🛍️ Products</h3>
+
+            {products.length === 0 && (
+              <p className="text-sm text-red-500">No products to edit.</p>
+            )}
+
             {products.map((product, index) => (
               <div key={index} className="space-y-2 mb-4 border p-3 rounded-lg">
                 <input
@@ -215,4 +228,4 @@ export default function EditFormPage() {
       )}
     </DashboardLayout>
   );
-                     }
+                }
