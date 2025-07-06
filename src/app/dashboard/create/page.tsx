@@ -12,7 +12,7 @@ export default function CreateFormPage() {
   const { user, loading } = useUser();
 
   const [bizName, setBizName] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
+  const [whatsapp, setWhatsapp] = useState('+91');
   const [products, setProducts] = useState([
     { name: '', price: '', image: '', file: null as File | null },
   ]);
@@ -22,8 +22,9 @@ export default function CreateFormPage() {
     if (!loading && !user) {
       router.push('/login');
     }
-    if (user?.phoneNumber) {
-      setWhatsapp(user.phoneNumber);
+
+    if (user?.phoneNumber && !whatsapp) {
+      setWhatsapp(user.phoneNumber.startsWith('+91') ? user.phoneNumber : `+91${user.phoneNumber}`);
     }
   }, [user, loading, router]);
 
@@ -104,11 +105,19 @@ export default function CreateFormPage() {
         onChange={(e) => setBizName(e.target.value)}
         className="w-full border rounded px-3 py-2"
       />
+
       <input
         type="tel"
-        placeholder="WhatsApp Number"
+        placeholder="e.g. +91XXXXXXXXXX"
         value={whatsapp}
-        onChange={(e) => setWhatsapp(e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value.startsWith('+91')) {
+            setWhatsapp(value);
+          } else {
+            setWhatsapp('+91' + value.replace(/^\+?91?/, ''));
+          }
+        }}
         className="w-full border rounded px-3 py-2"
       />
 
@@ -156,4 +165,4 @@ export default function CreateFormPage() {
       </button>
     </div>
   );
-                }
+  }
