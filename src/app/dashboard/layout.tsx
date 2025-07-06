@@ -79,69 +79,94 @@ function SidebarContent({
   handleLogout: () => void;
 }) {
   const [displayName, setDisplayName] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [nameInput, setNameInput] = useState('');
 
   useEffect(() => {
-    const askForName = async () => {
-      if (user && !user.displayName) {
-        const name = prompt('Enter your name to personalize your dashboard:');
-        if (name) {
-          try {
-            await updateProfile(auth.currentUser!, { displayName: name });
-            setDisplayName(name);
-          } catch (err) {
-            console.error('Failed to update profile name:', err);
-          }
-        }
-      } else if (user?.displayName) {
-        setDisplayName(user.displayName);
-      }
-    };
-
-    askForName();
+    if (user?.displayName) {
+      setDisplayName(user.displayName);
+    } else if (user && !user.displayName) {
+      setShowModal(true);
+    }
   }, [user]);
+
+  const saveName = async () => {
+    if (!nameInput.trim()) return;
+    try {
+      await updateProfile(auth.currentUser!, { displayName: nameInput.trim() });
+      setDisplayName(nameInput.trim());
+      setShowModal(false);
+    } catch (err) {
+      console.error('Failed to update name:', err);
+    }
+  };
 
   const initials = displayName
     ? displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : 'WO';
 
   return (
-    <div className="h-full flex flex-col justify-between space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-indigo-700 mb-4">📋 WhatsOrder</h2>
-        <nav className="space-y-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`block px-3 py-2 rounded-md font-medium ${
-                pathname === item.href
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-              onClick={() => {
-                if (typeof window !== 'undefined') window.scrollTo(0, 0);
-              }}
+    <>
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full space-y-4">
+            <h2 className="text-lg font-semibold text-gray-800">Enter Your Name</h2>
+            <input
+              type="text"
+              placeholder="Your full name"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              className="w-full border px-3 py-2 rounded-md"
+            />
+            <button
+              onClick={saveName}
+              className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700"
             >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+              Save Name
+            </button>
+          </div>
+        </div>
+      )}
 
-      <div className="border-t pt-4 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold">
-          {initials}
+      <div className="h-full flex flex-col justify-between space-y-6">
+        <div>
+          <h2 className="text-xl font-bold text-indigo-700 mb-4">📋 WhatsOrder</h2>
+          <nav className="space-y-2">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`block px-3 py-2 rounded-md font-medium ${
+                  pathname === item.href
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                onClick={() => {
+                  if (typeof window !== 'undefined') window.scrollTo(0, 0);
+                }}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold">{displayName || user?.phoneNumber}</p>
-          <button
-            onClick={handleLogout}
-            className="text-xs text-red-600 hover:underline mt-1"
-          >
-            🚪 Logout
-          </button>
+
+        <div className="border-t pt-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold">
+            {initials}
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{displayName || user?.phoneNumber}</p>
+            <button
+              onClick={handleLogout}
+              className="text-xs text-red-600 hover:underline mt-1"
+            >
+              🚪 Logout
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
       }
