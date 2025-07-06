@@ -16,10 +16,11 @@ export default function PreviewOrderPage() {
   const phone = searchParams.get('phone') || '919999888877';
   const productsParam = searchParams.get('products') || '';
 
-  const parsedProducts = useMemo<Product[]>(() => {
+  // ✅ Let TypeScript infer after filtering
+  const parsedProducts = useMemo(() => {
     if (!productsParam) return [];
 
-    return productsParam
+    const products = productsParam
       .split(',')
       .map((entry) => {
         try {
@@ -33,6 +34,8 @@ export default function PreviewOrderPage() {
         }
       })
       .filter((p): p is Product => p !== null);
+
+    return products;
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
@@ -145,4 +148,4 @@ export default function PreviewOrderPage() {
       </div>
     </main>
   );
-          }
+}
