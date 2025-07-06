@@ -6,12 +6,12 @@ import { useUser } from '@/hooks/useUser';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export default function LoginPage() {
+export default function OrderFormPage() {
   const { user } = useUser();
   const router = useRouter();
 
   const [businessName, setBusinessName] = useState('');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('+91');
   const [products, setProducts] = useState([{ name: '', price: '', image: '' }]);
   const [generatedLink, setGeneratedLink] = useState('');
   const [copied, setCopied] = useState(false);
@@ -35,6 +35,9 @@ export default function LoginPage() {
       updated[index].image = reader.result as string;
       setProducts(updated);
     };
+    reader.onerror = () => {
+      alert('❌ Failed to read the image file.');
+    };
     reader.readAsDataURL(file);
   };
 
@@ -43,10 +46,26 @@ export default function LoginPage() {
   };
 
   const handleGenerateLink = async () => {
-    if (!businessName.trim() || !whatsappNumber.trim()) return;
+    if (!businessName.trim()) {
+      alert('Please enter a business name.');
+      return;
+    }
 
-    const validProducts = products
-      .filter((p) => p.name.trim() && p.price.toString().trim())
+    if (!whatsappNumber.trim() || !/^\+91\d{10}$/.test(whatsappNumber)) {
+      alert('Please enter a valid WhatsApp number (+91XXXXXXXXXX).');
+      return;
+    }
+
+    const validProducts = products.filter(
+      (p) => p.name.trim() && !isNaN(Number(p.price)) && Number(p.price) > 0
+    );
+
+    if (validProducts.length === 0) {
+      alert('Please add at least one product with a name and valid price.');
+      return;
+    }
+
+    const productQuery = validProducts
       .map((p) =>
         `${encodeURIComponent(p.name.trim())}-${p.price}${
           p.image ? `-${encodeURIComponent(p.image)}` : ''
@@ -62,7 +81,7 @@ export default function LoginPage() {
     const query = new URLSearchParams({
       phone: whatsappNumber.trim(),
       biz: businessName.trim(),
-      products: validProducts,
+      products: productQuery,
     }).toString();
 
     const fullURL = `${window.location.origin}/preview/${slug}?${query}`;
@@ -71,12 +90,12 @@ export default function LoginPage() {
     try {
       setSaving(true);
 
-      if (validProducts.length && user?.uid) {
+      if (user?.uid) {
         await addDoc(collection(db, 'users', user.uid, 'forms'), {
-          businessName,
-          whatsappNumber,
+          businessName: businessName.trim(),
+          whatsappNumber: whatsappNumber.trim(),
           slug,
-          products: products.filter((p) => p.name.trim() && p.price.toString().trim()),
+          products: validProducts,
           createdAt: serverTimestamp(),
         });
 
@@ -137,10 +156,14 @@ export default function LoginPage() {
           />
           <input
             type="tel"
-            placeholder="WhatsApp Number (e.g. 91XXXXXXXXXX)"
+            placeholder="WhatsApp Number (e.g. +91XXXXXXXXXX)"
             value={whatsappNumber}
-            onChange={(e) => setWhatsappNumber(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.replace(/^\+?91/, '');
+              setWhatsappNumber('+91' + value);
+            }}
             className="w-full border px-3 py-2 rounded-md"
+            maxLength={13}
           />
 
           <div>
@@ -154,20 +177,27 @@ export default function LoginPage() {
                   type="text"
                   placeholder="Product Name"
                   value={product.name}
-                  onChange={(e) => handleProductChange(index, 'name', e.target.value)}
+                  onChange={(e) =>
+                    handleProductChange(index, 'name', e.target.value)
+                  }
                   className="w-full border px-3 py-1.5 rounded"
                 />
                 <input
                   type="number"
                   placeholder="Price"
                   value={product.price}
-                  onChange={(e) => handleProductChange(index, 'price', e.target.value)}
+                  onChange={(e) =>
+                    handleProductChange(index, 'price', e.target.value)
+                  }
                   className="w-full border px-3 py-1.5 rounded"
+                  min="0"
                 />
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleImageUpload(index, e.target.files?.[0] || null)}
+                  onChange={(e) =>
+                    handleImageUpload(index, e.target.files?.[0] || null)
+                  }
                   className="w-full"
                 />
                 {product.image && (
@@ -221,4 +251,4 @@ export default function LoginPage() {
       </div>
     </main>
   );
-              }
+                }
