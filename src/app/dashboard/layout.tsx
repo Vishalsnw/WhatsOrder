@@ -34,9 +34,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
+  // ✅ Close drawer when route/pathname changes
   useEffect(() => {
-    const handleRouteChange = () => closeDrawer();
-    router && router.prefetch && handleRouteChange(); // Optional precaution
+    closeDrawer();
   }, [pathname]);
 
   return (
@@ -182,4 +182,4 @@ function SidebarContent({
       </div>
     </>
   );
-          }
+        }
