@@ -8,6 +8,7 @@ interface Product {
   price: string;
   quantity: string;
   image?: string;
+  file?: File | null;
 }
 
 interface Props {
@@ -36,8 +37,9 @@ export default function OrderFormEditor({
   const [products, setProducts] = useState<Product[]>(
     initialProducts.length > 0
       ? initialProducts
-      : [{ name: '', price: '', quantity: '', image: '' }]
+      : [{ name: '', price: '', quantity: '', image: '', file: null }]
   );
+  const [uploading, setUploading] = useState(false);
 
   const handleProductChange = (
     index: number,
@@ -51,31 +53,25 @@ export default function OrderFormEditor({
 
   const handleImageUpload = async (index: number, file: File | null) => {
     if (!file) return;
+    setUploading(true);
     try {
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Upload timeout')), 15000)
-      );
-
-      const upload = uploadImage(file);
-      const url = await Promise.race([upload, timeout]);
-
-      if (!url || typeof url !== 'string') {
-        throw new Error('Upload failed');
-      }
-
+      const url = await uploadImage(file);
       const updated = [...products];
       updated[index].image = url;
+      updated[index].file = null;
       setProducts(updated);
     } catch (err) {
       console.error('Image upload failed:', err);
-      alert('Image upload failed. Please try again.');
+      alert('Image upload failed.');
+    } finally {
+      setUploading(false);
     }
   };
 
   const addProduct = () => {
     setProducts([
       ...products,
-      { name: '', price: '', quantity: '', image: '' },
+      { name: '', price: '', quantity: '', image: '', file: null },
     ]);
   };
 
@@ -90,35 +86,49 @@ export default function OrderFormEditor({
     setPhone('+91' + cleanValue);
   };
 
-  const handleSubmit = () => {
-    const validProducts = products
-      .map((p) => ({
-        name: p.name.trim(),
-        price: p.price.trim(),
-        quantity: p.quantity.trim(),
-        image: p.image?.trim() || undefined,
-      }))
-      .filter((p) => {
-        const price = Number(p.price);
-        const quantity = Number(p.quantity);
-        return (
-          p.name &&
-          !isNaN(price) &&
-          price > 0 &&
-          !isNaN(quantity) &&
-          quantity > 0
-        );
-      });
-
+  const handleSubmit = async () => {
     if (!businessName.trim()) {
       alert('Please enter your business name.');
       return;
     }
 
-    if (!phone.trim() || !/^\+91\d{10}$/.test(phone)) {
+    if (!/^\+91\d{10}$/.test(phone.trim())) {
       alert('Please enter a valid 10-digit WhatsApp number.');
       return;
     }
+
+    setUploading(true);
+
+    const validProducts: Product[] = [];
+
+    for (const product of products) {
+      const price = Number(product.price);
+      const quantity = Number(product.quantity);
+      const name = product.name.trim();
+
+      if (!name || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
+        continue; // skip invalid product
+      }
+
+      let imageUrl = product.image || '';
+      if (product.file) {
+        try {
+          imageUrl = await uploadImage(product.file);
+        } catch (err) {
+          console.error('Image upload failed:', err);
+          alert('Image upload failed.');
+        }
+      }
+
+      validProducts.push({
+        name,
+        price: String(price),
+        quantity: String(quantity),
+        image: imageUrl,
+      });
+    }
+
+    setUploading(false);
 
     if (validProducts.length === 0) {
       alert('Please add at least one valid product.');
@@ -177,7 +187,7 @@ export default function OrderFormEditor({
                 handleProductChange(index, 'price', e.target.value)
               }
               className="w-full border px-3 py-2 rounded"
-              min="0"
+              min="1"
             />
 
             <input
@@ -195,7 +205,7 @@ export default function OrderFormEditor({
               type="file"
               accept="image/*"
               onChange={(e) =>
-                handleImageUpload(index, e.target.files?.[0] || null)
+                handleProductChange(index, 'file', e.target.files?.[0] || null)
               }
               className="w-full"
             />
@@ -232,11 +242,11 @@ export default function OrderFormEditor({
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || uploading}
         className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700"
       >
-        {submitting ? 'Saving...' : 'Save Form'}
+        {submitting || uploading ? 'Saving...' : 'Save Form'}
       </button>
     </div>
   );
-        }
+  }
