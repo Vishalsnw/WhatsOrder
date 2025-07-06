@@ -6,6 +6,7 @@ import { uploadImage } from '@/lib/storage';
 interface Product {
   name: string;
   price: string;
+  quantity: string;
   image?: string;
 }
 
@@ -23,17 +24,19 @@ interface Props {
 
 export default function OrderFormEditor({
   initialBizName = '',
-  initialPhone = '',
+  initialPhone = '+91',
   initialProducts = [],
   onSubmit,
   submitting = false,
 }: Props) {
   const [businessName, setBusinessName] = useState(initialBizName);
-  const [phone, setPhone] = useState(initialPhone);
+  const [phone, setPhone] = useState(
+    initialPhone.startsWith('+91') ? initialPhone : `+91${initialPhone}`
+  );
   const [products, setProducts] = useState<Product[]>(
     initialProducts.length > 0
       ? initialProducts
-      : [{ name: '', price: '', image: '' }]
+      : [{ name: '', price: '', quantity: '', image: '' }]
   );
 
   const handleProductChange = (
@@ -55,12 +58,15 @@ export default function OrderFormEditor({
       setProducts(updated);
     } catch (err) {
       alert('Image upload failed.');
-      console.error(err);
+      console.error('Image upload error:', err);
     }
   };
 
   const addProduct = () => {
-    setProducts([...products, { name: '', price: '', image: '' }]);
+    setProducts([
+      ...products,
+      { name: '', price: '', quantity: '', image: '' },
+    ]);
   };
 
   const removeProduct = (index: number) => {
@@ -69,12 +75,27 @@ export default function OrderFormEditor({
     setProducts(updated);
   };
 
+  const handlePhoneChange = (value: string) => {
+    if (value.startsWith('+91')) {
+      setPhone(value);
+    } else {
+      setPhone('+91' + value.replace(/^\+?91?/, ''));
+    }
+  };
+
   const handleSubmit = () => {
     const validProducts = products.filter(
-      (p) => p.name.trim() && p.price.trim()
+      (p) =>
+        p.name.trim() &&
+        p.price.trim() &&
+        !isNaN(Number(p.price)) &&
+        p.quantity.trim() &&
+        !isNaN(Number(p.quantity))
     );
     if (!businessName.trim() || !phone.trim() || validProducts.length === 0) {
-      alert('Please fill all required fields and add at least one product.');
+      alert(
+        'Please fill all required fields and ensure each product has name, price, and quantity.'
+      );
       return;
     }
     onSubmit({
@@ -96,9 +117,9 @@ export default function OrderFormEditor({
 
       <input
         type="tel"
-        placeholder="WhatsApp Number"
+        placeholder="+91XXXXXXXXXX"
         value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        onChange={(e) => handlePhoneChange(e.target.value)}
         className="w-full border px-3 py-2 rounded"
       />
 
@@ -118,15 +139,29 @@ export default function OrderFormEditor({
               }
               className="w-full border px-3 py-2 rounded"
             />
+
             <input
               type="number"
-              placeholder="Price"
+              placeholder="Price (in ₹)"
               value={product.price}
               onChange={(e) =>
                 handleProductChange(index, 'price', e.target.value)
               }
               className="w-full border px-3 py-2 rounded"
+              min="0"
             />
+
+            <input
+              type="number"
+              placeholder="Quantity"
+              value={product.quantity}
+              onChange={(e) =>
+                handleProductChange(index, 'quantity', e.target.value)
+              }
+              className="w-full border px-3 py-2 rounded"
+              min="1"
+            />
+
             <input
               type="file"
               accept="image/*"
@@ -142,6 +177,7 @@ export default function OrderFormEditor({
                 className="w-full h-32 object-cover rounded-lg border"
               />
             )}
+
             <button
               type="button"
               onClick={() => removeProduct(index)}
@@ -171,4 +207,4 @@ export default function OrderFormEditor({
       </button>
     </div>
   );
-      }
+                                  }
