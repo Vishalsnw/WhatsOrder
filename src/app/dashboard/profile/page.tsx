@@ -12,7 +12,7 @@ export default function ProfilePage() {
   const router = useRouter();
 
   const [bizName, setBizName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+91');
   const [saving, setSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
@@ -35,7 +35,13 @@ export default function ProfilePage() {
         if (snap.exists()) {
           const data = snap.data();
           setBizName(data.businessName || '');
-          setPhone(data.phone || '');
+
+          // Ensure number starts with +91
+          const savedPhone = data.phone || '';
+          const formattedPhone = savedPhone.startsWith('+91')
+            ? savedPhone
+            : `+91${savedPhone.replace(/^(\+91)?/, '')}`;
+          setPhone(formattedPhone);
         }
       } catch (err) {
         console.error('Failed to load profile:', err);
@@ -60,16 +66,27 @@ export default function ProfilePage() {
     try {
       setSaving(true);
       const ref = doc(db, 'users', user!.uid);
+
       await setDoc(ref, {
         businessName: bizName.trim(),
         phone: phone.trim(),
       });
+
       toast.success('✅ Profile saved successfully!');
     } catch (err) {
       console.error('Error saving profile:', err);
       toast.error('❌ Failed to save profile.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePhoneChange = (value: string) => {
+    // Enforce +91 prefix
+    if (value.startsWith('+91')) {
+      setPhone(value);
+    } else {
+      setPhone('+91' + value.replace(/^\+?91?/, ''));
     }
   };
 
@@ -93,9 +110,9 @@ export default function ProfilePage() {
 
       <input
         type="tel"
-        placeholder="WhatsApp Number"
+        placeholder="e.g. +91XXXXXXXXXX"
         value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        onChange={(e) => handlePhoneChange(e.target.value)}
         className="w-full border rounded px-3 py-2"
       />
 
@@ -108,4 +125,4 @@ export default function ProfilePage() {
       </button>
     </div>
   );
-    }
+}
