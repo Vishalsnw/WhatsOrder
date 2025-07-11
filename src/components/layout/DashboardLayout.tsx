@@ -1,149 +1,204 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
-import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { signOut, updateProfile } from 'firebase/auth';
 
-const bottomNavItems = [
-  { label: 'Home', href: '/dashboard', icon: '🏠', activeIcon: '🏠' },
-  { label: 'Create', href: '/dashboard/create', icon: '➕', activeIcon: '✨' },
-  { label: 'Forms', href: '/my-forms', icon: '📋', activeIcon: '📋' },
-  { label: 'Orders', href: '/dashboard/orders', icon: '🛒', activeIcon: '🛒' },
-  { label: 'Profile', href: '/dashboard/profile', icon: '👤', activeIcon: '👤' },
-];
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
 
-const moreItems = [
-  { label: 'Analytics', href: '/dashboard/analytics', icon: '📊' },
-  { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
-  { label: 'Help', href: '/dashboard/help', icon: '❓' },
-];
-
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user, loading } = useUser();
   const router = useRouter();
-  const { user } = useUser();
-  const [showMore, setShowMore] = useState(false);
-  const [notifications, setNotifications] = useState(3);
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    // Check if user needs to set display name
+    if (!user.displayName) {
+      setShowNamePrompt(true);
+    }
+  }, [user, loading, router]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
+  const handleNameUpdate = async (name: string) => {
+    if (!user || !name.trim()) return;
+
+    try {
+      await updateProfile(user, { displayName: name.trim() });
+      setShowNamePrompt(false);
+    } catch (error) {
+      console.error('Error updating name:', error);
+    }
+  };
+
+  const menuItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
+    { href: '/dashboard/create', label: 'Create Form', icon: '✨' },
+    { href: '/my-forms', label: 'My Forms', icon: '📋' },
+    { href: '/dashboard/analytics', label: 'Analytics', icon: '📊' },
+    { href: '/dashboard/orders', label: 'Orders', icon: '🛒' },
+    { href: '/dashboard/profile', label: 'Profile', icon: '👤' },
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="mobile-container min-h-screen bg-gray-50 pb-16">
-      {/* Android-style Status Bar */}
-      <div className="system-bar"></div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white shadow-sm p-4 flex items-center justify-between">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 rounded-lg hover:bg-gray-100"
+        >
+          <span className="text-xl">☰</span>
+        </button>
+        <h1 className="material-headline6">WhatsOrder</h1>
+        <button
+          onClick={handleSignOut}
+          className="p-2 rounded-lg hover:bg-gray-100 text-red-600"
+        >
+          <span className="text-lg">🚪</span>
+        </button>
+      </div>
 
-      {/* App Bar */}
-      <header className="app-bar sticky top-0 z-40">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-sm">W</span>
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className={`
+          fixed lg:static inset-y-0 left-0 z-50
+          w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
+          <div className="p-6 border-b border-gray-100">
+            <h1 className="material-headline5 text-blue-600">WhatsOrder</h1>
+            <p className="material-caption text-gray-600">Order Form Builder</p>
           </div>
-          <div>
-            <h1 className="material-headline6 text-gray-900">WhatsOrder</h1>
-            <p className="material-caption text-gray-500">Business Dashboard</p>
-          </div>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          {/* Search Button */}
-          <button className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
-            <span className="material-icon">🔍</span>
-          </button>
-
-          {/* Notifications */}
-          <button className="relative p-2 rounded-full hover:bg-gray-100 transition-colors duration-200">
-            <span className="material-icon">🔔</span>
-            {notifications > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {notifications}
-              </span>
-            )}
-          </button>
-
-          {/* More Menu */}
-          <button 
-            onClick={() => setShowMore(!showMore)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-          >
-            <span className="material-icon">⋮</span>
-          </button>
-        </div>
-      </header>
-
-      {/* More Menu Dropdown */}
-      {showMore && (
-        <>
-          <div 
-            className="fixed inset-0 z-40 bg-black/20"
-            onClick={() => setShowMore(false)}
-          />
-          <div className="fixed top-16 right-4 z-50 material-card w-48 animate-scale-in">
-            <div className="py-2">
-              {moreItems.map((item) => (
+          <nav className="p-4 space-y-2">
+            {menuItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="material-list-item text-gray-700 hover:bg-gray-50"
-                  onClick={() => setShowMore(false)}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`
+                    flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200
+                    ${isActive 
+                      ? 'bg-blue-50 text-blue-600 shadow-sm' 
+                      : 'text-gray-700 hover:bg-gray-50'
+                    }
+                  `}
                 >
-                  <span className="mr-3">{item.icon}</span>
-                  <span className="material-body2">{item.label}</span>
+                  <span className="text-lg">{item.icon}</span>
+                  <span className="material-subtitle2">{item.label}</span>
                 </Link>
-              ))}
-              <hr className="my-2 border-gray-200" />
-              <button
-                onClick={handleLogout}
-                className="w-full material-list-item text-red-600 hover:bg-red-50"
-              >
-                <span className="mr-3">🚪</span>
-                <span className="material-body2">Sign Out</span>
-              </button>
+              );
+            })}
+          </nav>
+
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-semibold text-blue-600">
+                  {user.displayName?.charAt(0) || user.phoneNumber?.charAt(1) || '?'}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="material-subtitle2 text-gray-900 truncate">
+                  {user.displayName || 'User'}
+                </p>
+                <p className="material-caption text-gray-600 truncate">
+                  {user.phoneNumber}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={handleSignOut}
+              className="w-full material-button bg-red-50 text-red-600 hover:bg-red-100"
+            >
+              <span className="mr-2">🚪</span>
+              Sign Out
+            </button>
           </div>
-        </>
-      )}
+        </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 pb-20">
-        {children}
-      </main>
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-      {/* Floating Action Button */}
-      <div className="fab-container">
-        <Link href="/dashboard/create" className="material-button-fab">
-          <span className="text-xl">➕</span>
-        </Link>
+        {/* Main Content */}
+        <main className="flex-1 lg:ml-0">
+          <div className="p-4 lg:p-6">
+            {children}
+          </div>
+        </main>
       </div>
 
-      {/* Bottom Navigation */}
-      <nav className="bottom-nav">
-        <div className="flex">
-          {bottomNavItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`bottom-nav-item ${isActive ? 'active' : ''}`}
+      {/* Name Prompt Modal */}
+      {showNamePrompt && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
+            <h2 className="material-headline6 mb-4">Welcome! What's your name?</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const name = formData.get('name') as string;
+                handleNameUpdate(name);
+              }}
+            >
+              <input
+                name="name"
+                type="text"
+                className="material-input mb-4"
+                placeholder="Enter your name"
+                required
+              />
+              <button
+                type="submit"
+                className="material-button material-button-primary w-full"
               >
-                <span className="text-xl mb-1">
-                  {isActive ? item.activeIcon : item.icon}
-                </span>
-                <span className="text-xs font-medium">{item.label}</span>
-                {isActive && (
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-blue-600 rounded-full"></div>
-                )}
-              </Link>
-            );
-          })}
+                Save Name
+              </button>
+            </form>
+          </div>
         </div>
-      </nav>
+      )}
     </div>
   );
 }
