@@ -72,6 +72,8 @@ export default function MyFormsPage() {
   };
 
   const handleDelete = async (formId: string) => {
+    if (!user) return;
+    
     if (!confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
       return;
     }
