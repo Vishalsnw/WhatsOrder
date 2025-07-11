@@ -107,7 +107,14 @@ export default function CreateFormPage() {
         createdAt: serverTimestamp(),
       });
 
-      router.push(`/preview/${slug}?id=${docRef.id}`);
+      // Generate proper preview URL with direct parameters
+      const encodedProducts = uploadedProducts
+        .map((p) => `${encodeURIComponent(p.name)}-${p.price}${p.image ? `-${encodeURIComponent(p.image)}` : ''}`)
+        .join(',');
+
+      const previewUrl = `/preview/${slug}?biz=${encodeURIComponent(trimmedBiz)}&phone=${encodeURIComponent(trimmedPhone)}&products=${encodedProducts}`;
+      
+      router.push(previewUrl);
     } catch (err) {
       console.error('🔥 Error creating form:', err);
       alert('Failed to create form.');

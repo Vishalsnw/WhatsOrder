@@ -109,7 +109,7 @@ export default function DashboardPage() {
                   <div>
                     <h3 className="font-semibold text-gray-800">{form.businessName}</h3>
                     <a
-                      href={`/preview/${form.slug}`}
+                      href={`/preview/${form.slug}?id=${form.id}`}
                       className="text-sm text-green-600 underline"
                       target="_blank"
                       rel="noopener noreferrer"

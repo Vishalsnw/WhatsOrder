@@ -91,7 +91,7 @@ export default function OrderFormPage() {
       setSaving(true);
 
       if (user?.uid) {
-        await addDoc(collection(db, 'users', user.uid, 'forms'), {
+        const docRef = await addDoc(collection(db, 'users', user.uid, 'forms'), {
           businessName: businessName.trim(),
           whatsappNumber: whatsappNumber.trim(),
           slug,
@@ -99,15 +99,16 @@ export default function OrderFormPage() {
           createdAt: serverTimestamp(),
         });
 
-        alert('✅ Form saved successfully! Redirecting to dashboard...');
+        alert('✅ Form saved successfully! Redirecting to preview...');
         
-        // Reset form state
-        setBusinessName('');
-        setWhatsappNumber('+91');
-        setProducts([{ name: '', price: '', image: '' }]);
-        setGeneratedLink('');
+        // Generate proper preview URL
+        const encodedProducts = validProducts
+          .map((p) => `${encodeURIComponent(p.name)}-${p.price}${p.image ? `-${encodeURIComponent(p.image)}` : ''}`)
+          .join(',');
+
+        const previewUrl = `/preview/${slug}?biz=${encodeURIComponent(businessName.trim())}&phone=${encodeURIComponent(whatsappNumber.trim())}&products=${encodedProducts}`;
         
-        setTimeout(() => router.push('/dashboard'), 1500);
+        setTimeout(() => router.push(previewUrl), 1500);
       }
     } catch (err) {
       console.error('❌ Error saving form:', err);

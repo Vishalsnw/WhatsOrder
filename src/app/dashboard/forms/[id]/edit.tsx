@@ -147,11 +147,10 @@ export default function EditFormPage() {
         )
         .join(',');
 
-      router.push(
-        `/preview/${slug}?biz=${encodeURIComponent(
-          bizName
-        )}&phone=${encodeURIComponent('+91' + cleanPhone.slice(-10))}&products=${encodedProducts}`
-      );
+      const previewUrl = `/preview/${slug}?biz=${encodeURIComponent(bizName)}&phone=${encodeURIComponent('+91' + cleanPhone.slice(-10))}&products=${encodedProducts}`;
+      
+      alert('✅ Form updated successfully! Redirecting to preview...');
+      setTimeout(() => router.push(previewUrl), 1000);
     } catch (err) {
       console.error('Error updating form:', err);
       alert('Failed to update form.');

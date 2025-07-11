@@ -2,6 +2,8 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface Product {
   name: string;
@@ -21,15 +23,52 @@ function isValidProduct(obj: any): obj is Product {
 
 export default function PreviewOrderPage() {
   const searchParams = useSearchParams();
+  const [formData, setFormData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const businessName = decodeURIComponent(searchParams.get('biz') || 'Business');
-  const phone = searchParams.get('phone') || '919999888877';
-  const productsParam = searchParams.get('products') || '';
+  // Check if we have an ID parameter (loading from database)
+  const formId = searchParams.get('id');
+  const directBiz = searchParams.get('biz');
+  const directPhone = searchParams.get('phone');
+  const directProducts = searchParams.get('products');
 
+  // Load form data if ID is provided
+  useEffect(() => {
+    const loadFormData = async () => {
+      if (formId) {
+        try {
+          const formRef = doc(db, 'forms', formId);
+          const formSnap = await getDoc(formRef);
+          
+          if (formSnap.exists()) {
+            setFormData(formSnap.data());
+          } else {
+            console.error('Form not found');
+          }
+        } catch (error) {
+          console.error('Error loading form:', error);
+        }
+      }
+      setLoading(false);
+    };
+
+    loadFormData();
+  }, [formId]);
+
+  // Determine business name, phone, and products
+  const businessName = formData?.businessName || decodeURIComponent(directBiz || 'Business');
+  const phone = formData?.whatsappNumber || directPhone || '919999888877';
+  
   const parsedProducts: Product[] = useMemo(() => {
-    if (!productsParam) return [];
+    // If we have form data from database, use it
+    if (formData?.products) {
+      return formData.products.filter(isValidProduct);
+    }
 
-    const rawProducts: (Product | null)[] = productsParam.split(',').map((entry) => {
+    // Otherwise parse from URL parameters
+    if (!directProducts) return [];
+
+    const rawProducts: (Product | null)[] = directProducts.split(',').map((entry) => {
       try {
         const parts = entry.split('-');
         if (parts.length < 2) return null;
@@ -54,7 +93,7 @@ export default function PreviewOrderPage() {
     }
 
     return validProducts;
-  }, [productsParam]);
+  }, [formData, directProducts]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
   const [name, setName] = useState('');
@@ -95,6 +134,16 @@ export default function PreviewOrderPage() {
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-50 px-4 py-8 flex flex-col">
+        <div className="bg-white p-6 rounded-xl shadow-lg max-w-md mx-auto w-full">
+          <p className="text-center text-gray-500">Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-8 flex flex-col">

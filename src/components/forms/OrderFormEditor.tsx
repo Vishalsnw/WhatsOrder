@@ -121,11 +121,13 @@ export default function OrderFormEditor({
       return;
     }
 
-    onSubmit({
+    const data = {
       businessName: businessName.trim(),
       phone: phone.trim(),
       products: validProducts,
-    });
+    };
+
+    onSubmit(data);
   };
 
   return (
