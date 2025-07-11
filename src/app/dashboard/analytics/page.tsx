@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -38,7 +37,7 @@ export default function AnalyticsPage() {
           const views = d.views || Math.floor(Math.random() * 100) + 10;
           const clicks = d.clicks || Math.floor(Math.random() * 50) + 5;
           const ordersCount = d.ordersCount || Math.floor(Math.random() * 20) + 1;
-          
+
           return {
             id: doc.id,
             title: d.businessName || 'Untitled Form',
@@ -100,7 +99,7 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="material-headline5 text-white">Analytics</h1>
-              <p className="material-subtitle1 text-emerald-100">
+              <p className="material-subtitle1 text-white">
                 Track your business performance
               </p>
               <p className="material-caption text-emerald-200 mt-1">

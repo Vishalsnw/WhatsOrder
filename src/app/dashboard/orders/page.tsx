@@ -43,47 +43,7 @@ export default function OrdersPage() {
       setIsLoading(true);
 
       // Mock orders data - replace with actual database call
-      const mockOrders: Order[] = [
-        {
-          id: '1',
-          customerName: 'John Doe',
-          customerPhone: '+1234567890',
-          items: [
-            { name: 'Margherita Pizza', quantity: 2, price: 12.99 },
-            { name: 'Chicken Wings', quantity: 1, price: 8.99 }
-          ],
-          total: 34.97,
-          status: 'pending',
-          timestamp: new Date(Date.now() - 1000 * 60 * 30),
-          address: '123 Main St, City, State 12345',
-          notes: 'Please ring the doorbell'
-        },
-        {
-          id: '2',
-          customerName: 'Jane Smith',
-          customerPhone: '+1234567891',
-          items: [
-            { name: 'Caesar Salad', quantity: 1, price: 7.99 },
-            { name: 'Chicken Wings', quantity: 2, price: 8.99 }
-          ],
-          total: 25.97,
-          status: 'confirmed',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-          address: '456 Oak Ave, City, State 12345'
-        },
-        {
-          id: '3',
-          customerName: 'Mike Johnson',
-          customerPhone: '+1234567892',
-          items: [
-            { name: 'Margherita Pizza', quantity: 3, price: 12.99 }
-          ],
-          total: 38.97,
-          status: 'delivered',
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-          address: '789 Pine Rd, City, State 12345'
-        }
-      ];
+      const mockOrders: Order[] = [];
 
       setOrders(mockOrders);
     } catch (error) {
