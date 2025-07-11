@@ -2,6 +2,6 @@ export {};
 
 declare global {
   interface Window {
-    recaptchaVerifier?: unknown;
+    recaptchaVerifier?: import('firebase/auth').ApplicationVerifier;
   }
 }
