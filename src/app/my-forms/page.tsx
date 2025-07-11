@@ -43,12 +43,19 @@ export default function MyFormsPage() {
     if (!user) return;
 
     try {
-      const q = query(
-        collection(db, 'orderForms'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
-      const snapshot = await getDocs(q);
+      // First try to load from user's subcollection
+      const userFormsRef = collection(db, 'users', user.uid, 'forms');
+      let snapshot = await getDocs(userFormsRef);
+      
+      // If no forms in subcollection, try the main collection
+      if (snapshot.empty) {
+        const q = query(
+          collection(db, 'orderForms'),
+          where('userId', '==', user.uid),
+          orderBy('createdAt', 'desc')
+        );
+        snapshot = await getDocs(q);
+      }
       
       const formsData: FormData[] = snapshot.docs.map((doc) => {
         const data = doc.data();

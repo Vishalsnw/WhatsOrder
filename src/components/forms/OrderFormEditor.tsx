@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
-import { collection, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 
@@ -98,12 +98,20 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
         const profile = docSnap.data();
         setUserProfile(profile);
         
-        // Auto-fill form with user's saved info
-        setForm(prev => ({
-          ...prev,
-          businessName: prev.businessName || profile.businessName || '',
-          phoneNumber: prev.phoneNumber || profile.phone || '',
-        }));
+        // Auto-fill form with user's saved info only if not editing existing form
+        if (!formId) {
+          setForm(prev => ({
+            ...prev,
+            businessName: prev.businessName || profile.businessName || '',
+            phoneNumber: prev.phoneNumber || profile.phoneNumber || profile.phone || '',
+          }));
+        }
+      } else {
+        // Create user profile document if it doesn't exist
+        await setDoc(docRef, {
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -192,14 +200,19 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
       } else {
         const docRef = await addDoc(collection(db, 'orderForms'), formData);
         savedFormId = docRef.id;
+        
+        // Also save to user's forms subcollection for easier querying
+        const userFormRef = doc(db, 'users', user.uid, 'forms', savedFormId);
+        await setDoc(userFormRef, formData);
       }
       
       // Update user profile with business info if not already saved
-      if (!userProfile?.businessName || !userProfile?.phone) {
+      if (!userProfile?.businessName || !userProfile?.phoneNumber) {
         const userDocRef = doc(db, 'users', user.uid);
         await updateDoc(userDocRef, {
           businessName: form.businessName,
-          phone: form.phoneNumber,
+          phoneNumber: form.phoneNumber,
+          phone: form.phoneNumber, // Keep both for compatibility
           updatedAt: new Date()
         });
       }

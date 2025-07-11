@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -88,7 +87,7 @@ export default function DemoPage() {
         {/* Detailed Steps */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">📖 Detailed Instructions</h2>
-          
+
           <div className="space-y-8">
             {/* Step 1 */}
             <div className="border-l-4 border-blue-500 pl-6">
