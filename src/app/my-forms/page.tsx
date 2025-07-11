@@ -55,7 +55,7 @@ export default function MyFormsPage() {
         return {
           id: doc.id,
           businessName: data.businessName || 'Untitled Form',
-          slug: data.slug || '',
+          slug: data.slug || data.businessName?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || '',
           createdAt: data.createdAt?.toDate() || new Date(),
           products: data.products || [],
           views: data.views || 0,
@@ -66,7 +66,7 @@ export default function MyFormsPage() {
       setForms(formsData);
     } catch (error) {
       console.error('Error loading forms:', error);
-      // For now, just set empty forms array if there's a permission error
+      // Set empty forms array if there's a permission error
       setForms([]);
     } finally {
       setLoadingForms(false);

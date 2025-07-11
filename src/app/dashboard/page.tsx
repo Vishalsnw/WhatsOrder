@@ -51,7 +51,7 @@ export default function DashboardPage() {
         return {
           id: doc.id,
           businessName: data.businessName || 'Untitled Form',
-          slug: data.slug || '',
+          slug: data.slug || data.businessName?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || '',
           createdAt: data.createdAt?.toDate() || new Date(),
           products: data.products || []
         };
@@ -60,6 +60,8 @@ export default function DashboardPage() {
       setForms(formsData);
     } catch (error) {
       console.error('Error loading forms:', error);
+      // Set empty array to prevent infinite loading
+      setForms([]);
     } finally {
       setLoadingForms(false);
     }

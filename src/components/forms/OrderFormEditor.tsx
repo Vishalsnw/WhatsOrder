@@ -57,6 +57,7 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
       welcomeMessage: 'Welcome! Browse our products and place your order.',
     },
   });
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [currentProduct, setCurrentProduct] = useState<Product>({
     id: '',
     name: '',
@@ -82,7 +83,32 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
         products: initialData.products || []
       }));
     }
-  }, [formId, initialData]);
+    
+    // Load user profile for auto-filling
+    if (user && !formId) {
+      loadUserProfile();
+    }
+  }, [formId, initialData, user]);
+
+  const loadUserProfile = async () => {
+    try {
+      const docRef = doc(db, 'users', user!.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const profile = docSnap.data();
+        setUserProfile(profile);
+        
+        // Auto-fill form with user's saved info
+        setForm(prev => ({
+          ...prev,
+          businessName: prev.businessName || profile.businessName || '',
+          phoneNumber: prev.phoneNumber || profile.phone || '',
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
 
   const loadForm = async () => {
     try {
@@ -151,26 +177,40 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
     
     try {
       setIsLoading(true);
-      const formData = { ...form, userId: user.uid };
+      const formData = { 
+        ...form, 
+        userId: user.uid,
+        slug: form.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+        createdAt: formId ? form.createdAt : new Date(),
+        updatedAt: new Date()
+      };
       
+      let savedFormId = formId;
       if (formId) {
         const docRef = doc(db, 'orderForms', formId);
         await updateDoc(docRef, formData);
       } else {
         const docRef = await addDoc(collection(db, 'orderForms'), formData);
-        formId = docRef.id;
+        savedFormId = docRef.id;
+      }
+      
+      // Update user profile with business info if not already saved
+      if (!userProfile?.businessName || !userProfile?.phone) {
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+          businessName: form.businessName,
+          phone: form.phoneNumber,
+          updatedAt: new Date()
+        });
       }
       
       // Create preview URL
-      const productsParam = form.products.map(p => 
-        `${encodeURIComponent(p.name)}-${p.price}-${encodeURIComponent(p.description || '')}-${encodeURIComponent(p.image || '')}`
-      ).join(',');
-      
-      const previewUrl = `/preview/${encodeURIComponent(form.businessName)}?biz=${encodeURIComponent(form.businessName)}&phone=${encodeURIComponent(form.phoneNumber)}&products=${encodeURIComponent(productsParam)}`;
+      const previewUrl = `/preview/${encodeURIComponent(formData.slug)}?id=${savedFormId}`;
       
       router.push(previewUrl);
     } catch (error) {
       console.error('Error saving form:', error);
+      alert('Error saving form. Please try again.');
     } finally {
       setIsLoading(false);
     }
