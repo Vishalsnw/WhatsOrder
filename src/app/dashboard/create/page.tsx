@@ -44,7 +44,7 @@ export default function CreateFormPage() {
   const handleTemplateSelect = (templateId: string) => {
     setShowTemplates(false);
     // Navigate to form editor with template
-    router.push(`/dashboard/forms/new?template=${templateId}`);teId}`);
+    router.push(`/dashboard/forms/new?template=${templateId}`);
   };
 
   return (
