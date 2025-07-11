@@ -59,6 +59,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: '/dashboard/analytics', label: 'Analytics', icon: '📊' },
     { href: '/dashboard/orders', label: 'Orders', icon: '🛒' },
     { href: '/dashboard/profile', label: 'Profile', icon: '👤' },
+    { href: '/demo', label: 'Demo & Guide', icon: '🚀' },
   ];
 
   if (loading) {

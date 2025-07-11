@@ -3,7 +3,6 @@
 import { useUser } from '@/hooks/useUser';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 
 export default function DashboardLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading } = useUser();
@@ -28,5 +27,5 @@ export default function DashboardLayoutWrapper({ children }: { children: React.R
     return null;
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return <>{children}</>;
 }
