@@ -91,7 +91,7 @@ export default function MyFormsPage() {
   };
 
   const copyFormLink = async (slug: string, formId: string) => {
-    const link = `${window.location.origin}/preview/${formId}`;
+    const link = `${window.location.origin}/preview/${slug}?id=${formId}`;
     try {
       await navigator.clipboard.writeText(link);
       alert('Form link copied to clipboard!');
@@ -210,7 +210,7 @@ export default function MyFormsPage() {
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="flex space-x-2">
                       <Link 
-                        href={`/preview/${form.id}`}
+                        href={`/preview/${form.slug}?id=${form.id}`}
                         className="material-button material-button-secondary"
                       >
                         <span className="mr-1">👁️</span>

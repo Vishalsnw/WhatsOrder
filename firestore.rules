@@ -3,26 +3,30 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only access their own user document
+    // Allow users to read and write their own user document
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // Users can access their own forms subcollection
+      // Allow users to read and write their own forms subcollection
       match /forms/{formId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
     
-    // Public forms collection - readable by anyone, writable by authenticated users
+    // Allow anyone to read public forms (for sharing)
     match /publicForms/{formId} {
-      allow read: if true; // Anyone can read public forms
-      allow write: if request.auth != null; // Only authenticated users can write
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.uid == request.resource.data.userId);
     }
     
-    // Backward compatibility - keep existing forms collection readable
+    // Legacy forms collection (backward compatibility)
     match /forms/{formId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.uid == request.resource.data.userId);
     }
   }
 }
