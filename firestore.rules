@@ -3,19 +3,24 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write their own user document
+    // User profiles - users can only access their own
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // Allow users to read and write their own forms subcollection
+      // User's forms subcollection - users can manage their own forms
       match /forms/{formId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Any other subcollections under users
+      match /{subcollection=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
     
-    // Allow anyone to read public forms (for sharing)
+    // Public forms collection - for sharing forms publicly
     match /publicForms/{formId} {
-      allow read: if true;
+      allow read: if true; // Anyone can read public forms (for sharing)
       allow write: if request.auth != null && 
         (request.auth.uid == resource.data.userId || 
          request.auth.uid == request.resource.data.userId);
@@ -23,10 +28,14 @@ service cloud.firestore {
     
     // Legacy forms collection (backward compatibility)
     match /forms/{formId} {
+      allow read: if true; // Public reading for shared forms
+      allow write: if request.auth != null;
+    }
+    
+    // Order forms collection (if used)
+    match /orderForms/{formId} {
       allow read: if true;
-      allow write: if request.auth != null && 
-        (request.auth.uid == resource.data.userId || 
-         request.auth.uid == request.resource.data.userId);
+      allow write: if request.auth != null;
     }
   }
 }
