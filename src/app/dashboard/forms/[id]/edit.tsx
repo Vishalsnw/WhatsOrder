@@ -35,6 +35,12 @@ export default function EditFormPage() {
 
   useEffect(() => {
     const loadFormData = async () => {
+      if (!id) {
+        alert('Form ID is missing.');
+        router.push('/dashboard');
+        return;
+      }
+
       try {
         // Try to load from user's collection first
         const userFormRef = doc(db, 'users', user.uid, 'forms', id);
@@ -136,10 +142,12 @@ export default function EditFormPage() {
         })
       );
 
-      await updateDoc(doc(db, 'forms', id!), {
+      // Update in user's subcollection
+      await updateDoc(doc(db, 'users', user!.uid, 'forms', id!), {
         businessName: bizName.trim(),
-        whatsappNumber: '+91' + cleanPhone.slice(-10),
+        phoneNumber: '+91' + cleanPhone.slice(-10),
         products: updatedProducts,
+        updatedAt: new Date(),
       });
 
       const slug = bizName
