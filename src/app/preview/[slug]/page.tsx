@@ -46,7 +46,7 @@ export default function PreviewOrderPage() {
       }
     });
 
-    return rawProducts.filter((p): p is Product => isValidProduct(p));
+    return rawProducts.filter((p): p is Product => p !== null && isValidProduct(p));
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
