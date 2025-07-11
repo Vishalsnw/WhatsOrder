@@ -29,7 +29,7 @@ export default function PreviewOrderPage() {
   const parsedProducts: Product[] = useMemo(() => {
     if (!productsParam) return [];
 
-    const rawProducts = productsParam.split(',').map((entry) => {
+    const rawProducts: (Product | null)[] = productsParam.split(',').map((entry) => {
       try {
         const parts = entry.split('-');
         if (parts.length < 2) return null;
@@ -46,9 +46,14 @@ export default function PreviewOrderPage() {
       }
     });
 
-    return rawProducts.filter((p): p is Product => {
-      return p !== null && isValidProduct(p);
-    });
+    const validProducts: Product[] = [];
+    for (const product of rawProducts) {
+      if (product !== null && isValidProduct(product)) {
+        validProducts.push(product);
+      }
+    }
+
+    return validProducts;
   }, [productsParam]);
 
   const [quantities, setQuantities] = useState<number[]>([]);
