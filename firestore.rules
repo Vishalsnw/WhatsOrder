@@ -2,28 +2,22 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read/write their own profile
+    // Allow authenticated users to access their own user document
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // Allow users to read/write their own forms
+      // Allow authenticated users to access their own forms subcollection
       match /forms/{formId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
     
-    // Allow authenticated users to create and manage their own order forms
-    match /orderForms/{formId} {
-      allow read, write: if request.auth != null && 
-        (resource == null || resource.data.userId == request.auth.uid);
+    // Allow authenticated users to create forms in the main forms collection
+    match /forms/{formId} {
+      allow read, write: if request.auth != null;
     }
     
-    // Allow public read access to published forms for preview
-    match /orderForms/{formId} {
-      allow read: if true;
-    }
-    
-    // Allow authenticated users to create orders
+    // Allow authenticated users to access their own orders
     match /orders/{orderId} {
       allow read, write: if request.auth != null;
     }
