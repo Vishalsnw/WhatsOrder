@@ -3,272 +3,335 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
-/* 🌿 Global Base Styling */
+/* 🤖 Android Material Design Base */
 * {
   box-sizing: border-box;
 }
 
 body {
-  @apply bg-gradient-to-br from-slate-50 via-white to-blue-50 text-gray-900 antialiased;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  line-height: 1.6;
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 🧾 Enhanced Form Controls */
-input,
-textarea,
-select {
-  @apply border border-gray-200 px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/80 backdrop-blur-sm;
-  font-size: 16px; /* Prevents zoom on iOS */
+/* 📱 Material Design Components */
+.material-card {
+  @apply bg-white rounded-2xl shadow-lg border-0 overflow-hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 4px 24px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-input:hover,
-textarea:hover,
-select:hover {
-  @apply border-gray-300 shadow-md;
+.material-card:hover {
+  @apply shadow-xl;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 8px 32px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
-/* 📝 Professional Typography */
-h1, h2, h3, h4, h5, h6 {
-  @apply text-gray-900 font-semibold leading-tight;
-  letter-spacing: -0.025em;
+.material-button {
+  @apply px-6 py-3 rounded-full font-medium text-sm uppercase tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-h1 { @apply text-3xl md:text-4xl font-bold; }
-h2 { @apply text-2xl md:text-3xl; }
-h3 { @apply text-xl md:text-2xl; }
-h4 { @apply text-lg md:text-xl; }
-
-/* 🔘 Professional Button Styles */
-button {
-  @apply transition-all duration-200 ease-in-out active:scale-[0.98] font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-xl;
+.material-button-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500;
 }
 
-.btn-primary {
-  @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl focus:ring-blue-500 px-6 py-3;
+.material-button-secondary {
+  @apply bg-gray-100 hover:bg-gray-200 text-gray-700 focus:ring-gray-500;
 }
 
-.btn-secondary {
-  @apply bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md focus:ring-gray-500 px-6 py-3;
+.material-button-fab {
+  @apply w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 active:scale-95;
 }
 
-.btn-success {
-  @apply bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl focus:ring-emerald-500 px-6 py-3;
+/* 🎨 Enhanced Form Controls */
+.material-input {
+  @apply w-full px-4 py-3 border-0 border-b-2 border-gray-200 bg-transparent focus:border-blue-600 focus:outline-none transition-colors duration-200 text-base;
 }
 
-.btn-danger {
-  @apply bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl focus:ring-red-500 px-6 py-3;
+.material-input:focus {
+  @apply bg-blue-50/30;
 }
 
-/* 🧩 Professional Card Components */
-.card {
-  @apply bg-white/90 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100;
+.material-input-filled {
+  @apply bg-gray-50 border border-gray-200 rounded-t-lg px-4 py-3 focus:bg-white focus:border-blue-600 focus:outline-none transition-all duration-200;
 }
 
-.card-header {
-  @apply border-b border-gray-100 pb-4 mb-6;
+.material-textarea {
+  @apply w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-blue-600 focus:outline-none transition-all duration-200 resize-none;
 }
 
-.glass-card {
-  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+/* 📑 Material Typography */
+.material-headline1 { @apply text-6xl font-light tracking-tight text-gray-900; }
+.material-headline2 { @apply text-4xl font-normal tracking-tight text-gray-900; }
+.material-headline3 { @apply text-3xl font-normal tracking-normal text-gray-900; }
+.material-headline4 { @apply text-2xl font-normal tracking-wide text-gray-900; }
+.material-headline5 { @apply text-xl font-normal tracking-normal text-gray-900; }
+.material-headline6 { @apply text-lg font-medium tracking-wide text-gray-900; }
+
+.material-subtitle1 { @apply text-base font-normal tracking-wide text-gray-700; }
+.material-subtitle2 { @apply text-sm font-medium tracking-wide text-gray-700; }
+
+.material-body1 { @apply text-base font-normal tracking-normal text-gray-800; }
+.material-body2 { @apply text-sm font-normal tracking-normal text-gray-700; }
+
+.material-caption { @apply text-xs font-normal tracking-wide text-gray-600; }
+.material-overline { @apply text-xs font-medium tracking-widest uppercase text-gray-600; }
+
+/* 🧭 Android Navigation */
+.bottom-nav {
+  @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 🖼️ Enhanced Image Styling */
-img {
-  @apply object-cover rounded-xl shadow-sm;
+.bottom-nav-item {
+  @apply flex-1 flex flex-col items-center justify-center py-2 px-1 transition-colors duration-200;
 }
 
-.product-image {
-  @apply rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300;
+.bottom-nav-item.active {
+  @apply text-blue-600;
 }
 
-/* 🏷️ Professional Labels */
-label {
-  @apply block mb-2 text-sm font-medium text-gray-700;
+.bottom-nav-item:not(.active) {
+  @apply text-gray-400;
 }
 
-.label-required::after {
-  content: " *";
-  @apply text-red-500;
+/* 🎯 Status Bar and App Bar */
+.app-bar {
+  @apply bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* 🔗 Enhanced Links */
-.link {
-  @apply text-blue-600 hover:text-blue-700 underline decoration-2 underline-offset-2 hover:decoration-blue-300 transition-colors duration-200;
+.status-chip {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
 }
 
-.link-button {
-  @apply text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-200;
+.status-chip-success { @apply bg-green-100 text-green-800; }
+.status-chip-warning { @apply bg-amber-100 text-amber-800; }
+.status-chip-error { @apply bg-red-100 text-red-800; }
+.status-chip-info { @apply bg-blue-100 text-blue-800; }
+
+/* 📱 Android System Bars */
+.system-bar {
+  @apply h-6 bg-gray-900;
 }
 
-/* 📌 Professional Footer */
-.footer {
-  @apply text-center text-sm text-gray-500 mt-8 mb-4 font-medium;
+/* 🎪 Enhanced Animations */
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-.footer-brand {
-  @apply text-blue-600 font-semibold;
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
-/* 🖱️ Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #f8fafc;
-}
-
-/* 📦 Layout Utilities */
-.container {
-  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.section-title {
-  @apply text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200;
+.animate-slide-in-bottom {
+  animation: slideInFromBottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 🖼️ Professional File Input */
-input[type="file"] {
-  @apply bg-white text-sm text-gray-700 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:transition-colors file:duration-200;
+.animate-slide-in-right {
+  animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ✅ Enhanced Toast Notifications */
-.toast {
-  @apply fixed top-4 right-4 px-6 py-4 rounded-xl text-white shadow-2xl z-50 backdrop-blur-sm border-l-4;
-  animation: slideIn 0.3s ease-out;
+.animate-scale-in {
+  animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+/* 🎨 Material Ripple Effect */
+.ripple {
+  @apply relative overflow-hidden;
 }
 
-.toast-success {
-  @apply bg-emerald-600/95 border-emerald-400;
-}
-.toast-error {
-  @apply bg-red-600/95 border-red-400;
-}
-.toast-info {
-  @apply bg-blue-600/95 border-blue-400;
-}
-.toast-warning {
-  @apply bg-amber-600/95 border-amber-400;
+.ripple::before {
+  content: '';
+  @apply absolute inset-0 bg-white opacity-0 transition-opacity duration-200;
 }
 
-/* 🧭 Professional Mobile Menu */
-.backdrop {
-  @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-40;
-  animation: fadeIn 0.2s ease-out;
+.ripple:active::before {
+  @apply opacity-20;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* 📊 Professional Lists */
+.material-list-item {
+  @apply flex items-center px-4 py-3 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0;
 }
 
-/* 📱 Responsive Design */
-.mobile-only {
-  @apply block lg:hidden;
-}
-.desktop-only {
-  @apply hidden lg:block;
+.material-list-item-two-line {
+  @apply py-4;
 }
 
-/* 🎨 Professional Gradients */
-.gradient-bg {
-  @apply bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800;
+/* 🎭 Material Icons */
+.material-icon {
+  @apply w-6 h-6 text-gray-600;
 }
 
-.gradient-text {
-  @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+.material-icon-large {
+  @apply w-8 h-8;
 }
 
-/* 🔍 Focus States */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+/* 🌊 Floating Action Button */
+.fab-container {
+  @apply fixed bottom-20 right-4 z-40;
 }
 
-/* 💫 Loading States */
-.loading {
-  @apply animate-pulse;
+.fab-mini {
+  @apply w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 mb-3;
 }
 
-.spinner {
-  @apply animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full;
+/* 📱 Mobile-First Responsive Design */
+.mobile-container {
+  @apply max-w-sm mx-auto bg-white min-h-screen;
 }
 
-/* 📊 Professional Tables */
-table {
-  @apply w-full border-collapse bg-white rounded-xl overflow-hidden shadow-sm;
+.tablet-container {
+  @apply max-w-2xl mx-auto;
 }
 
-th {
-  @apply bg-gray-50 px-6 py-4 text-left text-sm font-semibold text-gray-900 border-b border-gray-200;
+.desktop-container {
+  @apply max-w-6xl mx-auto;
 }
 
-td {
-  @apply px-6 py-4 text-sm text-gray-700 border-b border-gray-100;
-}
-
-tr:hover {
-  @apply bg-gray-50/50;
-}
-
-/* 🎯 Status Indicators */
-.status-active {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800;
-}
-
-.status-inactive {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800;
-}
-
-.status-pending {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800;
-}
-
-/* 🌙 Dark Mode Support */
+/* 🎨 Dark Mode Support */
 @media (prefers-color-scheme: dark) {
   body {
-    @apply bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 text-gray-100;
+    @apply bg-gray-900 text-gray-100;
   }
   
-  .card {
-    @apply bg-gray-800/90 border-gray-700;
+  .material-card {
+    @apply bg-gray-800 border-gray-700;
   }
   
-  input, textarea, select {
-    @apply bg-gray-800 border-gray-600 text-gray-100 focus:border-blue-400;
+  .app-bar {
+    @apply bg-gray-800 border-gray-700;
+  }
+  
+  .bottom-nav {
+    @apply bg-gray-800 border-gray-700;
+  }
+  
+  .material-input {
+    @apply border-gray-600 text-gray-100;
+  }
+  
+  .material-input:focus {
+    @apply bg-gray-700/30 border-blue-400;
   }
 }
 
-/* 🎨 Custom Animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.float-animation {
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200px 0; }
-  100% { background-position: calc(200px + 100%) 0; }
+/* 🎯 Loading States */
+.skeleton {
+  @apply animate-pulse bg-gray-200 rounded;
 }
 
 .shimmer {
-  animation: shimmer 2s infinite;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200px 100%;
+  @apply relative overflow-hidden;
 }
+
+.shimmer::after {
+  content: '';
+  @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 🎪 Snackbar/Toast */
+.snackbar {
+  @apply fixed bottom-4 left-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-xl z-50 flex items-center justify-between;
+  animation: slideInFromBottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.snackbar-action {
+  @apply text-blue-300 font-medium uppercase text-sm tracking-wide hover:text-blue-200 transition-colors duration-200;
+}
+
+/* 🎨 Enhanced Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* 🎯 Focus Indicators */
+.focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+}
+
+/* 📱 Android-style Switches */
+.switch {
+  @apply relative inline-block w-12 h-6;
+}
+
+.switch input {
+  @apply opacity-0 w-0 h-0;
+}
+
+.slider {
+  @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-all duration-200;
+}
+
+.slider:before {
+  @apply absolute content-[''] h-5 w-5 left-0.5 bottom-0.5 bg-white rounded-full transition-all duration-200;
+}
+
+input:checked + .slider {
+  @apply bg-blue-600;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+/* 🎨 Material Elevation Shadows */
+.elevation-1 { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+.elevation-2 { box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23); }
+.elevation-3 { box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23); }
+.elevation-4 { box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22); }
+.elevation-5 { box-shadow: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22); }
