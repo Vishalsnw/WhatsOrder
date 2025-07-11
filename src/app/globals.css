@@ -1,113 +1,274 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* 🌿 Global Base Styling */
-body {
-  @apply bg-gradient-to-br from-green-50 to-white text-gray-800 antialiased;
-  font-family: 'Inter', sans-serif;
-  line-height: 1.6;
-  scroll-behavior: smooth;
+* {
+  box-sizing: border-box;
 }
 
-/* 🧾 Inputs, Textareas, Selects */
+body {
+  @apply bg-gradient-to-br from-slate-50 via-white to-blue-50 text-gray-900 antialiased;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 🧾 Enhanced Form Controls */
 input,
 textarea,
 select {
-  @apply border border-gray-300 px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200;
+  @apply border border-gray-200 px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/80 backdrop-blur-sm;
+  font-size: 16px; /* Prevents zoom on iOS */
 }
 
-/* 🌗 Dark Mode Prep (Optional) */
-@media (prefers-color-scheme: dark) {
-  body {
-    @apply bg-gray-900 text-gray-100;
-  }
+input:hover,
+textarea:hover,
+select:hover {
+  @apply border-gray-300 shadow-md;
 }
 
-/* 📝 Headings */
-h1, h2, h3, h4 {
-  @apply text-gray-800 font-semibold;
+/* 📝 Professional Typography */
+h1, h2, h3, h4, h5, h6 {
+  @apply text-gray-900 font-semibold leading-tight;
+  letter-spacing: -0.025em;
 }
 
-/* 🔘 Buttons */
+h1 { @apply text-3xl md:text-4xl font-bold; }
+h2 { @apply text-2xl md:text-3xl; }
+h3 { @apply text-xl md:text-2xl; }
+h4 { @apply text-lg md:text-xl; }
+
+/* 🔘 Professional Button Styles */
 button {
-  @apply transition-all duration-200 ease-in-out active:scale-[0.98] font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400;
+  @apply transition-all duration-200 ease-in-out active:scale-[0.98] font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-xl;
 }
 
-/* 🧩 Form Section Cards */
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl focus:ring-blue-500 px-6 py-3;
+}
+
+.btn-secondary {
+  @apply bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md focus:ring-gray-500 px-6 py-3;
+}
+
+.btn-success {
+  @apply bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-lg hover:shadow-xl focus:ring-emerald-500 px-6 py-3;
+}
+
+.btn-danger {
+  @apply bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl focus:ring-red-500 px-6 py-3;
+}
+
+/* 🧩 Professional Card Components */
 .card {
-  @apply bg-white p-6 rounded-xl shadow-md space-y-4;
+  @apply bg-white/90 backdrop-blur-sm p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100;
 }
 
-/* 🖼️ Product Image Styling */
+.card-header {
+  @apply border-b border-gray-100 pb-4 mb-6;
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+}
+
+/* 🖼️ Enhanced Image Styling */
 img {
-  @apply object-cover rounded-lg shadow-sm;
+  @apply object-cover rounded-xl shadow-sm;
 }
 
-/* 🏷️ Labels */
+.product-image {
+  @apply rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300;
+}
+
+/* 🏷️ Professional Labels */
 label {
-  @apply block mb-1 text-sm text-gray-600 font-medium;
+  @apply block mb-2 text-sm font-medium text-gray-700;
 }
 
-/* 🔗 Utility Links */
-.text-link {
-  @apply text-green-600 underline hover:text-green-700 cursor-pointer;
+.label-required::after {
+  content: " *";
+  @apply text-red-500;
 }
 
-/* 📌 Footer Branding */
+/* 🔗 Enhanced Links */
+.link {
+  @apply text-blue-600 hover:text-blue-700 underline decoration-2 underline-offset-2 hover:decoration-blue-300 transition-colors duration-200;
+}
+
+.link-button {
+  @apply text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-200;
+}
+
+/* 📌 Professional Footer */
 .footer {
-  @apply text-center text-xs text-gray-400 mt-6 mb-2;
+  @apply text-center text-sm text-gray-500 mt-8 mb-4 font-medium;
 }
 
-/* 🖱️ Scrollbar Styling (for WebKit browsers) */
+.footer-brand {
+  @apply text-blue-600 font-semibold;
+}
+
+/* 🖱️ Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #10b981; /* green-500 */
+  background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #f3f4f6; /* gray-100 */
+  background: #f8fafc;
 }
 
-/* 📦 Utility Extras */
+/* 📦 Layout Utilities */
 .container {
-  @apply max-w-4xl mx-auto px-4;
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
 .section-title {
-  @apply text-lg font-bold text-gray-700 mb-2;
+  @apply text-2xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200;
 }
 
-/* 🖼️ File Input Styling */
+/* 🖼️ Professional File Input */
 input[type="file"] {
-  @apply bg-white text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100;
+  @apply bg-white text-sm text-gray-700 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:transition-colors file:duration-200;
 }
 
-/* ✅ Toast Notification */
+/* ✅ Enhanced Toast Notifications */
 .toast {
-  @apply fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg text-white shadow-lg z-50;
+  @apply fixed top-4 right-4 px-6 py-4 rounded-xl text-white shadow-2xl z-50 backdrop-blur-sm border-l-4;
+  animation: slideIn 0.3s ease-out;
 }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
 .toast-success {
-  @apply bg-green-600;
+  @apply bg-emerald-600/95 border-emerald-400;
 }
 .toast-error {
-  @apply bg-red-600;
+  @apply bg-red-600/95 border-red-400;
 }
 .toast-info {
-  @apply bg-blue-600;
+  @apply bg-blue-600/95 border-blue-400;
+}
+.toast-warning {
+  @apply bg-amber-600/95 border-amber-400;
 }
 
-/* 🧭 Mobile Menu Backdrop (for Sidebar) */
+/* 🧭 Professional Mobile Menu */
 .backdrop {
-  @apply fixed inset-0 bg-black bg-opacity-40 z-40;
+  @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-40;
+  animation: fadeIn 0.2s ease-out;
 }
 
-/* 📱 Responsive Utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 📱 Responsive Design */
 .mobile-only {
-  @apply block md:hidden;
+  @apply block lg:hidden;
 }
 .desktop-only {
-  @apply hidden md:block;
+  @apply hidden lg:block;
+}
+
+/* 🎨 Professional Gradients */
+.gradient-bg {
+  @apply bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+}
+
+/* 🔍 Focus States */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+/* 💫 Loading States */
+.loading {
+  @apply animate-pulse;
+}
+
+.spinner {
+  @apply animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full;
+}
+
+/* 📊 Professional Tables */
+table {
+  @apply w-full border-collapse bg-white rounded-xl overflow-hidden shadow-sm;
+}
+
+th {
+  @apply bg-gray-50 px-6 py-4 text-left text-sm font-semibold text-gray-900 border-b border-gray-200;
+}
+
+td {
+  @apply px-6 py-4 text-sm text-gray-700 border-b border-gray-100;
+}
+
+tr:hover {
+  @apply bg-gray-50/50;
+}
+
+/* 🎯 Status Indicators */
+.status-active {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800;
+}
+
+.status-inactive {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800;
+}
+
+.status-pending {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800;
+}
+
+/* 🌙 Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  body {
+    @apply bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 text-gray-100;
   }
+  
+  .card {
+    @apply bg-gray-800/90 border-gray-700;
+  }
+  
+  input, textarea, select {
+    @apply bg-gray-800 border-gray-600 text-gray-100 focus:border-blue-400;
+  }
+}
+
+/* 🎨 Custom Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+}
