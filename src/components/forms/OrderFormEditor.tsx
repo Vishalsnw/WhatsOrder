@@ -37,16 +37,17 @@ interface OrderForm {
 
 interface OrderFormEditorProps {
   formId?: string;
+  initialData?: any;
 }
 
-export default function OrderFormEditor({ formId }: OrderFormEditorProps) {
+export default function OrderFormEditor({ formId, initialData }: OrderFormEditorProps) {
   const { user } = useUser();
   const router = useRouter();
   const [form, setForm] = useState<OrderForm>({
-    businessName: '',
+    businessName: initialData?.businessName || '',
     description: '',
     phoneNumber: '',
-    products: [],
+    products: initialData?.products || [],
     userId: user?.uid || '',
     createdAt: new Date(),
     isActive: true,
@@ -74,8 +75,14 @@ export default function OrderFormEditor({ formId }: OrderFormEditorProps) {
   useEffect(() => {
     if (formId) {
       loadForm();
+    } else if (initialData) {
+      setForm(prev => ({
+        ...prev,
+        businessName: initialData.businessName || '',
+        products: initialData.products || []
+      }));
     }
-  }, [formId]);
+  }, [formId, initialData]);
 
   const loadForm = async () => {
     try {
