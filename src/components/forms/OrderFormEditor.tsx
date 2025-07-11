@@ -199,6 +199,20 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
         const formsRef = collection(db, 'users', user.uid, 'forms');
         const docRef = await addDoc(formsRef, formData);
 
+        // Also save to public collection for sharing
+        const publicFormRef = doc(db, 'publicForms', docRef.id);
+        await setDoc(publicFormRef, {
+          businessName: form.businessName,
+          phoneNumber: form.phoneNumber,
+          products: form.products,
+          slug: '', // Assuming slug is generated elsewhere or not needed here
+          customization: form.customization,
+          createdAt: new Date(),
+          views: 0,
+          orders: 0,
+          userId: user.uid
+        });
+
         // Also save user profile with business info for auto-fill
         const userRef = doc(db, 'users', user.uid);
         await setDoc(userRef, {

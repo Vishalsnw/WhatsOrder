@@ -34,44 +34,52 @@ export default function EditFormPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    const loadData = async () => {
-      if (!id) return;
-
+    const loadFormData = async () => {
       try {
-        const ref = doc(db, 'forms', id);
-        const snap = await getDoc(ref);
+        // Try to load from user's collection first
+        const userFormRef = doc(db, 'users', user.uid, 'forms', id);
+        const userFormSnap = await getDoc(userFormRef);
 
-        if (snap.exists()) {
-          const data = snap.data();
+        if (userFormSnap.exists()) {
+          const data = userFormSnap.data();
           setBizName(data.businessName || '');
-          setWhatsapp(
-            data.whatsappNumber?.startsWith('+91')
-              ? data.whatsappNumber
-              : `+91${data.whatsappNumber || ''}`
-          );
-          setProducts(
-            (data.products || []).map((p: any) => ({
-              name: p.name || '',
-              price: p.price || '',
-              image: p.image || '',
-              file: null,
-            }))
-          );
+          setWhatsapp(data.phoneNumber || '+91');
+          setProducts(data.products || []);
+          return;
+        }
+
+        // If not found, try public collection (for backward compatibility)
+        const publicFormRef = doc(db, 'publicForms', id);
+        const publicFormSnap = await getDoc(publicFormRef);
+
+        if (publicFormSnap.exists()) {
+          const data = publicFormSnap.data();
+          // Check if current user owns this form
+          if (data.userId === user.uid) {
+            setBizName(data.businessName || '');
+            setWhatsapp(data.phoneNumber || '+91');
+            setProducts(data.products || []);
+          } else {
+            alert('You do not have permission to edit this form.');
+            router.push('/dashboard');
+          }
         } else {
           alert('Form not found.');
           router.push('/dashboard');
         }
       } catch (err) {
         console.error('Error loading form:', err);
-        alert('Failed to load form.');
+        alert('Error loading form.');
         router.push('/dashboard');
       } finally {
         setLoadingData(false);
       }
     };
 
-    loadData();
-  }, [id, router]);
+    if (user && id) {
+      loadFormData();
+    }
+  }, [id, router, user]);
 
   const handleChange = (
     index: number,

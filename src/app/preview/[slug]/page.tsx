@@ -48,27 +48,22 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
     const loadFormData = async () => {
       try {
         if (formId) {
-          // Try to find form in all users' collections by ID
-          const usersRef = collection(db, 'users');
-          const usersSnapshot = await getDocs(usersRef);
+          // First try to load from public forms collection (for shared forms)
+          const publicFormRef = doc(db, 'publicForms', formId);
+          const publicFormSnap = await getDoc(publicFormRef);
 
-          for (const userDoc of usersSnapshot.docs) {
-            const formRef = doc(db, 'users', userDoc.id, 'forms', formId);
-            const formSnap = await getDoc(formRef);
-
-            if (formSnap.exists()) {
-              const data = formSnap.data();
-              setFormData({
-                ...data,
-                id: formId,
-                createdAt: data.createdAt?.toDate() || new Date()
-              });
-              setLoading(false);
-              return;
-            }
+          if (publicFormSnap.exists()) {
+            const data = publicFormSnap.data();
+            setFormData({
+              ...data,
+              id: formId,
+              createdAt: data.createdAt?.toDate() || new Date()
+            });
+            setLoading(false);
+            return;
           }
 
-          // If not found by ID, try old collection
+          // If not found in public forms, try old collection for backward compatibility
           const oldFormRef = doc(db, 'forms', formId);
           const oldFormSnap = await getDoc(oldFormRef);
 
@@ -83,26 +78,21 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
             setError('Form not found');
           }
         } else if (resolvedParams.slug) {
-          // Search by slug in all users' collections
-          const usersRef = collection(db, 'users');
-          const usersSnapshot = await getDocs(usersRef);
+          // Search by slug in public forms
+          const publicFormsRef = collection(db, 'publicForms');
+          const slugQuery = query(publicFormsRef, where('slug', '==', resolvedParams.slug));
+          const formsSnapshot = await getDocs(slugQuery);
 
-          for (const userDoc of usersSnapshot.docs) {
-            const formsRef = collection(db, 'users', userDoc.id, 'forms');
-            const slugQuery = query(formsRef, where('slug', '==', resolvedParams.slug));
-            const formsSnapshot = await getDocs(slugQuery);
-
-            if (!formsSnapshot.empty) {
-              const formDoc = formsSnapshot.docs[0];
-              const data = formDoc.data();
-              setFormData({
-                ...data,
-                id: formDoc.id,
-                createdAt: data.createdAt?.toDate() || new Date()
-              });
-              setLoading(false);
-              return;
-            }
+          if (!formsSnapshot.empty) {
+            const formDoc = formsSnapshot.docs[0];
+            const data = formDoc.data();
+            setFormData({
+              ...data,
+              id: formDoc.id,
+              createdAt: data.createdAt?.toDate() || new Date()
+            });
+            setLoading(false);
+            return;
           }
 
           setError('Form not found');
