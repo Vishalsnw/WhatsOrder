@@ -131,15 +131,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex items-center space-x-3 mb-3">
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-sm font-semibold text-blue-600">
-                  {user.displayName?.charAt(0) || user.phoneNumber?.charAt(1) || '?'}
+                  {user.displayName?.charAt(0) || '👤'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="material-subtitle2 text-gray-900 truncate">
-                  {user.displayName || 'User'}
+                  {user.displayName || 'Anonymous User'}
                 </p>
                 <p className="material-caption text-gray-600 truncate">
-                  {user.phoneNumber}
+                  {user.email || user.phoneNumber || 'Anonymous'}
                 </p>
               </div>
             </div>

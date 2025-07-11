@@ -2,140 +2,98 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, signInAnonymouslyUser } from '@/lib/firebase';
 import { db } from '@/lib/firestore';
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  ConfirmationResult,
-  onAuthStateChanged,
-} from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginForm() {
   const router = useRouter();
-
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'enter-phone' | 'verify-otp'>('enter-phone');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
 
-  // ✅ Check for existing user login
+  // Check for existing user login
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setLoggedInUser(user.phoneNumber || null);
-        router.push('/dashboard'); // ✅ Redirect to dashboard
+        setLoggedInUser(user.uid);
+        router.push('/dashboard');
       }
     });
 
     return () => unsubscribe();
   }, [router]);
 
-  // ✅ Send OTP
-  const sendOTP = async () => {
-    if (!phone || phone.length < 10) {
-      alert('Please enter a valid phone number');
-      return;
-    }
-
+  // Anonymous sign-in
+  const handleAnonymousLogin = async () => {
     try {
       setLoading(true);
-
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-          callback: () => {},
-        });
-      }
-
-      const fullPhone = phone.startsWith('+') ? phone : `+${phone}`;
-      const confirmation = await signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier);
-      setConfirmationResult(confirmation);
-      setStep('verify-otp');
-    } catch (err) {
-      console.error('OTP Error:', err);
-      alert('Failed to send OTP. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Verify OTP and save user
-  const verifyOTP = async () => {
-    if (!otp || !confirmationResult) return;
-
-    try {
-      setLoading(true);
-      const result = await confirmationResult.confirm(otp);
+      const result = await signInAnonymouslyUser();
       const user = result.user;
 
-      // ✅ Save to Firestore
+      // Save anonymous user to Firestore
       await setDoc(doc(db, 'users', user.uid), {
-        phone: user.phoneNumber,
+        uid: user.uid,
+        isAnonymous: true,
         createdAt: serverTimestamp(),
       });
 
-      alert(`✅ Logged in as ${user.phoneNumber}`);
       router.push('/dashboard');
-    } catch (err) {
-      console.error('OTP Verification Failed:', err);
-      alert('Invalid OTP. Please try again.');
+    } catch (error) {
+      console.error('Anonymous login failed:', error);
+      alert('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-10 bg-white p-6 rounded-xl shadow-lg space-y-4">
-      <h2 className="text-xl font-bold text-center text-indigo-700">📲 Login with Phone</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="max-w-md w-full mx-4">
+        <div className="material-card p-8 text-center">
+          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-3xl">📱</span>
+          </div>
 
-      {loggedInUser ? (
-        <p className="text-center text-green-600">Already logged in as {loggedInUser}</p>
-      ) : (
-        <>
-          {step === 'enter-phone' ? (
-            <>
-              <input
-                type="tel"
-                placeholder="Enter phone (e.g. +91XXXXXXXXXX)"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full"
-              />
-              <button
-                onClick={sendOTP}
-                disabled={loading}
-                className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
-              >
-                {loading ? 'Sending OTP...' : 'Send OTP'}
-              </button>
-            </>
+          <h1 className="material-headline5 text-gray-900 mb-2">Welcome to WhatsOrder</h1>
+          <p className="material-body2 text-gray-600 mb-8">
+            Create beautiful order forms for your business
+          </p>
+
+          {loggedInUser ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 rounded-xl">
+                <p className="material-subtitle2 text-green-800">Already logged in</p>
+                <p className="material-caption text-green-600">Redirecting to dashboard...</p>
+              </div>
+            </div>
           ) : (
-            <>
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full"
-              />
+            <div className="space-y-4">
               <button
-                onClick={verifyOTP}
+                onClick={handleAnonymousLogin}
                 disabled={loading}
-                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+                className="w-full material-button material-button-primary"
               >
-                {loading ? 'Verifying...' : 'Verify OTP'}
+                {loading ? (
+                  <>
+                    <span className="mr-2">⏳</span>
+                    Getting Started...
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">🚀</span>
+                    Get Started
+                  </>
+                )}
               </button>
-            </>
-          )}
-        </>
-      )}
 
-      {/* 🔐 Hidden Recaptcha */}
-      <div id="recaptcha-container"></div>
+              <p className="material-caption text-gray-500">
+                No signup required. Start creating forms instantly.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-          }
+}

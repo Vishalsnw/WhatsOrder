@@ -58,14 +58,16 @@ export default function MyFormsPage() {
           slug: data.slug || '',
           createdAt: data.createdAt?.toDate() || new Date(),
           products: data.products || [],
-          views: data.views || Math.floor(Math.random() * 100),
-          orders: data.orders || Math.floor(Math.random() * 20)
+          views: data.views || 0,
+          orders: data.orders || 0
         };
       });
 
       setForms(formsData);
     } catch (error) {
       console.error('Error loading forms:', error);
+      // For now, just set empty forms array if there's a permission error
+      setForms([]);
     } finally {
       setLoadingForms(false);
     }
