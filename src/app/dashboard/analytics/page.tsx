@@ -321,3 +321,201 @@ export default function AnalyticsPage() {
     </DashboardLayout>
   );
 }
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/hooks/useUser';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+
+export default function AnalyticsPage() {
+  const { user, loading } = useUser();
+  const router = useRouter();
+  const [timeRange, setTimeRange] = useState('7days');
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+  }, [user, loading, router]);
+
+  const analyticsData = {
+    views: 1234,
+    orders: 89,
+    revenue: 2456.78,
+    conversionRate: 7.2,
+    topProducts: [
+      { name: 'Pizza Margherita', orders: 23, revenue: 287.77 },
+      { name: 'Chicken Wings', orders: 18, revenue: 161.82 },
+      { name: 'Caesar Salad', orders: 15, revenue: 119.85 }
+    ],
+    dailyOrders: [
+      { day: 'Mon', orders: 12 },
+      { day: 'Tue', orders: 18 },
+      { day: 'Wed', orders: 15 },
+      { day: 'Thu', orders: 22 },
+      { day: 'Fri', orders: 28 },
+      { day: 'Sat', orders: 35 },
+      { day: 'Sun', orders: 19 }
+    ]
+  };
+
+  if (loading || !user) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-4 animate-pulse">
+          <div className="skeleton h-8 w-48"></div>
+          <div className="grid grid-cols-2 gap-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="skeleton h-24 rounded-2xl"></div>
+            ))}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="material-card p-6 bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="material-headline5 text-white">Analytics</h1>
+              <p className="material-subtitle1 text-purple-100">
+                Track your business performance
+              </p>
+            </div>
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+              <span className="text-2xl">📊</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Time Range Selector */}
+        <div className="flex space-x-2 overflow-x-auto pb-2">
+          {['7days', '30days', '90days', '1year'].map((range) => (
+            <button
+              key={range}
+              onClick={() => setTimeRange(range)}
+              className={`px-4 py-2 rounded-full whitespace-nowrap ${
+                timeRange === range
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {range === '7days' ? 'Last 7 Days' : 
+               range === '30days' ? 'Last 30 Days' :
+               range === '90days' ? 'Last 90 Days' : 'Last Year'}
+            </button>
+          ))}
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="material-card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="material-caption text-gray-600">Total Views</p>
+                <p className="material-headline4 text-gray-900">{analyticsData.views.toLocaleString()}</p>
+                <p className="material-caption text-green-600">+12% vs last period</p>
+              </div>
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-lg">👁️</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="material-card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="material-caption text-gray-600">Orders</p>
+                <p className="material-headline4 text-gray-900">{analyticsData.orders}</p>
+                <p className="material-caption text-green-600">+8% vs last period</p>
+              </div>
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-lg">🛒</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="material-card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="material-caption text-gray-600">Revenue</p>
+                <p className="material-headline4 text-gray-900">${analyticsData.revenue.toFixed(2)}</p>
+                <p className="material-caption text-green-600">+15% vs last period</p>
+              </div>
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span className="text-lg">💰</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="material-card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="material-caption text-gray-600">Conversion Rate</p>
+                <p className="material-headline4 text-gray-900">{analyticsData.conversionRate}%</p>
+                <p className="material-caption text-green-600">+2.1% vs last period</p>
+              </div>
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <span className="text-lg">📈</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Daily Orders Chart */}
+        <div className="material-card p-6">
+          <h3 className="material-headline6 mb-4">Daily Orders</h3>
+          <div className="flex items-end justify-between h-40 space-x-2">
+            {analyticsData.dailyOrders.map((day, index) => (
+              <div key={index} className="flex-1 flex flex-col items-center">
+                <div
+                  className="w-full bg-blue-600 rounded-t-lg mb-2"
+                  style={{
+                    height: `${(day.orders / Math.max(...analyticsData.dailyOrders.map(d => d.orders))) * 100}%`,
+                    minHeight: '4px'
+                  }}
+                ></div>
+                <p className="material-caption text-gray-600">{day.day}</p>
+                <p className="material-caption text-gray-900 font-semibold">{day.orders}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Products */}
+        <div className="material-card">
+          <div className="p-4 border-b border-gray-100">
+            <h3 className="material-headline6">Top Products</h3>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {analyticsData.topProducts.map((product, index) => (
+              <div key={index} className="material-list-item-two-line">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-semibold text-blue-600">#{index + 1}</span>
+                    </div>
+                    <div>
+                      <p className="material-subtitle2 text-gray-900">{product.name}</p>
+                      <p className="material-caption text-gray-600">{product.orders} orders</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="material-subtitle2 text-gray-900">${product.revenue.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
