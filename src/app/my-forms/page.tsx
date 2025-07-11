@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -47,7 +46,7 @@ export default function MyFormsPage() {
       const userFormsRef = collection(db, 'users', user.uid, 'forms');
       const q = query(userFormsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      
+
       const formsData: FormData[] = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
@@ -73,7 +72,7 @@ export default function MyFormsPage() {
 
   const handleDelete = async (formId: string) => {
     if (!user) return;
-    
+
     if (!confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
       return;
     }
@@ -90,15 +89,22 @@ export default function MyFormsPage() {
     }
   };
 
-  const copyFormLink = async (slug: string, formId: string) => {
-    const link = `${window.location.origin}/preview/${slug}?id=${formId}`;
+  const copyFormLink = async (slug: string, id: string) => {
+    const formUrl = `${window.location.origin}/preview/${slug}?id=${id}`;
     try {
-      await navigator.clipboard.writeText(link);
-      alert('Form link copied to clipboard!');
-    } catch (error) {
-      console.error('Error copying link:', error);
-      alert('Unable to copy link. Please try again.');
+      await navigator.clipboard.writeText(formUrl);
+      alert('✅ Form link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      alert('❌ Failed to copy link. Please try again.');
     }
+  };
+
+  const shareToWhatsApp = (businessName: string, slug: string, id: string) => {
+    const formUrl = `${window.location.origin}/preview/${slug}?id=${id}`;
+    const shareMessage = `🛍️ Check out ${businessName}'s order form!\n\nPlace your order easily: ${formUrl}\n\n#WhatsOrder`;
+    const shareUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+    window.open(shareUrl, '_blank');
   };
 
   if (loading || !user) {
@@ -222,6 +228,13 @@ export default function MyFormsPage() {
                       >
                         <span className="mr-1">🔗</span>
                         Copy Link
+                      </button>
+                       <button
+                        onClick={() => shareToWhatsApp(form.businessName, form.slug, form.id)}
+                        className="material-button material-button-secondary"
+                      >
+                        <span className="mr-1">🔗</span>
+                        Share to WhatsApp
                       </button>
                     </div>
                     <div className="flex space-x-2">

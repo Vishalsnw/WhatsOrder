@@ -217,12 +217,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
     window.open(url, '_blank');
   };
 
-  const handleShareToWhatsApp = () => {
-    const currentUrl = window.location.href;
-    const shareMessage = `Check out ${businessName}'s order form: ${currentUrl}`;
-    const shareUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
-    window.open(shareUrl, '_blank');
-  };
+  
 
   if (loading) {
     return (
@@ -279,23 +274,6 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Share Button - Always Visible and Prominent */}
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-            <div className="text-center mb-3">
-              <h3 className="text-lg font-semibold text-green-800 mb-1">📢 Share This Form</h3>
-              <p className="text-sm text-green-600">Share with your customers via WhatsApp</p>
-            </div>
-            <div className="flex justify-center">
-              <button
-                onClick={handleShareToWhatsApp}
-                className="flex items-center space-x-3 bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold text-lg w-full max-w-xs justify-center"
-              >
-                <span className="text-xl">📱</span>
-                <span>Share to WhatsApp</span>
-              </button>
-            </div>
-          </div>
-
           {/* Products */}
           {parsedProducts.length === 0 ? (
             <div className="text-center py-8">
