@@ -1,202 +1,197 @@
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
-import { uploadImage } from '@/lib/storage';
-import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-
-interface ProductInput {
-  name: string;
-  price: string;
-  image: string;
-  file: File | null;
-}
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import OrderFormEditor from '@/components/forms/OrderFormEditor';
 
 export default function CreateFormPage() {
   const router = useRouter();
-  const { user, loading } = useUser();
+  const [showTemplates, setShowTemplates] = useState(false);
 
-  const [bizName, setBizName] = useState('');
-  const [whatsapp, setWhatsapp] = useState('+91');
-  const [products, setProducts] = useState<ProductInput[]>([
-    { name: '', price: '', image: '', file: null },
-  ]);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
+  const templates = [
+    {
+      id: 'restaurant',
+      name: 'Restaurant Menu',
+      description: 'Perfect for restaurants and food delivery',
+      icon: '🍽️',
+      color: 'from-orange-500 to-red-500'
+    },
+    {
+      id: 'retail',
+      name: 'Retail Store',
+      description: 'Great for clothing and retail businesses',
+      icon: '👕',
+      color: 'from-purple-500 to-pink-500'
+    },
+    {
+      id: 'services',
+      name: 'Service Business',
+      description: 'Ideal for service-based businesses',
+      icon: '🔧',
+      color: 'from-blue-500 to-cyan-500'
+    },
+    {
+      id: 'custom',
+      name: 'Start from Scratch',
+      description: 'Build your own custom form',
+      icon: '✨',
+      color: 'from-gray-600 to-gray-700'
     }
+  ];
 
-    if (user?.phoneNumber && whatsapp === '+91') {
-      const formatted = user.phoneNumber.startsWith('+91')
-        ? user.phoneNumber
-        : `+91${user.phoneNumber.replace(/^\+?91/, '')}`;
-      setWhatsapp(formatted);
-    }
-  }, [user, loading, router]);
-
-  const handleProductChange = (
-    index: number,
-    field: 'name' | 'price',
-    value: string
-  ) => {
-    const updated = [...products];
-    updated[index][field] = value;
-    setProducts(updated);
-  };
-
-  const handleFileChange = (index: number, file: File | null) => {
-    const updated = [...products];
-    updated[index].file = file;
-    setProducts(updated);
-  };
-
-  const addProduct = () => {
-    setProducts([...products, { name: '', price: '', image: '', file: null }]);
-  };
-
-  const handleCreateForm = async () => {
-    const trimmedBiz = bizName.trim();
-    const trimmedPhone = whatsapp.trim();
-
-    if (!trimmedBiz || !trimmedPhone) {
-      alert('Please fill business name and WhatsApp number.');
-      return;
-    }
-
-    const validProducts = products.filter(
-      (p) => p.name.trim() && p.price.trim() && !isNaN(Number(p.price))
-    );
-
-    if (validProducts.length === 0) {
-      alert('Please add at least one product with valid name and price.');
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const uploadedProducts = await Promise.all(
-        validProducts.map(async (p) => {
-          let imageUrl = '';
-          if (p.file) {
-            imageUrl = await uploadImage(p.file);
-          }
-          return {
-            name: p.name.trim(),
-            price: Number(p.price),
-            image: imageUrl,
-          };
-        })
-      );
-
-      const slug = trimmedBiz
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '');
-
-      const docRef = await addDoc(collection(db, 'forms'), {
-        owner: user?.uid || '',
-        businessName: trimmedBiz,
-        whatsappNumber: trimmedPhone,
-        slug,
-        products: uploadedProducts,
-        createdAt: serverTimestamp(),
-      });
-
-      // Generate proper preview URL with direct parameters
-      const encodedProducts = uploadedProducts
-        .map((p) => `${encodeURIComponent(p.name)}-${p.price}${p.image ? `-${encodeURIComponent(p.image)}` : ''}`)
-        .join(',');
-
-      const previewUrl = `/preview/${slug}?biz=${encodeURIComponent(trimmedBiz)}&phone=${encodeURIComponent(trimmedPhone)}&products=${encodedProducts}`;
-      
-      router.push(previewUrl);
-    } catch (err) {
-      console.error('🔥 Error creating form:', err);
-      alert('Failed to create form.');
-    } finally {
-      setSaving(false);
-    }
+  const handleTemplateSelect = (templateId: string) => {
+    setShowTemplates(false);
+    // Navigate to form editor with template
+    router.push(`/dashboard/forms/new?template=${templateId}`);
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold text-indigo-600 text-center">
-        📋 Create Order Form
-      </h1>
-
-      <input
-        type="text"
-        placeholder="Business Name"
-        value={bizName}
-        onChange={(e) => setBizName(e.target.value)}
-        className="w-full border rounded px-3 py-2"
-      />
-
-      <input
-        type="tel"
-        placeholder="e.g. +91XXXXXXXXXX"
-        value={whatsapp}
-        onChange={(e) => {
-          const value = e.target.value.replace(/^\+?91/, '');
-          setWhatsapp('+91' + value.slice(0, 10));
-        }}
-        className="w-full border rounded px-3 py-2"
-        maxLength={13}
-      />
-
-      <div>
-        <h3 className="text-gray-700 font-semibold mb-2">🛍️ Products</h3>
-        {products.map((p, i) => (
-          <div key={i} className="space-y-2 mb-4 border p-3 rounded-lg bg-gray-50">
-            <input
-              type="text"
-              placeholder="Product Name"
-              value={p.name}
-              onChange={(e) => handleProductChange(i, 'name', e.target.value)}
-              className="w-full border rounded px-3 py-2"
-            />
-            <input
-              type="number"
-              placeholder="Price"
-              min="1"
-              value={p.price}
-              onChange={(e) => handleProductChange(i, 'price', e.target.value)}
-              className="w-full border rounded px-3 py-2"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileChange(i, e.target.files?.[0] || null)}
-              className="w-full"
-            />
-            {p.file && (
-              <div className="text-sm text-gray-500">
-                Selected file: {p.file.name}
-              </div>
-            )}
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="material-card p-6 bg-gradient-to-r from-green-600 to-green-700 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="material-headline5 text-white">Create New Form</h1>
+              <p className="material-subtitle1 text-green-100">
+                Start building your order form
+              </p>
+            </div>
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+              <span className="text-2xl">✨</span>
+            </div>
           </div>
-        ))}
-        <button
-          type="button"
-          onClick={addProduct}
-          className="text-sm text-indigo-600 hover:underline mt-1"
-        >
-          + Add Product
-        </button>
-      </div>
+        </div>
 
-      <button
-        onClick={handleCreateForm}
-        disabled={saving}
-        className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
-      >
-        {saving ? 'Saving...' : 'Create Form'}
-      </button>
-    </div>
+        {/* Quick Start Options */}
+        <div className="space-y-4">
+          <h2 className="material-headline6 text-gray-900">Quick Start</h2>
+          
+          <div className="grid grid-cols-1 gap-4">
+            <button
+              onClick={() => setShowTemplates(true)}
+              className="material-card p-6 text-left hover:scale-105 transition-transform duration-200"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">📋</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="material-subtitle1 text-gray-900">Use Template</h3>
+                  <p className="material-body2 text-gray-600">Start with a pre-built template</p>
+                </div>
+                <span className="material-icon text-gray-400">→</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push('/dashboard/forms/new')}
+              className="material-card p-6 text-left hover:scale-105 transition-transform duration-200"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">🚀</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="material-subtitle1 text-gray-900">Start from Scratch</h3>
+                  <p className="material-body2 text-gray-600">Build a completely custom form</p>
+                </div>
+                <span className="material-icon text-gray-400">→</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="material-card p-6">
+          <h3 className="material-headline6 text-gray-900 mb-4">What you can create</h3>
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-1">
+                <span className="text-sm">📱</span>
+              </div>
+              <div>
+                <p className="material-subtitle2 text-gray-900">Mobile-Optimized Forms</p>
+                <p className="material-body2 text-gray-600">Beautiful forms that work perfectly on all devices</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mt-1">
+                <span className="text-sm">💬</span>
+              </div>
+              <div>
+                <p className="material-subtitle2 text-gray-900">WhatsApp Integration</p>
+                <p className="material-body2 text-gray-600">Orders sent directly to your WhatsApp</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mt-1">
+                <span className="text-sm">🎨</span>
+              </div>
+              <div>
+                <p className="material-subtitle2 text-gray-900">Custom Branding</p>
+                <p className="material-body2 text-gray-600">Add your logo, colors, and branding</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mt-1">
+                <span className="text-sm">📊</span>
+              </div>
+              <div>
+                <p className="material-subtitle2 text-gray-900">Real-time Analytics</p>
+                <p className="material-body2 text-gray-600">Track views, clicks, and conversions</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Templates Modal */}
+        {showTemplates && (
+          <>
+            <div 
+              className="fixed inset-0 z-40 bg-black/50"
+              onClick={() => setShowTemplates(false)}
+            />
+            <div className="fixed inset-x-4 top-20 bottom-20 z-50 material-card p-6 overflow-y-auto animate-slide-in-bottom">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="material-headline5 text-gray-900">Choose Template</h3>
+                <button
+                  onClick={() => setShowTemplates(false)}
+                  className="p-2 rounded-full hover:bg-gray-100"
+                >
+                  <span className="material-icon">✕</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {templates.map((template) => (
+                  <button
+                    key={template.id}
+                    onClick={() => handleTemplateSelect(template.id)}
+                    className="w-full material-card p-4 text-left hover:shadow-lg transition-all duration-200"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-12 h-12 bg-gradient-to-r ${template.color} rounded-full flex items-center justify-center`}>
+                        <span className="text-2xl">{template.icon}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="material-subtitle1 text-gray-900">{template.name}</h4>
+                        <p className="material-body2 text-gray-600">{template.description}</p>
+                      </div>
+                      <span className="material-icon text-gray-400">→</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </DashboardLayout>
   );
-  }
+}
