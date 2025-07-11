@@ -95,6 +95,33 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
             return;
           }
 
+          // If not found in public forms, search in all users' subcollections
+          // This is a fallback for forms that might not be in public collection
+          try {
+            const usersRef = collection(db, 'users');
+            const usersSnapshot = await getDocs(usersRef);
+            
+            for (const userDoc of usersSnapshot.docs) {
+              const userFormsRef = collection(db, 'users', userDoc.id, 'forms');
+              const userFormsQuery = query(userFormsRef, where('slug', '==', resolvedParams.slug));
+              const userFormsSnapshot = await getDocs(userFormsQuery);
+              
+              if (!userFormsSnapshot.empty) {
+                const formDoc = userFormsSnapshot.docs[0];
+                const data = formDoc.data();
+                setFormData({
+                  ...data,
+                  id: formDoc.id,
+                  createdAt: data.createdAt?.toDate() || new Date()
+                });
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (userSearchError) {
+            console.error('Error searching user forms:', userSearchError);
+          }
+
           setError('Form not found');
         }
       } catch (error) {
@@ -252,26 +279,21 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Share Button - More Prominent */}
-          <div className="flex justify-center">
-            <button
-              onClick={handleShareToWhatsApp}
-              className="flex items-center space-x-3 bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold text-lg"
-            >
-              <span className="text-xl">📱</span>
-              <span>Share to WhatsApp</span>
-            </button>
-          </div>
-          
-          {/* Alternative small share button */}
-          <div className="flex justify-center">
-            <button
-              onClick={handleShareToWhatsApp}
-              className="flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors border border-green-300"
-            >
-              <span>📤</span>
-              <span className="text-sm font-medium">Share this form</span>
-            </button>
+          {/* Share Button - Always Visible and Prominent */}
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+            <div className="text-center mb-3">
+              <h3 className="text-lg font-semibold text-green-800 mb-1">📢 Share This Form</h3>
+              <p className="text-sm text-green-600">Share with your customers via WhatsApp</p>
+            </div>
+            <div className="flex justify-center">
+              <button
+                onClick={handleShareToWhatsApp}
+                className="flex items-center space-x-3 bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold text-lg w-full max-w-xs justify-center"
+              >
+                <span className="text-xl">📱</span>
+                <span>Share to WhatsApp</span>
+              </button>
+            </div>
           </div>
 
           {/* Products */}

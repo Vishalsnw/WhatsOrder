@@ -49,7 +49,7 @@ export default function EditFormPage() {
         if (userFormSnap.exists()) {
           const data = userFormSnap.data();
           setBizName(data.businessName || '');
-          setWhatsapp(data.phoneNumber || '+91');
+          setWhatsapp(data.phoneNumber || data.whatsappNumber || '+91');
           setProducts(data.products || []);
           return;
         }
@@ -63,7 +63,26 @@ export default function EditFormPage() {
           // Check if current user owns this form
           if (data.userId === user.uid) {
             setBizName(data.businessName || '');
-            setWhatsapp(data.phoneNumber || '+91');
+            setWhatsapp(data.phoneNumber || data.whatsappNumber || '+91');
+            setProducts(data.products || []);
+            return;
+          } else {
+            alert('You do not have permission to edit this form.');
+            router.push('/dashboard');
+            return;
+          }
+        }
+
+        // If not found in either collection, try old forms collection
+        const oldFormRef = doc(db, 'forms', id);
+        const oldFormSnap = await getDoc(oldFormRef);
+
+        if (oldFormSnap.exists()) {
+          const data = oldFormSnap.data();
+          // Check if current user owns this form
+          if (data.userId === user.uid) {
+            setBizName(data.businessName || '');
+            setWhatsapp(data.phoneNumber || data.whatsappNumber || '+91');
             setProducts(data.products || []);
           } else {
             alert('You do not have permission to edit this form.');
@@ -149,6 +168,19 @@ export default function EditFormPage() {
         products: updatedProducts,
         updatedAt: new Date(),
       });
+
+      // Also update in public collection for sharing
+      try {
+        await updateDoc(doc(db, 'publicForms', id!), {
+          businessName: bizName.trim(),
+          phoneNumber: '+91' + cleanPhone.slice(-10),
+          products: updatedProducts,
+          updatedAt: new Date(),
+          userId: user!.uid,
+        });
+      } catch (publicUpdateError) {
+        console.warn('Could not update public form:', publicUpdateError);
+      }
 
       const slug = bizName
         .toLowerCase()
