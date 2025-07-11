@@ -24,11 +24,17 @@ function isValidProduct(obj: any): obj is Product {
   );
 }
 
-export default function PreviewOrderPage({ params }: { params: { slug: string } }) {
+export default function PreviewOrderPage({ params }: { params: Promise<{ slug: string }> }) {
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resolvedParams, setResolvedParams] = useState<{ slug: string } | null>(null);
+
+  // Resolve params promise
+  useEffect(() => {
+    params.then(setResolvedParams);
+  }, [params]);
 
   // Check if we have an ID parameter (loading from database)
   const formId = searchParams.get('id');
@@ -38,6 +44,8 @@ export default function PreviewOrderPage({ params }: { params: { slug: string } 
 
   // Load form data if ID is provided, otherwise search by slug
   useEffect(() => {
+    if (!resolvedParams) return;
+
     const loadFormData = async () => {
       try {
         if (formId) {
@@ -75,14 +83,14 @@ export default function PreviewOrderPage({ params }: { params: { slug: string } 
           } else {
             setError('Form not found');
           }
-        } else if (params.slug) {
+        } else if (resolvedParams.slug) {
           // Search by slug in all users' collections
           const usersRef = collection(db, 'users');
           const usersSnapshot = await getDocs(usersRef);
           
           for (const userDoc of usersSnapshot.docs) {
             const formsRef = collection(db, 'users', userDoc.id, 'forms');
-            const slugQuery = query(formsRef, where('slug', '==', params.slug));
+            const slugQuery = query(formsRef, where('slug', '==', resolvedParams.slug));
             const formsSnapshot = await getDocs(slugQuery);
             
             if (!formsSnapshot.empty) {
@@ -108,7 +116,7 @@ export default function PreviewOrderPage({ params }: { params: { slug: string } 
     };
 
     loadFormData();
-  }, [formId, params.slug]);
+  }, [formId, resolvedParams]);
 
   // Determine business name, phone, and products
   const businessName = formData?.businessName || decodeURIComponent(directBiz || 'Business');
