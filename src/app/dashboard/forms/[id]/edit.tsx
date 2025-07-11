@@ -35,8 +35,8 @@ export default function EditFormPage() {
 
   useEffect(() => {
     const loadFormData = async () => {
-      if (!id) {
-        alert('Form ID is missing.');
+      if (!id || !user) {
+        alert('Form ID is missing or user not authenticated.');
         router.push('/dashboard');
         return;
       }
