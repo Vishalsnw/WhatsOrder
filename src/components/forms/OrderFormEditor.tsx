@@ -6,7 +6,6 @@ import { uploadImage } from '@/lib/storage';
 interface Product {
   name: string;
   price: string;
-  quantity: string;
   image?: string;
   file?: File | null;
 }
@@ -37,7 +36,7 @@ export default function OrderFormEditor({
   const [products, setProducts] = useState<Product[]>(
     initialProducts.length > 0
       ? initialProducts
-      : [{ name: '', price: '', quantity: '', image: '', file: null }]
+      : [{ name: '', price: '', image: '', file: null }]
   );
   const [uploading, setUploading] = useState(false);
 
@@ -58,7 +57,7 @@ export default function OrderFormEditor({
   const addProduct = () => {
     setProducts([
       ...products,
-      { name: '', price: '', quantity: '', image: '', file: null },
+      { name: '', price: '', image: '', file: null },
     ]);
   };
 
@@ -91,9 +90,8 @@ export default function OrderFormEditor({
     for (const product of products) {
       const name = product.name.trim();
       const price = Number(product.price);
-      const quantity = Number(product.quantity);
 
-      if (!name || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
+      if (!name || isNaN(price) || price <= 0) {
         continue;
       }
 
@@ -112,7 +110,6 @@ export default function OrderFormEditor({
       validProducts.push({
         name,
         price: String(price),
-        quantity: String(quantity),
         image: imageUrl,
       });
     }
@@ -174,17 +171,6 @@ export default function OrderFormEditor({
               value={product.price}
               onChange={(e) =>
                 handleProductChange(index, 'price', e.target.value)
-              }
-              className="w-full border px-3 py-2 rounded"
-              min="1"
-            />
-
-            <input
-              type="number"
-              placeholder="Quantity"
-              value={product.quantity}
-              onChange={(e) =>
-                handleProductChange(index, 'quantity', e.target.value)
               }
               className="w-full border px-3 py-2 rounded"
               min="1"

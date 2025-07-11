@@ -100,6 +100,13 @@ export default function OrderFormPage() {
         });
 
         alert('✅ Form saved successfully! Redirecting to dashboard...');
+        
+        // Reset form state
+        setBusinessName('');
+        setWhatsappNumber('+91');
+        setProducts([{ name: '', price: '', image: '' }]);
+        setGeneratedLink('');
+        
         setTimeout(() => router.push('/dashboard'), 1500);
       }
     } catch (err) {
