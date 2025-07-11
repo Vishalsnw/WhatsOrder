@@ -216,7 +216,7 @@ export default function MyFormsPage() {
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="flex space-x-2">
                       <Link 
-                        href={`/preview/${form.slug}?id=${form.id}`}
+                        href={`/dashboard/forms/${form.id}/preview`}
                         className="material-button material-button-secondary"
                       >
                         <span className="mr-1">👁️</span>

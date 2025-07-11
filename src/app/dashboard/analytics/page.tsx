@@ -223,10 +223,10 @@ export default function AnalyticsPage() {
                         Created {form.createdAt.toLocaleDateString()}
                       </p>
                       <Link 
-                        href={`/preview/${form.slug}?id=${form.id}`}
+                        href={`/dashboard/forms/${form.id}/preview`}
                         className="material-caption text-blue-600 hover:underline"
                       >
-                        /preview/{form.slug}
+                        Preview Form
                       </Link>
                     </div>
                     <div className="text-right">
