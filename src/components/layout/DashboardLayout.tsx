@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,7 +15,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, loading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNamePrompt, setShowNamePrompt] = useState(false);
 
   useEffect(() => {
@@ -53,18 +51,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const menuItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
-    { href: '/dashboard/create', label: 'Create Form', icon: '✨' },
-    { href: '/my-forms', label: 'My Forms', icon: '📋' },
-    { href: '/dashboard/analytics', label: 'Analytics', icon: '📊' },
+    { href: '/dashboard', label: 'Home', icon: '🏠' },
+    { href: '/dashboard/create', label: 'Create', icon: '✨' },
+    { href: '/my-forms', label: 'Forms', icon: '📋' },
+    { href: '/dashboard/analytics', label: 'Stats', icon: '📊' },
+  ];
+
+  const profileItems = [
     { href: '/dashboard/orders', label: 'Orders', icon: '🛒' },
     { href: '/dashboard/profile', label: 'Profile', icon: '👤' },
-    { href: '/demo', label: 'Demo & Guide', icon: '🚀' },
+    { href: '/demo', label: 'Guide', icon: '🚀' },
   ];
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -75,106 +76,79 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white shadow-sm p-4 flex items-center justify-between">
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-lg hover:bg-gray-100"
-        >
-          <span className="text-xl">☰</span>
-        </button>
-        <h1 className="material-headline6">WhatsOrder</h1>
-        <button
-          onClick={handleSignOut}
-          className="p-2 rounded-lg hover:bg-gray-100 text-red-600"
-        >
-          <span className="text-lg">🚪</span>
-        </button>
-      </div>
-
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className={`
-          fixed lg:static inset-y-0 left-0 z-50
-          w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}>
-          <div className="p-6 border-b border-gray-100">
-            <h1 className="material-headline5 text-blue-600">WhatsOrder</h1>
-            <p className="material-caption text-gray-600">Order Form Builder</p>
-          </div>
-
-          <nav className="p-4 space-y-2">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`
-                    flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200
-                    ${isActive 
-                      ? 'bg-blue-50 text-blue-600 shadow-sm' 
-                      : 'text-gray-700 hover:bg-gray-50'
-                    }
-                  `}
-                >
-                  <span className="text-lg">{item.icon}</span>
-                  <span className="material-subtitle2">{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-blue-600">
-                  {user.displayName?.charAt(0) || '👤'}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="material-subtitle2 text-gray-900 truncate">
-                  {user.displayName || 'Anonymous User'}
-                </p>
-                <p className="material-caption text-gray-600 truncate">
-                  {user.email || user.phoneNumber || 'Anonymous'}
-                </p>
-              </div>
+      <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-40">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-sm font-semibold text-blue-600">
+                {user.displayName?.charAt(0) || '👤'}
+              </span>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="w-full material-button bg-red-50 text-red-600 hover:bg-red-100"
-            >
-              <span className="mr-2">🚪</span>
-              Sign Out
-            </button>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">WhatsOrder</h1>
+              <p className="text-xs text-gray-600">
+                {user.displayName || 'Anonymous User'}
+              </p>
+            </div>
           </div>
-        </aside>
+          <button
+            onClick={handleSignOut}
+            className="p-2 rounded-lg hover:bg-gray-100 text-red-600"
+          >
+            <span className="text-lg">🚪</span>
+          </button>
+        </div>
+      </header>
 
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+      {/* Main Content */}
+      <main className="px-4 py-6">
+        {children}
+      </main>
 
-        {/* Main Content */}
-        <main className="flex-1 lg:ml-0">
-          <div className="p-4 lg:p-6">
-            {children}
-          </div>
-        </main>
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div className="grid grid-cols-4 h-16">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`
+                  flex flex-col items-center justify-center space-y-1 transition-colors
+                  ${isActive 
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-600 hover:text-gray-900'
+                  }
+                `}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <span className="text-xs font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Profile Menu - Floating Action Button */}
+      <div className="fixed bottom-20 right-4 z-40">
+        <div className="relative">
+          <Link
+            href="/dashboard/profile"
+            className="w-12 h-12 bg-gray-800 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <span className="text-lg">⚙️</span>
+          </Link>
+        </div>
       </div>
 
       {/* Name Prompt Modal */}
       {showNamePrompt && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
-            <h2 className="material-headline6 mb-4">Welcome! What's your name?</h2>
+            <h2 className="text-lg font-semibold mb-4">Welcome! What's your name?</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -186,13 +160,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <input
                 name="name"
                 type="text"
-                className="material-input mb-4"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
                 placeholder="Enter your name"
                 required
               />
               <button
                 type="submit"
-                className="material-button material-button-primary w-full"
+                className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors font-semibold"
               >
                 Save Name
               </button>

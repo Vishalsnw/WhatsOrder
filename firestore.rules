@@ -3,37 +3,29 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // User Profile and their forms
+    // Allow authenticated users to read/write their own user document
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // User's forms subcollection
+      // Allow authenticated users to read/write their own forms
       match /forms/{formId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
-      // Nested subcollections (e.g., orders)
-      match /{subcollection=**}/{docId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-    }
-
-    // Public forms collection for sharing (read-only for public, write for owners)
-    match /publicForms/{formId} {
-      allow read: if true; // Anyone can read public forms
-      allow write: if request.auth != null && 
-        (resource == null || resource.data.userId == request.auth.uid);
-    }
-
-    // Global forms (legacy collection - kept for backward compatibility)
-    match /forms/{formId} {
-      allow read: if true; // Anyone can read forms
-      allow write: if request.auth != null && 
-        (resource == null || resource.data.userId == request.auth.uid);
     }
     
-    // Orders collection
+    // Allow anyone to read public forms (for preview)
+    match /publicForms/{formId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Legacy forms collection (for backward compatibility)
+    match /forms/{formId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to create/read orders
     match /orders/{orderId} {
       allow read, write: if request.auth != null;
     }

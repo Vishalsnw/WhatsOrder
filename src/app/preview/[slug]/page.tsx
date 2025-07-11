@@ -221,8 +221,8 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-8 flex flex-col">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md mx-auto w-full">
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm mx-4 w-full">
           <div className="flex items-center justify-center space-x-2">
             <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce"></div>
             <div className="w-4 h-4 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -236,8 +236,8 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
 
   if (error) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 px-4 py-8 flex flex-col">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md mx-auto w-full text-center">
+      <main className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm mx-4 w-full text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">⚠️</span>
           </div>
@@ -255,8 +255,8 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-8 flex flex-col">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md mx-auto w-full overflow-hidden">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="bg-white min-h-screen max-w-md mx-auto w-full overflow-hidden sm:rounded-2xl sm:shadow-xl sm:my-8 sm:min-h-auto">
         {/* Header with Logo */}
         <div 
           className="p-6 text-white text-center"
@@ -273,7 +273,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
           <p className="text-white/90 text-sm">{welcomeMessage}</p>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 space-y-4 pb-8">
           {/* Products */}
           {parsedProducts.length === 0 ? (
             <div className="text-center py-8">
@@ -402,7 +402,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
       </div>
 
       {/* Footer */}
-      <div className="text-center text-xs text-gray-500 mt-6 mb-2">
+      <div className="text-center text-xs text-gray-500 py-4 bg-gray-50">
         Made with 💜 using <strong>WhatsOrder</strong>
       </div>
     </main>

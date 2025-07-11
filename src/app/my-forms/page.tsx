@@ -176,7 +176,7 @@ export default function MyFormsPage() {
         ) : (
           <div className="space-y-4">
             {forms.map((form) => (
-              <div key={form.id} className="material-card overflow-hidden">
+              <div key={form.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">

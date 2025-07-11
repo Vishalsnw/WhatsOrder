@@ -210,7 +210,7 @@ body {
 
 /* 📱 Mobile-First Responsive Design */
 .mobile-container {
-  @apply max-w-sm mx-auto bg-white min-h-screen;
+  @apply max-w-md mx-auto;x-w-sm mx-auto bg-white min-h-screen;
 }
 
 .tablet-container {

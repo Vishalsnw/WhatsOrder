@@ -10,9 +10,9 @@ export default function LoginPage() {
   const [showDemo, setShowDemo] = useState(false);
 
   return (
-    <div className="mobile-container min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
-      {/* Android-style Status Bar */}
-      <div className="system-bar bg-blue-900"></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
+      {/* Mobile Status Bar */}
+      <div className="h-6 bg-blue-900"></div>
 
       {/* Hero Section */}
       <div className="px-6 pt-12 pb-8 text-center">
