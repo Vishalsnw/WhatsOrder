@@ -39,11 +39,9 @@ export default function DashboardPage() {
     if (!user) return;
 
     try {
-      const q = query(
-        collection(db, 'orderForms'),
-        where('userId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
+      // Load from user's subcollection
+      const userFormsRef = collection(db, 'users', user.uid, 'forms');
+      const q = query(userFormsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
 
       const formsData: FormData[] = snapshot.docs.map((doc) => {

@@ -262,14 +262,25 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
         </div>
 
         <div className="p-6 space-y-6">
-          {/* Share Button */}
+          {/* Share Button - More Prominent */}
           <div className="flex justify-center">
             <button
               onClick={handleShareToWhatsApp}
-              className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors shadow-lg"
+              className="flex items-center space-x-3 bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold text-lg"
             >
-              <span>📱</span>
-              <span className="font-medium">Share to WhatsApp</span>
+              <span className="text-xl">📱</span>
+              <span>Share to WhatsApp</span>
+            </button>
+          </div>
+          
+          {/* Alternative small share button */}
+          <div className="flex justify-center">
+            <button
+              onClick={handleShareToWhatsApp}
+              className="flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition-colors border border-green-300"
+            >
+              <span>📤</span>
+              <span className="text-sm font-medium">Share this form</span>
             </button>
           </div>
 
