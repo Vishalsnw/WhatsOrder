@@ -43,19 +43,10 @@ export default function MyFormsPage() {
     if (!user) return;
 
     try {
-      // First try to load from user's subcollection
+      // Load from user's subcollection only
       const userFormsRef = collection(db, 'users', user.uid, 'forms');
-      let snapshot = await getDocs(userFormsRef);
-      
-      // If no forms in subcollection, try the main collection
-      if (snapshot.empty) {
-        const q = query(
-          collection(db, 'orderForms'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc')
-        );
-        snapshot = await getDocs(q);
-      }
+      const q = query(userFormsRef, orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
       
       const formsData: FormData[] = snapshot.docs.map((doc) => {
         const data = doc.data();
@@ -87,7 +78,7 @@ export default function MyFormsPage() {
 
     setDeletingId(formId);
     try {
-      await deleteDoc(doc(db, 'orderForms', formId));
+      await deleteDoc(doc(db, 'users', user.uid, 'forms', formId));
       setForms(forms.filter(form => form.id !== formId));
     } catch (error) {
       console.error('Error deleting form:', error);

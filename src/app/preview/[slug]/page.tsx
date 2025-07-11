@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -52,11 +51,11 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
           // Try to find form in all users' collections by ID
           const usersRef = collection(db, 'users');
           const usersSnapshot = await getDocs(usersRef);
-          
+
           for (const userDoc of usersSnapshot.docs) {
             const formRef = doc(db, 'users', userDoc.id, 'forms', formId);
             const formSnap = await getDoc(formRef);
-            
+
             if (formSnap.exists()) {
               const data = formSnap.data();
               setFormData({
@@ -68,11 +67,11 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
               return;
             }
           }
-          
+
           // If not found by ID, try old collection
           const oldFormRef = doc(db, 'forms', formId);
           const oldFormSnap = await getDoc(oldFormRef);
-          
+
           if (oldFormSnap.exists()) {
             const data = oldFormSnap.data();
             setFormData({
@@ -87,12 +86,12 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
           // Search by slug in all users' collections
           const usersRef = collection(db, 'users');
           const usersSnapshot = await getDocs(usersRef);
-          
+
           for (const userDoc of usersSnapshot.docs) {
             const formsRef = collection(db, 'users', userDoc.id, 'forms');
             const slugQuery = query(formsRef, where('slug', '==', resolvedParams.slug));
             const formsSnapshot = await getDocs(slugQuery);
-            
+
             if (!formsSnapshot.empty) {
               const formDoc = formsSnapshot.docs[0];
               const data = formDoc.data();
@@ -105,7 +104,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
               return;
             }
           }
-          
+
           setError('Form not found');
         }
       } catch (error) {
@@ -124,7 +123,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
   const welcomeMessage = formData?.customization?.welcomeMessage || 'Welcome! Browse our products and place your order.';
   const primaryColor = formData?.customization?.primaryColor || '#2563eb';
   const logo = formData?.customization?.logo;
-  
+
   const parsedProducts: Product[] = useMemo(() => {
     // If we have form data from database, use it
     if (formData?.products) {
@@ -289,7 +288,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
                 <span className="mr-2">🛍️</span>
                 Our Products
               </h3>
-              
+
               {parsedProducts.map((product, index) => (
                 <div
                   key={index}
@@ -307,7 +306,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
                         <span className="text-gray-500 text-xs">📦</span>
                       </div>
                     )}
-                    
+
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-gray-900 truncate">{product.name}</h4>
                       {product.description && (
@@ -322,7 +321,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleQuantityChange(index, Math.max(0, quantities[index] - 1))}
@@ -352,7 +351,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
               <span className="mr-2">👤</span>
               Your Details
             </h3>
-            
+
             <input
               type="text"
               placeholder="Your Full Name"
