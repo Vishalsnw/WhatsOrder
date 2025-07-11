@@ -39,7 +39,7 @@ export default function NewFormPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const template = searchParams.get('template');
-  const [initialData, setInitialData] = useState(null);
+  const [initialData, setInitialData] = useState<any>(null);
 
   useEffect(() => {
     if (loading) return;
