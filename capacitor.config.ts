@@ -11,7 +11,7 @@ try {
 const config: any = {
   appId: 'com.whatsorder.app',
   appName: 'WhatsOrder',
-  webDir: 'out',
+  webDir: '.next',
   bundledWebRuntime: false,
   plugins: {
     SplashScreen: {
