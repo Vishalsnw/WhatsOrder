@@ -23,6 +23,15 @@ function isValidProduct(obj: any): obj is Product {
   );
 }
 
+// Required for static export with dynamic routes
+export async function generateStaticParams() {
+  // Return empty array since we want to generate pages on-demand
+  return [];
+}
+
+// Enable dynamic generation for routes not returned by generateStaticParams
+export const dynamicParams = true;
+
 export default function PreviewOrderPage({ params }: { params: Promise<{ slug: string }> }) {
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<any>(null);
