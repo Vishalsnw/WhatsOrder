@@ -1,0 +1,13 @@
+
+<resources>
+    <string name="app_name">WhatsOrder</string>
+    <string name="app_description">Simple WhatsApp order form for small businesses</string>
+    
+    <!-- TWA Configuration -->
+    <string name="twa_url">https://whats-order-osr3.vercel.app/</string>
+    <string name="asset_statements_url">https://whats-order-osr3.vercel.app/.well-known/assetlinks.json</string>
+    
+    <!-- App info for Play Store -->
+    <string name="short_description">Create beautiful order forms for WhatsApp</string>
+    <string name="full_description">WhatsOrder helps small businesses create professional order forms that customers can fill and send directly via WhatsApp. Perfect for restaurants, retail stores, and service businesses.</string>
+</resources>

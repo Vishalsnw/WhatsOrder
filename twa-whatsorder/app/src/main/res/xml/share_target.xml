@@ -1,0 +1,8 @@
+
+<share-target>
+    <action android:name="android.intent.action.SEND" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <data android:mimeType="text/plain" />
+    <param android:name="title" android:value="share-title" />
+    <param android:name="text" android:value="share-text" />
+</share-target>

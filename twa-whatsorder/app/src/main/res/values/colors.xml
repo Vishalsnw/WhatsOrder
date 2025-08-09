@@ -1,0 +1,29 @@
+
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary brand colors (matching your web app) -->
+    <color name="primary_blue">#3B82F6</color>
+    <color name="primary_blue_dark">#1D4ED8</color>
+    <color name="primary_blue_light">#60A5FA</color>
+    
+    <!-- Secondary colors -->
+    <color name="secondary_gray">#6B7280</color>
+    <color name="secondary_gray_light">#F3F4F6</color>
+    
+    <!-- Background colors -->
+    <color name="background_white">#FFFFFF</color>
+    <color name="background_gray">#F9FAFB</color>
+    <color name="splash_background">#3B82F6</color>
+    
+    <!-- Status bar -->
+    <color name="status_bar_color">@color/primary_blue</color>
+    
+    <!-- Material Design colors -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

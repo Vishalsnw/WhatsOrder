@@ -1,0 +1,86 @@
+
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    namespace 'com.whatsorder.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.whatsorder.app"
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug // Use debug for now, change for production
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    
+    // TWA dependencies
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+    
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+// Task to print SHA256 fingerprint
+task printSHA256 {
+    doLast {
+        def keystorePath = project.hasProperty('keystorePath') ? project.keystorePath : "${System.getProperty('user.home')}/.android/debug.keystore"
+        def keystorePassword = project.hasProperty('keystorePassword') ? project.keystorePassword : 'android'
+        def keyAlias = project.hasProperty('keyAlias') ? project.keyAlias : 'androiddebugkey'
+        def keyPassword = project.hasProperty('keyPassword') ? project.keyPassword : 'android'
+        
+        println "Getting SHA256 fingerprint from keystore: $keystorePath"
+        
+        def output = new ByteArrayOutputStream()
+        exec {
+            commandLine 'keytool', '-list', '-v', '-keystore', keystorePath, '-alias', keyAlias, '-storepass', keystorePassword, '-keypass', keyPassword
+            standardOutput = output
+        }
+        
+        def result = output.toString()
+        def sha256Line = result.readLines().find { it.contains("SHA256:") }
+        if (sha256Line) {
+            def sha256 = sha256Line.split("SHA256:")[1].trim().replaceAll(":", "")
+            println "\n========================================="
+            println "SHA256 Fingerprint: $sha256"
+            println "========================================="
+            println "Use this in your assetlinks.json file"
+            println "========================================="
+        } else {
+            println "Could not extract SHA256 fingerprint"
+        }
+    }
+}
