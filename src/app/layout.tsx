@@ -2,6 +2,7 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
+import NativeWrapper from '@/components/NativeWrapper';
 import Head from 'next/head';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -17,11 +18,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="icon" href="/logo.svg" />
       </head>
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <NativeWrapper>
+            {children}
+          </NativeWrapper>
+        </AuthProvider>
       </body>
     </html>
   );
