@@ -2,15 +2,6 @@ name: Build TWA Android App
 
 on:
   workflow_dispatch:
-    inputs:
-      app_url:
-        description: 'PWA URL with manifest.json'
-        required: true
-        default: 'https://whats-order-osr3.vercel.app/'
-      package_name:
-        description: 'Android package name'
-        required: true
-        default: 'com.whatsorder.app'
 
 jobs:
   build:
@@ -44,18 +35,27 @@ jobs:
             -keypass keypass123 \
             -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
 
-      - name: Init TWA Project
+      - name: Init TWA Project (Non-Interactive)
         run: |
-          bubblewrap init --manifest=${{ github.event.inputs.app_url }}manifest.json \
-            --packageId=${{ github.event.inputs.package_name }} \
+          bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json \
+            --packageId=com.whatsorder.app \
             --signingKeyPath=release-key.jks \
             --signingKeyAlias=key0 \
             --signingKeyPassword=keypass123 \
             --storePassword=keypass123 \
-            --skipPwaValidation
+            --skipPwaValidation \
+            --jdkPath=$(which java)
 
       - name: Build Android App
         run: bubblewrap build
+
+      - name: Generate SHA256 fingerprint
+        run: |
+          keytool -list -v -keystore release-key.jks \
+            -alias key0 \
+            -storepass keypass123 \
+            -keypass keypass123 | grep SHA256: | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
+          cat sha256.txt
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -68,3 +68,9 @@ jobs:
         with:
           name: TWA-Release-AAB
           path: app-release.aab
+
+      - name: Upload SHA256 Fingerprint
+        uses: actions/upload-artifact@v4
+        with:
+          name: SHA256-Fingerprint
+          path: sha256.txt
