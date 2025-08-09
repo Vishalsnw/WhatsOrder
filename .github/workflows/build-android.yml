@@ -56,14 +56,36 @@ jobs:
 
       - name: Init TWA Project
         run: |
-          # Use expect to handle all interactive prompts
+          # Use expect to handle all interactive prompts with timeout
           sudo apt-get update && sudo apt-get install -y expect
           
           expect << 'EOF'
+          set timeout 300
           spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json --packageId=com.whatsorder.app --signingKeyPath=./release-key.jks --signingKeyAlias=key0 --signingKeyPassword=keypass123 --storePassword=keypass123 --skipPwaValidation
-          expect "Do you want Bubblewrap to install the JDK*" { send "yes\r" }
-          expect "Do you want Bubblewrap to install the Android SDK*" { send "yes\r" }
-          expect eof
+          
+          expect {
+            "*Do you want Bubblewrap to install the JDK*" { 
+              send "yes\r"
+              exp_continue
+            }
+            "*Do you want Bubblewrap to install the Android SDK*" { 
+              send "yes\r"
+              exp_continue
+            }
+            "*license*" { 
+              send "yes\r"
+              exp_continue
+            }
+            "*accept*" { 
+              send "yes\r"
+              exp_continue
+            }
+            eof { exit 0 }
+            timeout { 
+              puts "Timeout reached"
+              exit 1 
+            }
+          }
           EOF
 
       - name: Copy TWA configuration
