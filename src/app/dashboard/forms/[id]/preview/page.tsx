@@ -15,11 +15,6 @@ interface Product {
   available?: boolean;
 }
 
-// Generate static params for export
-export async function generateStaticParams() {
-  return [];
-}
-
 export default function FormPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useUser();
   const [formData, setFormData] = useState<any>(null);
