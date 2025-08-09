@@ -102,12 +102,12 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
           try {
             const usersRef = collection(db, 'users');
             const usersSnapshot = await getDocs(usersRef);
-            
+
             for (const userDoc of usersSnapshot.docs) {
               const userFormsRef = collection(db, 'users', userDoc.id, 'forms');
               const userFormsQuery = query(userFormsRef, where('slug', '==', resolvedParams.slug));
               const userFormsSnapshot = await getDocs(userFormsQuery);
-              
+
               if (!userFormsSnapshot.empty) {
                 const formDoc = userFormsSnapshot.docs[0];
                 const data = formDoc.data();
@@ -219,7 +219,7 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
     window.open(url, '_blank');
   };
 
-  
+
 
   if (loading) {
     return (
