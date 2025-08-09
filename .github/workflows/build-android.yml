@@ -56,7 +56,7 @@ jobs:
 
       - name: Init TWA Project
         run: |
-          echo "yes" | bubblewrap init \
+          printf "yes\nyes\n" | bubblewrap init \
             --manifest=https://whats-order-osr3.vercel.app/manifest.json \
             --packageId=com.whatsorder.app \
             --signingKeyPath=./release-key.jks \
