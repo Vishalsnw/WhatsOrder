@@ -32,6 +32,9 @@ jobs:
         node-version: '18'
         cache: 'npm'
 
+      - name: Clear npm cache
+        run: npm cache clean --force
+
     - name: Setup Java JDK
       uses: actions/setup-java@v4
       with:
@@ -101,12 +104,12 @@ jobs:
           -storepass whatsorder123 \
           -keypass whatsorder123 \
           -dname "CN=WhatsOrder,OU=Mobile,O=WhatsOrder,L=City,ST=State,C=US"
-        
+
         # Get SHA256 fingerprint for Digital Asset Links
         keytool -list -v -keystore app/whatsorder-release.keystore \
           -alias whatsorder -storepass whatsorder123 -keypass whatsorder123 | \
           grep "SHA256:" | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
-        
+
         echo "SHA256 Fingerprint for assetlinks.json:"
         cat sha256.txt
 
@@ -115,7 +118,7 @@ jobs:
       run: |
         cd android
         cat >> app/build.gradle << 'EOF'
-        
+
         android {
             signingConfigs {
                 release {
@@ -145,7 +148,7 @@ jobs:
       run: |
         cd android
         cat >> app/build.gradle << 'EOF'
-        
+
         android {
             signingConfigs {
                 release {
@@ -215,7 +218,7 @@ jobs:
         echo "- Build Date: $(date)" >> release-notes.md
         echo "- Git Commit: ${{ github.sha }}" >> release-notes.md
         echo "- Package: com.whatsorder.app" >> release-notes.md
-        
+
         if [ ! -f "../secrets.KEYSTORE_BASE64" ]; then
           echo "- Signing: Auto-generated keystore" >> release-notes.md
           echo "- SHA256 for assetlinks.json: $(cat sha256.txt 2>/dev/null || echo 'Check SHA256-Fingerprint artifact')" >> release-notes.md
@@ -243,6 +246,9 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
+
+      - name: Clear npm cache
+        run: npm cache clean --force
 
     - name: Setup Java JDK
       uses: actions/setup-java@v4
