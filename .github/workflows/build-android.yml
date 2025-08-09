@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+          - signed
 
 jobs:
   build:
@@ -80,23 +90,143 @@ jobs:
     - name: Make gradlew executable
       run: chmod +x android/gradlew
 
+    - name: Generate Release Keystore (if not using secrets)
+      if: ${{ !secrets.KEYSTORE_BASE64 }}
+      run: |
+        cd android
+        keytool -genkey -v -keystore app/whatsorder-release.keystore \
+          -keyalg RSA -keysize 2048 -validity 10000 \
+          -alias whatsorder \
+          -storepass whatsorder123 \
+          -keypass whatsorder123 \
+          -dname "CN=WhatsOrder,OU=Mobile,O=WhatsOrder,L=City,ST=State,C=US"
+        
+        # Get SHA256 fingerprint for Digital Asset Links
+        keytool -list -v -keystore app/whatsorder-release.keystore \
+          -alias whatsorder -storepass whatsorder123 -keypass whatsorder123 | \
+          grep "SHA256:" | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
+        
+        echo "SHA256 Fingerprint for assetlinks.json:"
+        cat sha256.txt
+
+    - name: Configure Release Signing (auto-generated keystore)
+      if: ${{ !secrets.KEYSTORE_BASE64 }}
+      run: |
+        cd android
+        cat >> app/build.gradle << 'EOF'
+        
+        android {
+            signingConfigs {
+                release {
+                    storeFile file('whatsorder-release.keystore')
+                    storePassword 'whatsorder123'
+                    keyAlias 'whatsorder'
+                    keyPassword 'whatsorder123'
+                }
+            }
+            buildTypes {
+                release {
+                    signingConfig signingConfigs.release
+                    minifyEnabled false
+                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                }
+            }
+        }
+        EOF
+
+    - name: Decode Custom Keystore (if provided)
+      if: ${{ secrets.KEYSTORE_BASE64 }}
+      run: |
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+
+    - name: Configure Release Signing (custom keystore)
+      if: ${{ secrets.KEYSTORE_BASE64 }}
+      run: |
+        cd android
+        cat >> app/build.gradle << 'EOF'
+        
+        android {
+            signingConfigs {
+                release {
+                    storeFile file('release.keystore')
+                    storePassword '${{ secrets.KEYSTORE_PASSWORD }}'
+                    keyAlias '${{ secrets.KEY_ALIAS }}'
+                    keyPassword '${{ secrets.KEY_PASSWORD }}'
+                }
+            }
+            buildTypes {
+                release {
+                    signingConfig signingConfigs.release
+                    minifyEnabled false
+                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                }
+            }
+        }
+        EOF
+
     - name: Build Debug APK
+      if: ${{ inputs.build_type == 'debug' || github.event_name != 'workflow_dispatch' }}
       run: cd android && ./gradlew assembleDebug
 
-    - name: Build Release APK
+    - name: Build Release APK (Signed)
       run: cd android && ./gradlew assembleRelease
 
+    - name: Build AAB for Play Store
+      run: cd android && ./gradlew bundleRelease
+
     - name: Upload Debug APK
+      if: ${{ inputs.build_type == 'debug' || github.event_name != 'workflow_dispatch' }}
       uses: actions/upload-artifact@v4
       with:
-        name: debug-apk
+        name: WhatsOrder-Debug-APK
         path: android/app/build/outputs/apk/debug/app-debug.apk
 
-    - name: Upload Release APK
+    - name: Upload Signed Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: release-apk
-        path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+        name: WhatsOrder-Release-APK-Installable
+        path: android/app/build/outputs/apk/release/app-release.apk
+
+    - name: Upload AAB for Play Store
+      uses: actions/upload-artifact@v4
+      with:
+        name: WhatsOrder-PlayStore-AAB
+        path: android/app/build/outputs/bundle/release/app-release.aab
+
+    - name: Upload SHA256 Fingerprint
+      if: ${{ !secrets.KEYSTORE_BASE64 }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: SHA256-Fingerprint
+        path: android/sha256.txt
+
+    - name: Create Release Notes
+      run: |
+        cd android
+        echo "# WhatsOrder Android App" > release-notes.md
+        echo "" >> release-notes.md
+        echo "## Installation Instructions" >> release-notes.md
+        echo "1. Download the 'WhatsOrder-Release-APK-Installable' file" >> release-notes.md
+        echo "2. Enable 'Install from unknown sources' in Android settings" >> release-notes.md
+        echo "3. Install the APK file" >> release-notes.md
+        echo "" >> release-notes.md
+        echo "## Build Details" >> release-notes.md
+        echo "- Build Date: $(date)" >> release-notes.md
+        echo "- Git Commit: ${{ github.sha }}" >> release-notes.md
+        echo "- Package: com.whatsorder.app" >> release-notes.md
+        
+        if [ ! -f "../secrets.KEYSTORE_BASE64" ]; then
+          echo "- Signing: Auto-generated keystore" >> release-notes.md
+          echo "- SHA256 for assetlinks.json: $(cat sha256.txt 2>/dev/null || echo 'Check SHA256-Fingerprint artifact')" >> release-notes.md
+        else
+          echo "- Signing: Custom keystore provided" >> release-notes.md
+        fi
+
+    - name: Upload Release Notes
+      uses: actions/upload-artifact@v4
+      with:
+        name: Release-Notes
+        path: android/release-notes.md
 
   build-signed:
     runs-on: ubuntu-latest
