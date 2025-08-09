@@ -2,6 +2,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+// Generate static params for export
+export async function generateStaticParams() {
+  return [];
+}
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { db } from '@/lib/firebase';
