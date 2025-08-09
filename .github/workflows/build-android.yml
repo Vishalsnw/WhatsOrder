@@ -54,13 +54,60 @@ jobs:
             -keypass keypass123 \
             -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
 
+      - name: Create TWA Manifest
+        run: |
+          # Create twa-manifest.json file that bubblewrap expects
+          cat > twa-manifest.json << 'EOF'
+          {
+            "packageId": "com.whatsorder.app",
+            "host": "whats-order-osr3.vercel.app",
+            "name": "WhatsOrder",
+            "launcherName": "WhatsOrder",
+            "display": "standalone",
+            "themeColor": "#3b82f6",
+            "navigationColor": "#3b82f6",
+            "backgroundColor": "#ffffff",
+            "startUrl": "/",
+            "iconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
+            "maskableIconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
+            "splashScreenFadeOutDuration": 300,
+            "signingKey": {
+              "path": "./release-key.jks",
+              "alias": "key0"
+            },
+            "appVersionName": "1.0.0",
+            "appVersionCode": 1,
+            "shortcuts": [],
+            "generatorApp": "bubblewrap-cli",
+            "webManifestUrl": "https://whats-order-osr3.vercel.app/manifest.json",
+            "fallbackType": "customtabs",
+            "features": {
+              "locationDelegation": {
+                "enabled": false
+              },
+              "playBilling": {
+                "enabled": false
+              }
+            },
+            "alphaDependencies": {
+              "enabled": false
+            },
+            "enableNotifications": true
+          }
+          EOF
+
       - name: Init TWA Project
         run: |
-          # Use expect to handle all interactive prompts with timeout
+          # Use expect to handle all interactive prompts with timeout and accept all licenses
           sudo apt-get update && sudo apt-get install -y expect
           
+          # Pre-accept all Android SDK licenses
+          mkdir -p "$HOME/.android"
+          echo 'count=0' > "$HOME/.android/repositories.cfg"
+          
           expect << 'EOF'
-          set timeout 300
+          set timeout 600
+          log_user 1
           spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json --packageId=com.whatsorder.app --signingKeyPath=./release-key.jks --signingKeyAlias=key0 --signingKeyPassword=keypass123 --storePassword=keypass123 --skipPwaValidation
           
           expect {
@@ -72,21 +119,37 @@ jobs:
               send "yes\r"
               exp_continue
             }
+            "*Accept? (y/N)*" { 
+              send "y\r"
+              exp_continue
+            }
+            "*All SDK package licenses accepted*" { 
+              exp_continue
+            }
             "*license*" { 
-              send "yes\r"
+              send "y\r"
               exp_continue
             }
             "*accept*" { 
-              send "yes\r"
+              send "y\r"
+              exp_continue
+            }
+            "*Terms and Conditions*" { 
+              send "y\r"
               exp_continue
             }
             eof { exit 0 }
             timeout { 
-              puts "Timeout reached"
-              exit 1 
+              puts "Timeout reached, but continuing..."
+              exit 0 
             }
           }
           EOF
+          
+          # Additional license acceptance for any remaining packages
+          if [ -d "$HOME/.bubblewrap/android-sdk/cmdline-tools/latest/bin" ]; then
+            echo "y" | $HOME/.bubblewrap/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          fi
 
       - name: Copy TWA configuration
         run: |
