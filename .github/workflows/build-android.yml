@@ -17,7 +17,7 @@ jobs:
 
     env:
       JAVA_HOME: /usr/lib/jvm/adoptopenjdk-17-hotspot-amd64
-      BUBBLEWRAP_NO_INTERACTIVE: 'true'    # Bubblewrap non-interactive mode (optional)
+      BUBBLEWRAP_NO_INTERACTIVE: 'true'    # Optional: Bubblewrap non-interactive mode
 
     steps:
       - name: Checkout repo
@@ -33,6 +33,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+
+      - name: Install expect
+        run: sudo apt-get update && sudo apt-get install -y expect
 
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
