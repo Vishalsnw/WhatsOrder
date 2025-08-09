@@ -2,9 +2,13 @@ name: Build TWA Android App
 
 on:
   push:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
   pull_request:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
   workflow_dispatch:
 
 jobs:
@@ -36,7 +40,6 @@ jobs:
           npx browserslist@latest --update-db
           npm run build
 
-          # Verify out directory exists
           if [ ! -d "out" ]; then
             echo "Creating out directory..."
             mkdir -p out
