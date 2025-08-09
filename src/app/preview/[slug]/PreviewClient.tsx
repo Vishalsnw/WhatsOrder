@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -25,17 +25,14 @@ function isValidProduct(obj: any): obj is Product {
 }
 
 // Client component that handles all the interactive logic
-export default function PreviewClient({ params }: { params: Promise<{ slug: string }> }) {
+export default function PreviewClient() {
   const searchParams = useSearchParams();
+  const params = useParams();
   const [formData, setFormData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resolvedParams, setResolvedParams] = useState<{ slug: string } | null>(null);
 
-  // Resolve params promise
-  useEffect(() => {
-    params.then(setResolvedParams);
-  }, [params]);
+  const slug = params?.slug as string;
 
   // Check if we have an ID parameter (loading from database)
   const formId = searchParams.get('id');
@@ -45,7 +42,7 @@ export default function PreviewClient({ params }: { params: Promise<{ slug: stri
 
   // Load form data if ID is provided, otherwise search by slug
   useEffect(() => {
-    if (!resolvedParams) return;
+    if (!slug) return;
 
     const loadFormData = async () => {
       try {
@@ -79,10 +76,10 @@ export default function PreviewClient({ params }: { params: Promise<{ slug: stri
           } else {
             setError('Form not found');
           }
-        } else if (resolvedParams.slug) {
+        } else if (slug) {
           // Search by slug in public forms
           const publicFormsRef = collection(db, 'publicForms');
-          const slugQuery = query(publicFormsRef, where('slug', '==', resolvedParams.slug));
+          const slugQuery = query(publicFormsRef, where('slug', '==', slug));
           const formsSnapshot = await getDocs(slugQuery);
 
           if (!formsSnapshot.empty) {
@@ -105,7 +102,7 @@ export default function PreviewClient({ params }: { params: Promise<{ slug: stri
 
             for (const userDoc of usersSnapshot.docs) {
               const userFormsRef = collection(db, 'users', userDoc.id, 'forms');
-              const userFormsQuery = query(userFormsRef, where('slug', '==', resolvedParams.slug));
+              const userFormsQuery = query(userFormsRef, where('slug', '==', slug));
               const userFormsSnapshot = await getDocs(userFormsQuery);
 
               if (!userFormsSnapshot.empty) {
@@ -134,7 +131,7 @@ export default function PreviewClient({ params }: { params: Promise<{ slug: stri
     };
 
     loadFormData();
-  }, [formId, resolvedParams]);
+  }, [formId, slug]);
 
   // Determine business name, phone, and products
   const businessName = formData?.businessName || decodeURIComponent(directBiz || 'Business');
