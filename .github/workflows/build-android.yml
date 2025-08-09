@@ -10,9 +10,10 @@ on:
       build_type:
         description: 'Build Type'
         required: true
-        default: 'debug'
+        default: 'mobile_install'
         type: choice
         options:
+          - mobile_install
           - debug
           - release
           - signed
