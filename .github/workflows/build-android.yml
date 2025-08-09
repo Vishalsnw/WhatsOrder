@@ -1,4 +1,3 @@
-
 name: Build TWA Android App
 
 on:
@@ -34,7 +33,7 @@ jobs:
         run: |
           npm cache clean --force
           npm install
-          npx update-browserslist-db@latest
+          npx browserslist@latest --update-db
           npm run build
 
           # Verify out directory exists
@@ -56,60 +55,54 @@ jobs:
 
       - name: Create TWA Manifest
         run: |
-          # Create twa-manifest.json file that bubblewrap expects
-          cat > twa-manifest.json << 'EOF'
-          {
-            "packageId": "com.whatsorder.app",
-            "host": "whats-order-osr3.vercel.app",
-            "name": "WhatsOrder",
-            "launcherName": "WhatsOrder",
-            "display": "standalone",
-            "themeColor": "#3b82f6",
-            "navigationColor": "#3b82f6",
-            "backgroundColor": "#ffffff",
-            "startUrl": "/",
-            "iconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
-            "maskableIconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
-            "splashScreenFadeOutDuration": 300,
-            "signingKey": {
-              "path": "./release-key.jks",
-              "alias": "key0"
-            },
-            "appVersionName": "1.0.0",
-            "appVersionCode": 1,
-            "shortcuts": [],
-            "generatorApp": "bubblewrap-cli",
-            "webManifestUrl": "https://whats-order-osr3.vercel.app/manifest.json",
-            "fallbackType": "customtabs",
-            "features": {
-              "locationDelegation": {
-                "enabled": false
-              },
-              "playBilling": {
-                "enabled": false
-              }
-            },
-            "alphaDependencies": {
-              "enabled": false
-            },
-            "enableNotifications": true
-          }
-          EOF
+          cat > twa-manifest.json <<EOF
+{
+  "packageId": "com.whatsorder.app",
+  "host": "whats-order-osr3.vercel.app",
+  "name": "WhatsOrder",
+  "launcherName": "WhatsOrder",
+  "display": "standalone",
+  "themeColor": "#3b82f6",
+  "navigationColor": "#3b82f6",
+  "backgroundColor": "#ffffff",
+  "startUrl": "/",
+  "iconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
+  "maskableIconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./release-key.jks",
+    "alias": "key0"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://whats-order-osr3.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableNotifications": true
+}
+EOF
 
       - name: Init TWA Project
         run: |
-          # Install expect for automation
           sudo apt-get update && sudo apt-get install -y expect
-          
-          # Pre-setup Android environment
+
           mkdir -p "$HOME/.android"
           echo 'count=0' > "$HOME/.android/repositories.cfg"
-          
-          # Create comprehensive Android SDK licenses file
+
           mkdir -p "$HOME/.android/licenses"
-          
-          # Add all known Android SDK license hashes
-          cat > "$HOME/.android/licenses/android-sdk-license" << 'LICENSE_EOF'
+          cat > "$HOME/.android/licenses/android-sdk-license" <<LICENSE_EOF
 8933bad161af4178b1185d1a37fbf41ea5269c55
 d56f5187479451eabf01fb78af6dfcb131a6481e
 24333f8a63b6825ea9c5514f83c2829b004d1fee
@@ -117,84 +110,78 @@ d56f5187479451eabf01fb78af6dfcb131a6481e
 504667f4c0de7af1a06de9f4b1727b84351f2910
 LICENSE_EOF
 
-          # Set up auto-response for all interactive prompts
           export DEBIAN_FRONTEND=noninteractive
-          
-          # Create comprehensive expect script
-          expect << 'EOF'
-          set timeout 900
-          log_user 1
-          
-          # Start bubblewrap with regeneration flag
-          spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json --packageId=com.whatsorder.app --signingKeyPath=./release-key.jks --signingKeyAlias=key0 --signingKeyPassword=keypass123 --storePassword=keypass123 --skipPwaValidation --updateConfig
-          
-          expect {
-            -re ".*Do you want Bubblewrap to install.*JDK.*" { 
-              send "yes\r"
-              exp_continue
-            }
-            -re ".*Do you want Bubblewrap to install.*Android SDK.*" { 
-              send "yes\r"
-              exp_continue
-            }
-            -re ".*Accept.*\\(y/N\\).*" { 
-              send "y\r"
-              exp_continue
-            }
-            -re ".*would you like to regenerate.*" { 
-              send "Y\r"
-              exp_continue
-            }
-            -re ".*checksum file.*" { 
-              send "Y\r"
-              exp_continue
-            }
-            -re ".*up-to-date.*" { 
-              send "Y\r"
-              exp_continue
-            }
-            -re ".*license.*" { 
-              send "y\r"
-              exp_continue
-            }
-            -re ".*Terms and Conditions.*" { 
-              send "y\r"
-              exp_continue
-            }
-            -re ".*\\(Y/n\\).*" { 
-              send "Y\r"
-              exp_continue
-            }
-            -re ".*\\(y/N\\).*" { 
-              send "y\r"
-              exp_continue
-            }
-            eof { 
-              puts "Bubblewrap completed successfully"
-              exit 0 
-            }
-            timeout { 
-              puts "Timeout - force continuing..."
-              exit 0 
-            }
-          }
-          EOF
-          
-          # Fallback: Force accept all Android SDK licenses post-installation
+
+          expect <<'EOF'
+set timeout 900
+log_user 1
+
+spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json --packageId=com.whatsorder.app --signingKeyPath=./release-key.jks --signingKeyAlias=key0 --signingKeyPassword=keypass123 --storePassword=keypass123 --skipPwaValidation --updateConfig
+
+expect {
+  -re ".*Do you want Bubblewrap to install.*JDK.*" {
+    send "yes\r"
+    exp_continue
+  }
+  -re ".*Do you want Bubblewrap to install.*Android SDK.*" {
+    send "yes\r"
+    exp_continue
+  }
+  -re ".*Accept.*\\(y/N\\).*" {
+    send "y\r"
+    exp_continue
+  }
+  -re ".*would you like to regenerate.*" {
+    send "Y\r"
+    exp_continue
+  }
+  -re ".*checksum file.*" {
+    send "Y\r"
+    exp_continue
+  }
+  -re ".*up-to-date.*" {
+    send "Y\r"
+    exp_continue
+  }
+  -re ".*license.*" {
+    send "y\r"
+    exp_continue
+  }
+  -re ".*Terms and Conditions.*" {
+    send "y\r"
+    exp_continue
+  }
+  -re ".*\\(Y/n\\).*" {
+    send "Y\r"
+    exp_continue
+  }
+  -re ".*\\(y/N\\).*" {
+    send "y\r"
+    exp_continue
+  }
+  eof {
+    puts "Bubblewrap completed successfully"
+    exit 0
+  }
+  timeout {
+    puts "Timeout - force continuing..."
+    exit 0
+  }
+}
+EOF
+
           if [ -d "$HOME/.bubblewrap" ]; then
             find "$HOME/.bubblewrap" -name "sdkmanager" -type f 2>/dev/null | while read sdkmanager; do
               echo "Found sdkmanager at: $sdkmanager"
               export ANDROID_SDK_ROOT=$(dirname $(dirname $(dirname "$sdkmanager")))
               echo "Setting ANDROID_SDK_ROOT to: $ANDROID_SDK_ROOT"
-              
-              # Force accept all licenses
+
               yes | "$sdkmanager" --licenses 2>/dev/null || true
               yes | "$sdkmanager" "build-tools;34.0.0" 2>/dev/null || true
               yes | "$sdkmanager" "platforms;android-34" 2>/dev/null || true
             done
           fi
-          
-          # Alternative approach: Try bubblewrap update if init failed
+
           if [ ! -d "twa-whatsorder" ]; then
             echo "Init may have failed, trying update approach..."
             echo "Y" | bubblewrap update --updateConfig 2>/dev/null || true
@@ -202,24 +189,22 @@ LICENSE_EOF
 
       - name: Copy TWA configuration
         run: |
-          # Ensure directories exist
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/xml
-          
-          # Copy existing TWA configuration files if they exist
+
           if [ -d "twa-whatsorder/app/src/main/res" ]; then
             cp -r twa-whatsorder/app/src/main/res/* app/src/main/res/ 2>/dev/null || true
           fi
-          
+
           if [ -f "twa-whatsorder/app/src/main/AndroidManifest.xml" ]; then
             cp twa-whatsorder/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
           fi
-          
+
           if [ -f "twa-whatsorder/app/build.gradle" ]; then
             cp twa-whatsorder/app/build.gradle app/build.gradle
           fi
-          
+
           if [ -f "twa-whatsorder/app/proguard-rules.pro" ]; then
             cp twa-whatsorder/app/proguard-rules.pro app/proguard-rules.pro
           fi
@@ -233,7 +218,7 @@ LICENSE_EOF
             -alias key0 \
             -storepass keypass123 \
             -keypass keypass123 | grep SHA256: | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
-          
+
           echo "SHA256 Fingerprint for assetlinks.json:"
           cat sha256.txt
 
