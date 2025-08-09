@@ -11,7 +11,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {},
-  assetPrefix: './',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '' : './',
 };
 
 module.exports = nextConfig;

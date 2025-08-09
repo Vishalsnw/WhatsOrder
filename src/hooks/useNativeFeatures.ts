@@ -2,15 +2,48 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { Geolocation } from '@capacitor/geolocation';
-import { PushNotifications } from '@capacitor/push-notifications';
-import { LocalNotifications } from '@capacitor/local-notifications';
-import { Storage } from '@capacitor/storage';
-import { Share } from '@capacitor/share';
-import { Device } from '@capacitor/device';
-import { Network } from '@capacitor/network';
+
+// Dynamic imports for Capacitor to avoid build errors on web
+let Capacitor: any;
+let Camera: any;
+let Geolocation: any;
+let PushNotifications: any;
+let LocalNotifications: any;
+let Storage: any;
+let Share: any;
+let Device: any;
+let Network: any;
+
+if (typeof window !== 'undefined') {
+  import('@capacitor/core').then(module => {
+    Capacitor = module.Capacitor;
+  });
+  import('@capacitor/camera').then(module => {
+    Camera = module.Camera;
+  });
+  import('@capacitor/geolocation').then(module => {
+    Geolocation = module.Geolocation;
+  });
+  import('@capacitor/push-notifications').then(module => {
+    PushNotifications = module.PushNotifications;
+  });
+  import('@capacitor/local-notifications').then(module => {
+    LocalNotifications = module.LocalNotifications;
+  });
+  import('@capacitor/storage').then(module => {
+    Storage = module.Storage;
+  });
+  import('@capacitor/share').then(module => {
+    Share = module.Share;
+  });
+  import('@capacitor/device').then(module => {
+    Device = module.Device;
+  });
+  import('@capacitor/network').then(module => {
+    Network = module.Network;
+  });
+}
+
 
 export const useNativeFeatures = () => {
   const [isNative, setIsNative] = useState(false);
@@ -18,10 +51,12 @@ export const useNativeFeatures = () => {
   const [networkStatus, setNetworkStatus] = useState<any>(null);
 
   useEffect(() => {
-    setIsNative(Capacitor.isNativePlatform());
-    
-    if (Capacitor.isNativePlatform()) {
-      initializeNativeFeatures();
+    if (Capacitor) {
+      setIsNative(Capacitor.isNativePlatform());
+      
+      if (Capacitor.isNativePlatform()) {
+        initializeNativeFeatures();
+      }
     }
   }, []);
 
@@ -86,6 +121,9 @@ export const useNativeFeatures = () => {
 
   const takePicture = async () => {
     try {
+      if (!Camera) throw new Error('Camera not available');
+      
+      const { CameraResultType, CameraSource } = await import('@capacitor/camera');
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -102,6 +140,8 @@ export const useNativeFeatures = () => {
 
   const getCurrentLocation = async () => {
     try {
+      if (!Geolocation) throw new Error('Geolocation not available');
+      
       const coordinates = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 10000,
@@ -119,6 +159,8 @@ export const useNativeFeatures = () => {
 
   const scheduleNotification = async (title: string, body: string, scheduleAt?: Date) => {
     try {
+      if (!LocalNotifications) throw new Error('Local notifications not available');
+      
       await LocalNotifications.schedule({
         notifications: [
           {
@@ -137,6 +179,11 @@ export const useNativeFeatures = () => {
 
   const storeData = async (key: string, value: string) => {
     try {
+      if (!Storage) {
+        // Fallback to localStorage for web
+        localStorage.setItem(key, value);
+        return;
+      }
       await Storage.set({ key, value });
     } catch (error) {
       console.error('Error storing data:', error);
@@ -146,6 +193,10 @@ export const useNativeFeatures = () => {
 
   const getData = async (key: string) => {
     try {
+      if (!Storage) {
+        // Fallback to localStorage for web
+        return localStorage.getItem(key);
+      }
       const { value } = await Storage.get({ key });
       return value;
     } catch (error) {
@@ -156,6 +207,15 @@ export const useNativeFeatures = () => {
 
   const shareContent = async (title: string, text: string, url?: string) => {
     try {
+      if (!Share) {
+        // Fallback to Web Share API
+        if (navigator.share) {
+          await navigator.share({ title, text, url });
+        } else {
+          throw new Error('Share not available');
+        }
+        return;
+      }
       await Share.share({
         title,
         text,
