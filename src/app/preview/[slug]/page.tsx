@@ -1,19 +1,20 @@
-
-
+// app/preview/[slug]/page.tsx
 import { Suspense } from 'react';
 import PreviewClient from './PreviewClient';
 
-// Generate static params for static export
+// Build time pe slugs generate karo
 export async function generateStaticParams() {
-  return [];
+  // Yahan API, DB ya file se slugs fetch karo
+  const slugs = ["product-1", "product-2", "product-3"];
+
+  return slugs.map((slug) => ({ slug }));
 }
 
-// Server component that renders the client component
-export default function PreviewPage() {
+// Server component
+export default function PreviewPage({ params }: { params: { slug: string } }) {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <PreviewClient />
+      <PreviewClient slug={params.slug} />
     </Suspense>
   );
-}
-
+    }
