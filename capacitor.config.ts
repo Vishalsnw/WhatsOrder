@@ -7,7 +7,8 @@ const config: CapacitorConfig = {
   webDir: 'out',
   bundledWebRuntime: false,
   server: {
-    androidScheme: 'https'
+    url: 'https://your-repl-name.replit.app',
+    cleartext: true
   },
   plugins: {
     SplashScreen: {
