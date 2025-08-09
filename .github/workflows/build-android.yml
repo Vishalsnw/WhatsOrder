@@ -15,6 +15,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      JAVA_HOME: /usr/lib/jvm/adoptopenjdk-17-hotspot-amd64
+      BUBBLEWRAP_NO_INTERACTIVE: 'true'    # Bubblewrap non-interactive mode
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,7 +28,7 @@ jobs:
         with:
           node-version: 18
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -35,182 +39,26 @@ jobs:
 
       - name: Install dependencies and build web app
         run: |
-          npm cache clean --force
-          npm install
-          npx browserslist@latest --update-db
+          npm ci
           npm run build
-
-          if [ ! -d "out" ]; then
-            echo "Creating out directory..."
-            mkdir -p out
-            echo '<!DOCTYPE html><html><head><title>WhatsOrder</title></head><body><h1>Building...</h1></body></html>' > out/index.html
-          fi
 
       - name: Generate Keystore
         run: |
-          keytool -genkey -v \
-            -keystore release-key.jks \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -alias key0 \
-            -storepass keypass123 \
-            -keypass keypass123 \
+          keytool -genkeypair -alias key0 -keyalg RSA -keysize 2048 -validity 10000 \
+            -keystore release-key.jks -storepass keypass123 -keypass keypass123 \
             -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
 
-      - name: Create TWA Manifest
+      - name: Init TWA Project (non-interactive)
         run: |
-          cat > twa-manifest.json <<EOF
-{
-  "packageId": "com.whatsorder.app",
-  "host": "whats-order-osr3.vercel.app",
-  "name": "WhatsOrder",
-  "launcherName": "WhatsOrder",
-  "display": "standalone",
-  "themeColor": "#3b82f6",
-  "navigationColor": "#3b82f6",
-  "backgroundColor": "#ffffff",
-  "startUrl": "/",
-  "iconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
-  "maskableIconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
-  "splashScreenFadeOutDuration": 300,
-  "signingKey": {
-    "path": "./release-key.jks",
-    "alias": "key0"
-  },
-  "appVersionName": "1.0.0",
-  "appVersionCode": 1,
-  "shortcuts": [],
-  "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://whats-order-osr3.vercel.app/manifest.json",
-  "fallbackType": "customtabs",
-  "features": {
-    "locationDelegation": {
-      "enabled": false
-    },
-    "playBilling": {
-      "enabled": false
-    }
-  },
-  "alphaDependencies": {
-    "enabled": false
-  },
-  "enableNotifications": true
-}
-EOF
-
-      - name: Init TWA Project
-        run: |
-          sudo apt-get update && sudo apt-get install -y expect
-
-          mkdir -p "$HOME/.android"
-          echo 'count=0' > "$HOME/.android/repositories.cfg"
-
-          mkdir -p "$HOME/.android/licenses"
-          cat > "$HOME/.android/licenses/android-sdk-license" <<LICENSE_EOF
-8933bad161af4178b1185d1a37fbf41ea5269c55
-d56f5187479451eabf01fb78af6dfcb131a6481e
-24333f8a63b6825ea9c5514f83c2829b004d1fee
-84831b9409646a918e30573bab4c9c91346d8abd
-504667f4c0de7af1a06de9f4b1727b84351f2910
-LICENSE_EOF
-
-          export DEBIAN_FRONTEND=noninteractive
-
-          expect <<'EOF'
-set timeout 900
-log_user 1
-
-spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json --packageId=com.whatsorder.app --signingKeyPath=./release-key.jks --signingKeyAlias=key0 --signingKeyPassword=keypass123 --storePassword=keypass123 --skipPwaValidation --updateConfig
-
-expect {
-  -re ".*Do you want Bubblewrap to install.*JDK.*" {
-    send "yes\r"
-    exp_continue
-  }
-  -re ".*Do you want Bubblewrap to install.*Android SDK.*" {
-    send "yes\r"
-    exp_continue
-  }
-  -re ".*Accept.*\\(y/N\\).*" {
-    send "y\r"
-    exp_continue
-  }
-  -re ".*would you like to regenerate.*" {
-    send "Y\r"
-    exp_continue
-  }
-  -re ".*checksum file.*" {
-    send "Y\r"
-    exp_continue
-  }
-  -re ".*up-to-date.*" {
-    send "Y\r"
-    exp_continue
-  }
-  -re ".*license.*" {
-    send "y\r"
-    exp_continue
-  }
-  -re ".*Terms and Conditions.*" {
-    send "y\r"
-    exp_continue
-  }
-  -re ".*\\(Y/n\\).*" {
-    send "Y\r"
-    exp_continue
-  }
-  -re ".*\\(y/N\\).*" {
-    send "y\r"
-    exp_continue
-  }
-  eof {
-    puts "Bubblewrap completed successfully"
-    exit 0
-  }
-  timeout {
-    puts "Timeout - force continuing..."
-    exit 0
-  }
-}
-EOF
-
-          if [ -d "$HOME/.bubblewrap" ]; then
-            find "$HOME/.bubblewrap" -name "sdkmanager" -type f 2>/dev/null | while read sdkmanager; do
-              echo "Found sdkmanager at: $sdkmanager"
-              export ANDROID_SDK_ROOT=$(dirname $(dirname $(dirname "$sdkmanager")))
-              echo "Setting ANDROID_SDK_ROOT to: $ANDROID_SDK_ROOT"
-
-              yes | "$sdkmanager" --licenses 2>/dev/null || true
-              yes | "$sdkmanager" "build-tools;34.0.0" 2>/dev/null || true
-              yes | "$sdkmanager" "platforms;android-34" 2>/dev/null || true
-            done
-          fi
-
-          if [ ! -d "twa-whatsorder" ]; then
-            echo "Init may have failed, trying update approach..."
-            echo "Y" | bubblewrap update --updateConfig 2>/dev/null || true
-          fi
-
-      - name: Copy TWA configuration
-        run: |
-          mkdir -p app/src/main/res/values
-          mkdir -p app/src/main/res/drawable
-          mkdir -p app/src/main/res/xml
-
-          if [ -d "twa-whatsorder/app/src/main/res" ]; then
-            cp -r twa-whatsorder/app/src/main/res/* app/src/main/res/ 2>/dev/null || true
-          fi
-
-          if [ -f "twa-whatsorder/app/src/main/AndroidManifest.xml" ]; then
-            cp twa-whatsorder/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
-          fi
-
-          if [ -f "twa-whatsorder/app/build.gradle" ]; then
-            cp twa-whatsorder/app/build.gradle app/build.gradle
-          fi
-
-          if [ -f "twa-whatsorder/app/proguard-rules.pro" ]; then
-            cp twa-whatsorder/app/proguard-rules.pro app/proguard-rules.pro
-          fi
+          bubblewrap init \
+            --manifest=https://whats-order-osr3.vercel.app/manifest.json \
+            --packageId=com.whatsorder.app \
+            --signingKeyPath=release-key.jks \
+            --signingKeyAlias=key0 \
+            --signingKeyPassword=keypass123 \
+            --storePassword=keypass123 \
+            --skipPwaValidation \
+            --no-update-check
 
       - name: Build TWA Android App
         run: bubblewrap build
@@ -218,11 +66,8 @@ EOF
       - name: Generate SHA256 fingerprint
         run: |
           keytool -list -v -keystore release-key.jks \
-            -alias key0 \
-            -storepass keypass123 \
-            -keypass keypass123 | grep SHA256: | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
-
-          echo "SHA256 Fingerprint for assetlinks.json:"
+            -alias key0 -storepass keypass123 -keypass keypass123 | \
+            grep SHA256: | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
           cat sha256.txt
 
       - name: Upload APK
