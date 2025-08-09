@@ -13,7 +13,7 @@ fi
 echo "📱 Installing Capacitor..."
 npm install @capacitor/core @capacitor/cli @capacitor/android
 npm install @capacitor/camera @capacitor/geolocation @capacitor/push-notifications
-npm install @capacitor/local-notifications @capacitor/storage @capacitor/share
+npm install @capacitor/local-notifications @capacitor/preferences @capacitor/share
 npm install @capacitor/device @capacitor/network @capacitor/filesystem
 npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics
 
