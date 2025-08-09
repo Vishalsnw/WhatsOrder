@@ -17,7 +17,7 @@ jobs:
 
     env:
       JAVA_HOME: /usr/lib/jvm/adoptopenjdk-17-hotspot-amd64
-      BUBBLEWRAP_NO_INTERACTIVE: 'true'   # Enable non-interactive mode for bubblewrap
+      BUBBLEWRAP_NO_INTERACTIVE: 'true'    # Bubblewrap non-interactive mode (optional)
 
     steps:
       - name: Checkout repo
@@ -48,17 +48,50 @@ jobs:
             -keystore release-key.jks -storepass keypass123 -keypass keypass123 \
             -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
 
-      - name: Init TWA Project (non-interactive)
+      - name: Create and run expect script to init TWA
         run: |
-          bubblewrap init \
-            --manifest=https://whats-order-osr3.vercel.app/manifest.json \
+          cat << 'EOF' > bubblewrap-init.exp
+          #!/usr/bin/expect -f
+          set timeout 600
+
+          spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json \
             --packageId=com.whatsorder.app \
-            --signingKeyPath=release-key.jks \
+            --signingKeyPath=./release-key.jks \
             --signingKeyAlias=key0 \
             --signingKeyPassword=keypass123 \
             --storePassword=keypass123 \
             --skipPwaValidation \
             --no-update-check
+
+          expect {
+            -re "Do you want Bubblewrap to install the JDK.*" {
+              send "no\r"
+              exp_continue
+            }
+            -re "Path to your existing JDK 17.*" {
+              send "/usr/lib/jvm/adoptopenjdk-17-hotspot-amd64\r"
+              exp_continue
+            }
+            -re "Do you want Bubblewrap to install the Android SDK.*" {
+              send "yes\r"
+              exp_continue
+            }
+            -re "Accept.*\\(y/N\\).*" {
+              send "y\r"
+              exp_continue
+            }
+            eof {
+              puts "Bubblewrap init finished."
+              exit 0
+            }
+            timeout {
+              puts "Timeout hit, exiting."
+              exit 1
+            }
+          }
+          EOF
+          chmod +x bubblewrap-init.exp
+          ./bubblewrap-init.exp
 
       - name: Build TWA Android App
         run: bubblewrap build
