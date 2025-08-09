@@ -56,15 +56,15 @@ jobs:
 
       - name: Init TWA Project
         run: |
-          printf "yes\nyes\n" | bubblewrap init \
-            --manifest=https://whats-order-osr3.vercel.app/manifest.json \
-            --packageId=com.whatsorder.app \
-            --signingKeyPath=./release-key.jks \
-            --signingKeyAlias=key0 \
-            --signingKeyPassword=keypass123 \
-            --storePassword=keypass123 \
-            --skipPwaValidation \
-            --jdkPath=/usr/lib/jvm/temurin-17-jdk-amd64
+          # Use expect to handle all interactive prompts
+          sudo apt-get update && sudo apt-get install -y expect
+          
+          expect << 'EOF'
+          spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json --packageId=com.whatsorder.app --signingKeyPath=./release-key.jks --signingKeyAlias=key0 --signingKeyPassword=keypass123 --storePassword=keypass123 --skipPwaValidation
+          expect "Do you want Bubblewrap to install the JDK*" { send "yes\r" }
+          expect "Do you want Bubblewrap to install the Android SDK*" { send "yes\r" }
+          expect eof
+          EOF
 
       - name: Copy TWA configuration
         run: |
