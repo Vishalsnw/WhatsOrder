@@ -1,11 +1,9 @@
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'export',
   trailingSlash: true,
   images: {
-    unoptimized: true
+    unoptimized: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -14,7 +12,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {},
-  webpack: (config: any) => {
+  webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
