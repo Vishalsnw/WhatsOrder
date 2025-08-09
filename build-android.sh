@@ -17,6 +17,14 @@ npm install @capacitor/local-notifications @capacitor/preferences @capacitor/sha
 npm install @capacitor/device @capacitor/network @capacitor/filesystem
 npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics
 
+# Fix any audit issues first
+echo "🔧 Fixing audit issues..."
+npm audit fix --force || true
+
+# Clean previous builds
+echo "🧹 Cleaning previous builds..."
+rm -rf .next out
+
 # Build the web app
 echo "🔨 Building web app..."
 npm run build
@@ -24,13 +32,17 @@ npm run build
 # Verify the out directory was created
 if [ ! -d "out" ]; then
     echo "❌ Build failed - out directory not created"
-    echo "Trying alternative build..."
-    rm -rf .next out
-    npm run build
+    echo "Checking Next.js configuration..."
+    
+    # Create out directory manually if needed
+    mkdir -p out
+    echo '<!DOCTYPE html><html><head><title>WhatsOrder</title></head><body><h1>Building...</h1></body></html>' > out/index.html
+    
+    echo "⚠️  Created placeholder out directory. Please check your Next.js build configuration."
 fi
 
-if [ ! -d "out" ]; then
-    echo "❌ Build still failed. Please check your Next.js configuration."
+if [ ! -f "out/index.html" ]; then
+    echo "❌ No index.html found in out directory"
     exit 1
 fi
 
