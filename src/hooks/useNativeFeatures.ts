@@ -70,7 +70,7 @@ export const useNativeFeatures = () => {
       setNetworkStatus(status);
 
       // Listen for network changes
-      Network.addListener('networkStatusChange', (status) => {
+      Network.addListener('networkStatusChange', (status: any) => {
         setNetworkStatus(status);
       });
 
