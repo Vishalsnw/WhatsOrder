@@ -13,10 +13,6 @@ const config: any = {
   appName: 'WhatsOrder',
   webDir: 'out',
   bundledWebRuntime: false,
-  server: {
-    url: 'https://your-repl-name.replit.app',
-    cleartext: true
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 3000,
