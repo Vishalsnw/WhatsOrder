@@ -7,32 +7,22 @@ import { db } from '@/lib/firebase';
 
 // Generate static params for build time
 export async function generateStaticParams() {
-  try {
-    // Fetch all public forms to generate static paths
-    const publicFormsRef = collection(db, 'publicForms');
-    const snapshot = await getDocs(publicFormsRef);
-    
-    const params = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        slug: data.slug || doc.id // Use slug if available, otherwise use document ID
-      };
-    });
+  // For static export, we'll generate some common slugs
+  // The actual dynamic forms will be handled at runtime
+  const commonSlugs = [
+    'demo',
+    'sample', 
+    'test',
+    'example',
+    'store',
+    'shop',
+    'menu',
+    'order'
+  ];
 
-    // Add some common demo slugs for forms that might be created via URL params
-    const demoSlugs = ['demo', 'sample', 'test', 'example'];
-    demoSlugs.forEach(slug => {
-      if (!params.find(p => p.slug === slug)) {
-        params.push({ slug });
-      }
-    });
-
-    return params;
-  } catch (error) {
-    console.error('Error generating static params:', error);
-    // Return empty array if there's an error - pages will be generated on demand if possible
-    return [];
-  }
+  return commonSlugs.map(slug => ({
+    slug
+  }));
 }
 
 interface Product {
