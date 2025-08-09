@@ -17,7 +17,7 @@ jobs:
 
     env:
       JAVA_HOME: /usr/lib/jvm/adoptopenjdk-17-hotspot-amd64
-      BUBBLEWRAP_NO_INTERACTIVE: 'true'    # Bubblewrap non-interactive mode
+      BUBBLEWRAP_NO_INTERACTIVE: 'true'   # Enable non-interactive mode for bubblewrap
 
     steps:
       - name: Checkout repo
