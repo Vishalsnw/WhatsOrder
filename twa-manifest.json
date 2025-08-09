@@ -14,8 +14,8 @@
   "signingKey": {
     "path": "./release-key.jks",
     "alias": "key0",
-    "storePassword": "keypass123",
-    "keyPassword": "keypass123"
+    "storePass": "keypass123",
+    "keyPass": "keypass123"
   },
   "appVersionName": "1.0.0",
   "appVersionCode": 1,
