@@ -51,49 +51,79 @@ jobs:
             -keystore release-key.jks -storepass keypass123 -keypass keypass123 \
             -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
 
-      - name: Create and run expect script to init TWA
+      - name: Download and validate manifest
         run: |
-          cat << 'EOF' > bubblewrap-init.exp
-          #!/usr/bin/expect -f
-          set timeout 600
+          echo "Downloading manifest..."
+          curl -f -s -o manifest.json https://whats-order-osr3.vercel.app/manifest.json
+          echo "Manifest content:"
+          cat manifest.json
+          echo "Validating JSON..."
+          node -e "JSON.parse(require('fs').readFileSync('manifest.json', 'utf8')); console.log('✅ Manifest JSON is valid');"
 
-          spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json \
+      - name: Create TWA project from local manifest
+        run: |
+          mkdir -p "$HOME/.android"
+          echo 'count=0' > "$HOME/.android/repositories.cfg"
+          
+          # Pre-accept all Android SDK licenses
+          mkdir -p "$HOME/.android/licenses"
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$HOME/.android/licenses/android-sdk-license"
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> "$HOME/.android/licenses/android-sdk-license"
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$HOME/.android/licenses/android-sdk-license"
+          
+          expect << 'EOF'
+          set timeout 600
+          log_user 1
+          
+          spawn bubblewrap init --manifest=./manifest.json \
             --packageId=com.whatsorder.app \
             --signingKeyPath=./release-key.jks \
             --signingKeyAlias=key0 \
             --signingKeyPassword=keypass123 \
             --storePassword=keypass123 \
-            --skipPwaValidation \
-            --no-update-check
-
+            --skipPwaValidation
+          
           expect {
-            -re "Do you want Bubblewrap to install the JDK.*" {
+            "*Do you want Bubblewrap to install the JDK*" {
               send "no\r"
               exp_continue
             }
-            -re "Path to your existing JDK 17:" {
-              send "/usr/lib/jvm/adoptopenjdk-17-hotspot-amd64\r"
+            "*Path to your existing JDK*" {
+              send "$env(JAVA_HOME)\r"
+              exp_continue
             }
-            -re "Do you want Bubblewrap to install the Android SDK.*" {
+            "*Do you want Bubblewrap to install the Android SDK*" {
               send "yes\r"
               exp_continue
             }
-            -re "Accept.*\\(y/N\\).*" {
+            "*Accept*" {
               send "y\r"
               exp_continue
             }
+            "*January*Accept*" {
+              send "y\r"
+              exp_continue
+            }
+            "*No checksum file was found*" {
+              send "Y\r"
+              exp_continue
+            }
+            "*would you like to regenerate*" {
+              send "Y\r"
+              exp_continue
+            }
+            "*All SDK package licenses accepted*" {
+              exp_continue
+            }
             eof {
-              puts "Bubblewrap init finished."
-              exit 0
+              puts "Bubblewrap init completed successfully."
             }
             timeout {
-              puts "Timeout hit, exiting."
+              puts "Timeout occurred during bubblewrap init."
               exit 1
             }
           }
           EOF
-          chmod +x bubblewrap-init.exp
-          ./bubblewrap-init.exp
 
       - name: Build TWA Android App
         run: bubblewrap build
