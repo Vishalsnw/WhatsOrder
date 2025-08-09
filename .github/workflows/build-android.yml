@@ -37,7 +37,7 @@ jobs:
 
       - name: Init TWA Project (Non-Interactive)
         run: |
-          bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json \
+          yes n | bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json \
             --packageId=com.whatsorder.app \
             --signingKeyPath=release-key.jks \
             --signingKeyAlias=key0 \
@@ -61,13 +61,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-APK
-          path: androidApp/app/build/outputs/apk/release/app-release.apk
+          path: app-release-signed.apk
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-AAB
-          path: androidApp/app/build/outputs/bundle/release/app-release.aab
+          path: app-release.aab
 
       - name: Upload SHA256 Fingerprint
         uses: actions/upload-artifact@v4
