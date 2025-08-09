@@ -21,6 +21,21 @@ npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics
 echo "🔨 Building web app..."
 npm run build
 
+# Verify the out directory was created
+if [ ! -d "out" ]; then
+    echo "❌ Build failed - out directory not created"
+    echo "Trying alternative build..."
+    rm -rf .next out
+    npm run build
+fi
+
+if [ ! -d "out" ]; then
+    echo "❌ Build still failed. Please check your Next.js configuration."
+    exit 1
+fi
+
+echo "✅ Web app built successfully"
+
 # Initialize Capacitor (only if not already initialized)
 if [ ! -d "android" ]; then
     echo "⚡ Initializing Capacitor..."

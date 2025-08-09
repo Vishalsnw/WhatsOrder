@@ -60,3 +60,16 @@ args = "npm run build"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx serve out -p 5000 -s"
+
+[[workflows.workflow]]
+name = "Build Android App"
+author = 46180974
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "chmod +x build-android.sh"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./build-android.sh"

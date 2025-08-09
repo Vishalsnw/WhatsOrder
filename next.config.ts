@@ -11,6 +11,7 @@ const nextConfig = {
   },
   experimental: {},
   trailingSlash: true,
+  distDir: 'out',
 };
 
-module.exports = nextConfig;
+export default nextConfig;
