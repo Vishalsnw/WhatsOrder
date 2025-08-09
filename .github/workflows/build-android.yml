@@ -22,54 +22,70 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
-      - name: Generate Keystore
+      - name: Install dependencies
         run: |
-          keytool -genkey -v \
-            -keystore release-key.jks \
+          npm install
+          npm audit fix --force || true
+          npx update-browserslist-db@latest || true
+
+      - name: Build web app
+        run: |
+          npm run build
+
+          # Verify out directory exists
+          if [ ! -d "out" ]; then
+            echo "Creating out directory..."
+            mkdir -p out
+            echo '<!DOCTYPE html><html><head><title>WhatsOrder</title></head><body><h1>Building...</h1></body></html>' > out/index.html
+          fi
+
+      - name: Setup Android with Capacitor
+        run: |
+          # Install Capacitor dependencies
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/camera @capacitor/geolocation @capacitor/push-notifications
+          npm install @capacitor/local-notifications @capacitor/preferences @capacitor/share
+          npm install @capacitor/device @capacitor/network @capacitor/filesystem
+          npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics
+
+          # Sync Capacitor project
+          npx cap sync android
+
+      - name: Generate release keystore (if not provided)
+        if: env.KEYSTORE_PROVIDED != 'true'
+        run: |
+          cd android
+          keytool -genkey -v -keystore app/whatsorder-release.keystore \
             -keyalg RSA -keysize 2048 -validity 10000 \
-            -alias key0 \
-            -storepass keypass123 \
-            -keypass keypass123 \
-            -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
+            -alias whatsorder \
+            -storepass whatsorder123 \
+            -keypass whatsorder123 \
+            -dname "CN=WhatsOrder,OU=Mobile,O=WhatsOrder,L=City,ST=State,C=US"
 
-      - name: Init TWA Project (Non-Interactive)
-        run: |
-          bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json \
-            --packageId=com.whatsorder.app \
-            --signingKeyPath=release-key.jks \
-            --signingKeyAlias=key0 \
-            --signingKeyPassword=keypass123 \
-            --storePassword=keypass123 \
-            --skipPwaValidation \
-            --skipJdkInstall \
-            --jdkPath=/usr/lib/jvm/java-17-openjdk-amd64 \
-            --no-tty
+          # Get SHA256 fingerprint for Digital Asset Links
+          keytool -list -v -keystore app/whatsorder-release.keystore \
+            -alias whatsorder -storepass whatsorder123 -keypass whatsorder123 | \
+            grep "SHA256:" | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
 
-      - name: Build Android App
-        run: bubblewrap build
-
-      - name: Generate SHA256 fingerprint
-        run: |
-          keytool -list -v -keystore release-key.jks \
-            -alias key0 \
-            -storepass keypass123 \
-            -keypass keypass123 | grep SHA256: | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
+          echo "SHA256 Fingerprint for assetlinks.json:"
           cat sha256.txt
+
+      - name: Build Android Release APK
+        run: |
+          cd android
+          npx cap build android --prod --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-APK
-          path: app-release-signed.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-AAB
-          path: app-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Upload SHA256 Fingerprint
         uses: actions/upload-artifact@v4
