@@ -51,14 +51,13 @@ jobs:
             -keystore release-key.jks -storepass keypass123 -keypass keypass123 \
             -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
 
-      - name: Download and validate manifest
+      - name: Validate local manifest
         run: |
-          echo "Downloading manifest..."
-          curl -f -s -o manifest.json https://whats-order-osr3.vercel.app/manifest.json
+          echo "Using local twa-manifest.json..."
           echo "Manifest content:"
-          cat manifest.json
+          cat twa-manifest.json
           echo "Validating JSON..."
-          node -e "JSON.parse(require('fs').readFileSync('manifest.json', 'utf8')); console.log('✅ Manifest JSON is valid');"
+          node -e "JSON.parse(require('fs').readFileSync('twa-manifest.json', 'utf8')); console.log('✅ Manifest JSON is valid');"
 
       - name: Create TWA project from local manifest
         run: |
@@ -75,7 +74,7 @@ jobs:
           set timeout 600
           log_user 1
           
-          spawn bubblewrap init --manifest=./manifest.json \
+          spawn bubblewrap init --manifest=./twa-manifest.json \
             --packageId=com.whatsorder.app \
             --signingKeyPath=./release-key.jks \
             --signingKeyAlias=key0 \
