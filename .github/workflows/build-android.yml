@@ -32,8 +32,9 @@ jobs:
 
       - name: Install dependencies and build web app
         run: |
+          npm cache clean --force
           npm install
-          npm audit fix --force || true
+          npx update-browserslist-db@latest
           npm run build
 
           # Verify out directory exists
