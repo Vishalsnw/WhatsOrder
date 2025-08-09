@@ -1,0 +1,38 @@
+{
+  "packageId": "com.whatsorder.app",
+  "host": "whats-order-osr3.vercel.app",
+  "name": "WhatsOrder",
+  "launcherName": "WhatsOrder",
+  "display": "standalone",
+  "themeColor": "#3b82f6",
+  "navigationColor": "#3b82f6",
+  "backgroundColor": "#ffffff",
+  "startUrl": "/",
+  "iconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
+  "maskableIconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./release-key.jks",
+    "alias": "key0",
+    "storePassword": "keypass123",
+    "keyPassword": "keypass123"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://whats-order-osr3.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableNotifications": true
+}
