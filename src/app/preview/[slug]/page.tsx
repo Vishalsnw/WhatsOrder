@@ -5,6 +5,36 @@ import { useState, useEffect, useMemo } from 'react';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+// Generate static params for build time
+export async function generateStaticParams() {
+  try {
+    // Fetch all public forms to generate static paths
+    const publicFormsRef = collection(db, 'publicForms');
+    const snapshot = await getDocs(publicFormsRef);
+    
+    const params = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        slug: data.slug || doc.id // Use slug if available, otherwise use document ID
+      };
+    });
+
+    // Add some common demo slugs for forms that might be created via URL params
+    const demoSlugs = ['demo', 'sample', 'test', 'example'];
+    demoSlugs.forEach(slug => {
+      if (!params.find(p => p.slug === slug)) {
+        params.push({ slug });
+      }
+    });
+
+    return params;
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    // Return empty array if there's an error - pages will be generated on demand if possible
+    return [];
+  }
+}
+
 interface Product {
   name: string;
   price: number;
@@ -25,17 +55,13 @@ function isValidProduct(obj: any): obj is Product {
 
 
 
-export default function PreviewOrderPage({ params }: { params: Promise<{ slug: string }> }) {
+// Make params synchronous for static export
+export default function PreviewOrderPage({ params }: { params: { slug: string } }) {
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resolvedParams, setResolvedParams] = useState<{ slug: string } | null>(null);
-
-  // Resolve params promise
-  useEffect(() => {
-    params.then(setResolvedParams);
-  }, [params]);
+  const resolvedParams = params;
 
   // Check if we have an ID parameter (loading from database)
   const formId = searchParams.get('id');
@@ -45,7 +71,6 @@ export default function PreviewOrderPage({ params }: { params: Promise<{ slug: s
 
   // Load form data if ID is provided, otherwise search by slug
   useEffect(() => {
-    if (!resolvedParams) return;
 
     const loadFormData = async () => {
       try {
