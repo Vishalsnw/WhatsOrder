@@ -123,6 +123,18 @@ jobs:
               send "y\r"
               exp_continue
             }
+            "*would you like to regenerate your*project*" { 
+              send "Y\r"
+              exp_continue
+            }
+            "*To make sure your project is up-to-date*" { 
+              send "Y\r"
+              exp_continue
+            }
+            "*checksum file was found*" { 
+              send "Y\r"
+              exp_continue
+            }
             "*All SDK package licenses accepted*" { 
               exp_continue
             }
@@ -145,6 +157,15 @@ jobs:
             }
           }
           EOF
+          
+          # Force accept all remaining Android SDK licenses
+          export ANDROID_SDK_ROOT="$HOME/.bubblewrap/android-sdk"
+          if [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" ]; then
+            echo "Accepting all Android SDK licenses..."
+            yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+            echo "Installing build-tools..."
+            yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" || true
+          fi
           
           # Additional license acceptance for any remaining packages
           if [ -d "$HOME/.bubblewrap/android-sdk/cmdline-tools/latest/bin" ]; then
