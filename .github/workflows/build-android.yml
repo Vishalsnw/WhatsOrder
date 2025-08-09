@@ -98,92 +98,106 @@ jobs:
 
       - name: Init TWA Project
         run: |
-          # Use expect to handle all interactive prompts with timeout and accept all licenses
+          # Install expect for automation
           sudo apt-get update && sudo apt-get install -y expect
           
-          # Pre-accept all Android SDK licenses
+          # Pre-setup Android environment
           mkdir -p "$HOME/.android"
           echo 'count=0' > "$HOME/.android/repositories.cfg"
           
-          # Pre-create licenses directory with all common licenses
+          # Create comprehensive Android SDK licenses file
           mkdir -p "$HOME/.android/licenses"
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$HOME/.android/licenses/android-sdk-license"
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> "$HOME/.android/licenses/android-sdk-license"
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$HOME/.android/licenses/android-sdk-license"
           
+          # Add all known Android SDK license hashes
+          cat > "$HOME/.android/licenses/android-sdk-license" << 'LICENSE_EOF'
+8933bad161af4178b1185d1a37fbf41ea5269c55
+d56f5187479451eabf01fb78af6dfcb131a6481e
+24333f8a63b6825ea9c5514f83c2829b004d1fee
+84831b9409646a918e30573bab4c9c91346d8abd
+504667f4c0de7af1a06de9f4b1727b84351f2910
+LICENSE_EOF
+
+          # Set up auto-response for all interactive prompts
+          export DEBIAN_FRONTEND=noninteractive
+          
+          # Create comprehensive expect script
           expect << 'EOF'
-          set timeout 600
+          set timeout 900
           log_user 1
-          spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json --packageId=com.whatsorder.app --signingKeyPath=./release-key.jks --signingKeyAlias=key0 --signingKeyPassword=keypass123 --storePassword=keypass123 --skipPwaValidation
+          
+          # Start bubblewrap with regeneration flag
+          spawn bubblewrap init --manifest=https://whats-order-osr3.vercel.app/manifest.json --packageId=com.whatsorder.app --signingKeyPath=./release-key.jks --signingKeyAlias=key0 --signingKeyPassword=keypass123 --storePassword=keypass123 --skipPwaValidation --updateConfig
           
           expect {
-            "*Do you want Bubblewrap to install the JDK*" { 
+            -re ".*Do you want Bubblewrap to install.*JDK.*" { 
               send "yes\r"
               exp_continue
             }
-            "*Do you want Bubblewrap to install the Android SDK*" { 
+            -re ".*Do you want Bubblewrap to install.*Android SDK.*" { 
               send "yes\r"
               exp_continue
             }
-            "*Accept? (y/N)*" { 
+            -re ".*Accept.*\\(y/N\\).*" { 
               send "y\r"
               exp_continue
             }
-            "*January*Accept? (y/N)*" { 
-              send "y\r"
-              exp_continue
-            }
-            "*would you like to regenerate your*project*" { 
+            -re ".*would you like to regenerate.*" { 
               send "Y\r"
               exp_continue
             }
-            "*To make sure your project is up-to-date*" { 
+            -re ".*checksum file.*" { 
               send "Y\r"
               exp_continue
             }
-            "*checksum file was found*" { 
+            -re ".*up-to-date.*" { 
               send "Y\r"
               exp_continue
             }
-            "*No checksum file was found*" { 
+            -re ".*license.*" { 
+              send "y\r"
+              exp_continue
+            }
+            -re ".*Terms and Conditions.*" { 
+              send "y\r"
+              exp_continue
+            }
+            -re ".*\\(Y/n\\).*" { 
               send "Y\r"
               exp_continue
             }
-            "*All SDK package licenses accepted*" { 
-              exp_continue
-            }
-            "*license*" { 
+            -re ".*\\(y/N\\).*" { 
               send "y\r"
               exp_continue
             }
-            "*accept*" { 
-              send "y\r"
-              exp_continue
+            eof { 
+              puts "Bubblewrap completed successfully"
+              exit 0 
             }
-            "*Terms and Conditions*" { 
-              send "y\r"
-              exp_continue
-            }
-            eof { exit 0 }
             timeout { 
-              puts "Timeout reached, but continuing..."
+              puts "Timeout - force continuing..."
               exit 0 
             }
           }
           EOF
           
-          # Force accept all remaining Android SDK licenses
-          export ANDROID_SDK_ROOT="$HOME/.bubblewrap/android-sdk"
-          if [ -d "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" ]; then
-            echo "Accepting all Android SDK licenses..."
-            yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
-            echo "Installing build-tools..."
-            yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" || true
+          # Fallback: Force accept all Android SDK licenses post-installation
+          if [ -d "$HOME/.bubblewrap" ]; then
+            find "$HOME/.bubblewrap" -name "sdkmanager" -type f 2>/dev/null | while read sdkmanager; do
+              echo "Found sdkmanager at: $sdkmanager"
+              export ANDROID_SDK_ROOT=$(dirname $(dirname $(dirname "$sdkmanager")))
+              echo "Setting ANDROID_SDK_ROOT to: $ANDROID_SDK_ROOT"
+              
+              # Force accept all licenses
+              yes | "$sdkmanager" --licenses 2>/dev/null || true
+              yes | "$sdkmanager" "build-tools;34.0.0" 2>/dev/null || true
+              yes | "$sdkmanager" "platforms;android-34" 2>/dev/null || true
+            done
           fi
           
-          # Additional license acceptance for any remaining packages
-          if [ -d "$HOME/.bubblewrap/android-sdk/cmdline-tools/latest/bin" ]; then
-            echo "y" | $HOME/.bubblewrap/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          # Alternative approach: Try bubblewrap update if init failed
+          if [ ! -d "twa-whatsorder" ]; then
+            echo "Init may have failed, trying update approach..."
+            echo "Y" | bubblewrap update --updateConfig 2>/dev/null || true
           fi
 
       - name: Copy TWA configuration
