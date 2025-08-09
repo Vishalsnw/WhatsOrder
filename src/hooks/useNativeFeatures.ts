@@ -8,8 +8,7 @@ let Camera: any;
 let Geolocation: any;
 let PushNotifications: any;
 let LocalNotifications: any;
-let Storage: any; // Keep this for now, but it will be replaced by Preferences
-let Preferences: any; // New import for Preferences
+let Preferences: any;
 let Share: any;
 let Device: any;
 let Network: any;
@@ -30,10 +29,7 @@ if (typeof window !== 'undefined') {
   import('@capacitor/local-notifications').then(module => {
     LocalNotifications = module.LocalNotifications;
   });
-  import('@capacitor/storage').then(module => { // This import is no longer directly used but kept for context if needed.
-    Storage = module.Storage;
-  });
-  import('@capacitor/preferences').then(module => { // Import the new Preferences API
+  import('@capacitor/preferences').then(module => {
     Preferences = module.Preferences;
   });
   import('@capacitor/share').then(module => {
