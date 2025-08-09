@@ -71,9 +71,8 @@ jobs:
               send "no\r"
               exp_continue
             }
-            -re "Path to your existing JDK 17.*" {
+            -re "Path to your existing JDK 17:" {
               send "/usr/lib/jvm/adoptopenjdk-17-hotspot-amd64\r"
-              exp_continue
             }
             -re "Do you want Bubblewrap to install the Android SDK.*" {
               send "yes\r"
