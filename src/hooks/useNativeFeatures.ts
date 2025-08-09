@@ -97,20 +97,20 @@ export const useNativeFeatures = () => {
       await PushNotifications.register();
 
       // On success, we should be able to receive notifications
-      PushNotifications.addListener('registration', (token) => {
+      PushNotifications.addListener('registration', (token: any) => {
         console.log('Push registration success, token: ' + token.value);
         // Send token to your server
       });
 
-      PushNotifications.addListener('registrationError', (error) => {
+      PushNotifications.addListener('registrationError', (error: any) => {
         console.error('Error on registration: ' + JSON.stringify(error));
       });
 
-      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      PushNotifications.addListener('pushNotificationReceived', (notification: any) => {
         console.log('Push received: ' + JSON.stringify(notification));
       });
 
-      PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+      PushNotifications.addListener('pushNotificationActionPerformed', (notification: any) => {
         console.log('Push action performed: ' + JSON.stringify(notification));
       });
     } catch (error) {
