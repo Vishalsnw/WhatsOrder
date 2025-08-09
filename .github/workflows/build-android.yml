@@ -68,11 +68,27 @@ jobs:
 
       - name: Copy TWA configuration
         run: |
-          # Copy existing TWA configuration files
-          cp -r twa-whatsorder/app/src/main/res/* app/src/main/res/
-          cp twa-whatsorder/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
-          cp twa-whatsorder/app/build.gradle app/build.gradle
-          cp twa-whatsorder/app/proguard-rules.pro app/proguard-rules.pro
+          # Ensure directories exist
+          mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/xml
+          
+          # Copy existing TWA configuration files if they exist
+          if [ -d "twa-whatsorder/app/src/main/res" ]; then
+            cp -r twa-whatsorder/app/src/main/res/* app/src/main/res/ 2>/dev/null || true
+          fi
+          
+          if [ -f "twa-whatsorder/app/src/main/AndroidManifest.xml" ]; then
+            cp twa-whatsorder/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
+          fi
+          
+          if [ -f "twa-whatsorder/app/build.gradle" ]; then
+            cp twa-whatsorder/app/build.gradle app/build.gradle
+          fi
+          
+          if [ -f "twa-whatsorder/app/proguard-rules.pro" ]; then
+            cp twa-whatsorder/app/proguard-rules.pro app/proguard-rules.pro
+          fi
 
       - name: Build TWA Android App
         run: bubblewrap build
