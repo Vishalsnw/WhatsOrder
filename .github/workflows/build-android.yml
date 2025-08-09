@@ -44,7 +44,7 @@ jobs:
             --signingKeyPassword=keypass123 \
             --storePassword=keypass123 \
             --skipPwaValidation \
-            --jdkPath=$(which java)
+            --jdkPath=$(dirname $(dirname $(readlink -f $(which java))))
 
       - name: Build Android App
         run: bubblewrap build
@@ -61,13 +61,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-APK
-          path: app-release-signed.apk
+          path: androidApp/app/build/outputs/apk/release/app-release.apk
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-AAB
-          path: app-release.aab
+          path: androidApp/app/build/outputs/bundle/release/app-release.aab
 
       - name: Upload SHA256 Fingerprint
         uses: actions/upload-artifact@v4
