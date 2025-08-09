@@ -46,13 +46,24 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Clear npm cache
+        run: npm cache clean --force
+
       - name: Install dependencies
         run: |
-          if [ -f "package-lock.json" ]; then
-            npm ci
-          else
-            npm install
-          fi
+          rm -rf node_modules package-lock.json
+          npm install
+
+      - name: Install Capacitor and plugins
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/camera @capacitor/geolocation @capacitor/push-notifications
+          npm install @capacitor/local-notifications @capacitor/storage @capacitor/share
+          npm install @capacitor/device @capacitor/network @capacitor/filesystem
+          npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics
+
+      - name: Update browserslist
+        run: npx update-browserslist-db@latest
 
       - name: Build web app
         run: |
