@@ -44,8 +44,8 @@ jobs:
             --signingKeyPassword=keypass123 \
             --storePassword=keypass123 \
             --skipPwaValidation \
-            --jdkPath=/usr/lib/jvm/java-17-openjdk-amd64 \
             --skipJdkInstall \
+            --jdkPath=/usr/lib/jvm/java-17-openjdk-amd64 \
             --no-tty
 
       - name: Build Android App
