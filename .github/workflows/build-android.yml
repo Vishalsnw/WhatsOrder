@@ -216,7 +216,7 @@ jobs:
           echo "- Git Commit: ${{ github.sha }}" >> release-notes.md
           echo "- Package: com.whatsorder.app" >> release-notes.md
 
-          if [ ! -f "../secrets.KEYSTORE_BASE64" ]; then
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
             echo "- Signing: Auto-generated keystore" >> release-notes.md
             echo "- SHA256 for assetlinks.json: $(cat sha256.txt 2>/dev/null || echo 'Check SHA256-Fingerprint artifact')" >> release-notes.md
           else
