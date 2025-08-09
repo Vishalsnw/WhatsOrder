@@ -15,7 +15,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(com.capacitorjs.plugins.localnotifications.LocalNotificationsPlugin.class);
         registerPlugin(com.capacitorjs.plugins.pushnotifications.PushNotificationsPlugin.class);
         registerPlugin(com.capacitorjs.plugins.share.SharePlugin.class);
-        registerPlugin(com.capacitorjs.plugins.storage.StoragePlugin.class);
+        registerPlugin(com.capacitorjs.plugins.preferences.PreferencesPlugin.class);
         registerPlugin(com.capacitorjs.plugins.device.DevicePlugin.class);
         registerPlugin(com.capacitorjs.plugins.network.NetworkPlugin.class);
         registerPlugin(com.capacitorjs.plugins.statusbar.StatusBarPlugin.class);
