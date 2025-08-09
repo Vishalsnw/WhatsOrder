@@ -1,230 +1,77 @@
-name: Build Android APK
+name: Build TWA Android App
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
-      build_type:
-        description: 'Build Type'
+      app_url:
+        description: 'PWA URL with manifest.json'
         required: true
-        default: 'mobile_install'
-        type: choice
-        options:
-          - mobile_install
-          - debug
-          - release
-          - signed
+        default: 'https://whats-order-osr3.vercel.app/'
+      package_name:
+        description: 'Android package name'
+        required: true
+        default: 'com.whatsorder.twa'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: 18
 
-      - name: Clear npm cache
-        run: npm cache clean --force
-
-      - name: Setup Java JDK
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
 
-      - name: Install dependencies
-        run: |
-          rm -rf node_modules package-lock.json
-          npm install
-
-      - name: Install Capacitor and plugins
-        run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npm install @capacitor/camera @capacitor/geolocation @capacitor/push-notifications
-          npm install @capacitor/local-notifications @capacitor/preferences @capacitor/share
-          npm install @capacitor/device @capacitor/network @capacitor/filesystem
-          npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics
-
-      - name: Fix audit issues
-        run: npm audit fix --audit-level moderate || true
-
-      - name: Update browserslist
-        run: npx update-browserslist-db@latest
-
-      - name: Build web app
-        run: |
-          npm run build
-          ls -la out/ || echo "Out directory not found"
-
-      - name: Create assets directory
-        run: mkdir -p android/app/src/main/assets
-
-      - name: Initialize Capacitor
-        run: |
-          if [ ! -d "android" ]; then
-            npx cap init "WhatsOrder" "com.whatsorder.app" --web-dir=out
-          fi
-
-      - name: Add Android platform
-        run: |
-          if [ ! -d "android" ]; then
-            npx cap add android
-          fi
-
-      - name: Sync Capacitor
-        run: |
-          mkdir -p android/app/src/main/assets
-          npx cap sync android
-
-      - name: Make gradlew executable
-        run: chmod +x android/gradlew
-
-      - name: Generate Release Keystore (if not using secrets)
+      - name: Create signing key if not provided
         if: ${{ !secrets.KEYSTORE_BASE64 }}
         run: |
-          cd android
-          keytool -genkey -v -keystore app/whatsorder-release.keystore \
+          keytool -genkey -v \
+            -keystore release-key.jks \
             -keyalg RSA -keysize 2048 -validity 10000 \
-            -alias whatsorder \
-            -storepass whatsorder123 \
-            -keypass whatsorder123 \
-            -dname "CN=WhatsOrder,OU=Mobile,O=WhatsOrder,L=City,ST=State,C=US"
+            -alias key0 \
+            -storepass keypass123 \
+            -keypass keypass123 \
+            -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
+          echo "No keystore secret provided, generated default key."
 
-          # Get SHA256 fingerprint for Digital Asset Links
-          keytool -list -v -keystore app/whatsorder-release.keystore \
-            -alias whatsorder -storepass whatsorder123 -keypass whatsorder123 | \
-            grep "SHA256:" | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
-
-          echo "SHA256 Fingerprint for assetlinks.json:"
-          cat sha256.txt
-
-      - name: Configure Release Signing (auto-generated keystore)
-        if: ${{ !secrets.KEYSTORE_BASE64 }}
-        run: |
-          cd android
-          cat >> app/build.gradle << 'EOF'
-
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file('whatsorder-release.keystore')
-                      storePassword 'whatsorder123'
-                      keyAlias 'whatsorder'
-                      keyPassword 'whatsorder123'
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                      minifyEnabled false
-                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-                  }
-              }
-          }
-          EOF
-
-      - name: Decode Custom Keystore (if provided)
+      - name: Decode provided keystore
         if: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release-key.jks
 
-      - name: Configure Release Signing (custom keystore)
-        if: ${{ secrets.KEYSTORE_BASE64 }}
+      - name: Init TWA Project
         run: |
-          cd android
-          cat >> app/build.gradle << 'EOF'
+          bubblewrap init --manifest=${{ github.event.inputs.app_url }}manifest.json \
+            --packageId=${{ github.event.inputs.package_name }} \
+            --signingKeyPath=release-key.jks \
+            --signingKeyAlias=key0 \
+            --signingKeyPassword=${{ secrets.KEY_PASSWORD || 'keypass123' }} \
+            --storePassword=${{ secrets.KEYSTORE_PASSWORD || 'keypass123' }} \
+            --skipPwaValidation
 
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file('release.keystore')
-                      storePassword '${{ secrets.KEYSTORE_PASSWORD }}'
-                      keyAlias '${{ secrets.KEY_ALIAS }}'
-                      keyPassword '${{ secrets.KEY_PASSWORD }}'
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                      minifyEnabled false
-                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-                  }
-              }
-          }
-          EOF
+      - name: Build Android App
+        run: bubblewrap build
 
-      - name: Build Debug APK
-        if: ${{ inputs.build_type == 'debug' || github.event_name != 'workflow_dispatch' }}
-        run: cd android && ./gradlew assembleDebug
-
-      - name: Build Release APK (Signed)
-        run: cd android && ./gradlew assembleRelease
-
-      - name: Build AAB for Play Store
-        run: cd android && ./gradlew bundleRelease
-
-      - name: Upload Debug APK
-        if: ${{ inputs.build_type == 'debug' || github.event_name != 'workflow_dispatch' }}
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: WhatsOrder-Debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: TWA-Release-APK
+          path: app-release-signed.apk
 
-      - name: Upload Signed Release APK
+      - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: WhatsOrder-Release-APK-Installable
-          path: android/app/build/outputs/apk/release/app-release.apk
-
-      - name: Upload AAB for Play Store
-        uses: actions/upload-artifact@v4
-        with:
-          name: WhatsOrder-PlayStore-AAB
-          path: android/app/build/outputs/bundle/release/app-release.aab
-
-      - name: Upload SHA256 Fingerprint
-        if: ${{ !secrets.KEYSTORE_BASE64 }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: SHA256-Fingerprint
-          path: android/sha256.txt
-
-      - name: Create Release Notes
-        run: |
-          cd android
-          echo "# WhatsOrder Android App" > release-notes.md
-          echo "" >> release-notes.md
-          echo "## Installation Instructions" >> release-notes.md
-          echo "1. Download the 'WhatsOrder-Release-APK-Installable' file" >> release-notes.md
-          echo "2. Enable 'Install from unknown sources' in Android settings" >> release-notes.md
-          echo "3. Install the APK file" >> release-notes.md
-          echo "" >> release-notes.md
-          echo "## Build Details" >> release-notes.md
-          echo "- Build Date: $(date)" >> release-notes.md
-          echo "- Git Commit: ${{ github.sha }}" >> release-notes.md
-          echo "- Package: com.whatsorder.app" >> release-notes.md
-
-          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-            echo "- Signing: Auto-generated keystore" >> release-notes.md
-            echo "- SHA256 for assetlinks.json: $(cat sha256.txt 2>/dev/null || echo 'Check SHA256-Fingerprint artifact')" >> release-notes.md
-          else
-            echo "- Signing: Custom keystore provided" >> release-notes.md
-          fi
-
-      - name: Upload Release Notes
-        uses: actions/upload-artifact@v4
-        with:
-          name: Release-Notes
-          path: android/release-notes.md
+          name: TWA-Release-AAB
+          path: app-release.aab
