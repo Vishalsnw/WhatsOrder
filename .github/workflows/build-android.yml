@@ -1,6 +1,11 @@
+
 name: Build TWA Android App
 
 on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
@@ -22,14 +27,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install dependencies
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Install dependencies and build web app
         run: |
           npm install
           npm audit fix --force || true
-          npx update-browserslist-db@latest || true
-
-      - name: Build web app
-        run: |
           npm run build
 
           # Verify out directory exists
@@ -39,53 +43,60 @@ jobs:
             echo '<!DOCTYPE html><html><head><title>WhatsOrder</title></head><body><h1>Building...</h1></body></html>' > out/index.html
           fi
 
-      - name: Setup Android with Capacitor
+      - name: Generate Keystore
         run: |
-          # Install Capacitor dependencies
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npm install @capacitor/camera @capacitor/geolocation @capacitor/push-notifications
-          npm install @capacitor/local-notifications @capacitor/preferences @capacitor/share
-          npm install @capacitor/device @capacitor/network @capacitor/filesystem
-          npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics
-
-          # Sync Capacitor project
-          npx cap sync android
-
-      - name: Generate release keystore (if not provided)
-        if: env.KEYSTORE_PROVIDED != 'true'
-        run: |
-          cd android
-          keytool -genkey -v -keystore app/whatsorder-release.keystore \
+          keytool -genkey -v \
+            -keystore release-key.jks \
             -keyalg RSA -keysize 2048 -validity 10000 \
-            -alias whatsorder \
-            -storepass whatsorder123 \
-            -keypass whatsorder123 \
-            -dname "CN=WhatsOrder,OU=Mobile,O=WhatsOrder,L=City,ST=State,C=US"
+            -alias key0 \
+            -storepass keypass123 \
+            -keypass keypass123 \
+            -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
 
-          # Get SHA256 fingerprint for Digital Asset Links
-          keytool -list -v -keystore app/whatsorder-release.keystore \
-            -alias whatsorder -storepass whatsorder123 -keypass whatsorder123 | \
-            grep "SHA256:" | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
+      - name: Init TWA Project
+        run: |
+          echo "yes" | bubblewrap init \
+            --manifest=https://whats-order-osr3.vercel.app/manifest.json \
+            --packageId=com.whatsorder.app \
+            --signingKeyPath=./release-key.jks \
+            --signingKeyAlias=key0 \
+            --signingKeyPassword=keypass123 \
+            --storePassword=keypass123 \
+            --skipPwaValidation \
+            --jdkPath=/usr/lib/jvm/temurin-17-jdk-amd64
 
+      - name: Copy TWA configuration
+        run: |
+          # Copy existing TWA configuration files
+          cp -r twa-whatsorder/app/src/main/res/* app/src/main/res/
+          cp twa-whatsorder/app/src/main/AndroidManifest.xml app/src/main/AndroidManifest.xml
+          cp twa-whatsorder/app/build.gradle app/build.gradle
+          cp twa-whatsorder/app/proguard-rules.pro app/proguard-rules.pro
+
+      - name: Build TWA Android App
+        run: bubblewrap build
+
+      - name: Generate SHA256 fingerprint
+        run: |
+          keytool -list -v -keystore release-key.jks \
+            -alias key0 \
+            -storepass keypass123 \
+            -keypass keypass123 | grep SHA256: | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
+          
           echo "SHA256 Fingerprint for assetlinks.json:"
           cat sha256.txt
-
-      - name: Build Android Release APK
-        run: |
-          cd android
-          npx cap build android --prod --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: app-release-signed.apk
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-AAB
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          path: app-release.aab
 
       - name: Upload SHA256 Fingerprint
         uses: actions/upload-artifact@v4
