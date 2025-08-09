@@ -1,7 +1,14 @@
 
-import { CapacitorConfig } from '@capacitor/cli';
+// Import CapacitorConfig type conditionally to avoid build errors on web
+let CapacitorConfig: any;
+try {
+  CapacitorConfig = require('@capacitor/cli').CapacitorConfig;
+} catch {
+  // Fallback for web builds where Capacitor isn't installed
+  CapacitorConfig = Object;
+}
 
-const config: CapacitorConfig = {
+const config: any = {
   appId: 'com.whatsorder.app',
   appName: 'WhatsOrder',
   webDir: 'out',
