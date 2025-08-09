@@ -55,7 +55,12 @@ jobs:
           fi
 
       - name: Build web app
-        run: npm run build
+        run: |
+          npm run build
+          ls -la out/ || echo "Out directory not found"
+
+      - name: Create assets directory
+        run: mkdir -p android/app/src/main/assets
 
       - name: Initialize Capacitor
         run: |
@@ -70,7 +75,9 @@ jobs:
           fi
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          mkdir -p android/app/src/main/assets
+          npx cap sync android
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
