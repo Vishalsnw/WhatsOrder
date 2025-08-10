@@ -1,6 +1,6 @@
 {
   "packageId": "com.whatsorder.app",
-  "host": "whats-order-osr3.vercel.app",
+  "host": "https://whats-order-osr3.vercel.app",
   "name": "WhatsOrder",
   "launcherName": "WhatsOrder",
   "display": "standalone",
