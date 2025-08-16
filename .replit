@@ -73,3 +73,44 @@ args = "chmod +x build-android.sh"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "./build-android.sh"
+
+[[workflows.workflow]]
+name = "Debug Android Build"
+author = 46400926
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"🔍 Starting Android build debug process...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Node version: $(node --version)\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"NPM version: $(npm --version)\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm list --depth=0 2>/dev/null || echo \"⚠️ Some packages may be missing\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Checking Next.js config...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cat next.config.ts"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Running build with verbose output...\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run build 2>&1 | tee build.log"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "echo \"Build completed. Check build.log for details.\""
