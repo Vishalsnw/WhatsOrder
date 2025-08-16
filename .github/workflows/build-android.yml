@@ -125,7 +125,20 @@ jobs:
           EOF
 
       - name: Build TWA Android App
-        run: bubblewrap build
+        run: |
+          bubblewrap build || {
+            echo "❌ Bubblewrap build failed"
+            echo "Checking for APK files..."
+            find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+            find . -name "*.aab" -type f 2>/dev/null || echo "No AAB files found"
+            exit 1
+          }
+
+      - name: List build outputs
+        run: |
+          echo "Listing all APK and AAB files:"
+          find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+          find . -name "*.aab" -type f 2>/dev/null || echo "No AAB files found"
 
       - name: Generate SHA256 fingerprint
         run: |
@@ -138,13 +151,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-APK
-          path: app-release-signed.apk
+          path: "*.apk"
+        continue-on-error: true
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: TWA-Release-AAB
-          path: app-release.aab
+          path: "*.aab"
+        continue-on-error: true
 
       - name: Upload SHA256 Fingerprint
         uses: actions/upload-artifact@v4

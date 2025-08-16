@@ -37,7 +37,14 @@ rm -rf .next out
 
 # Build the web app
 echo "🔨 Building web app..."
-npm run build || handle_error "Next.js build"
+if ! npm run build; then
+    echo "❌ Next.js build failed. Checking for common issues..."
+    echo "Checking TypeScript errors..."
+    npx tsc --noEmit 2>&1 | head -20 || echo "TypeScript check failed"
+    echo "Checking ESLint errors..."
+    npm run lint 2>&1 | head -10 || echo "ESLint check failed"
+    handle_error "Next.js build - check build.log for details"
+fi
 
 # Verify the out directory was created
 if [ ! -d "out" ]; then
