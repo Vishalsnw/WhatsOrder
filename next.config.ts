@@ -9,9 +9,11 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  experimental: {},
+  experimental: {
+    esmExternals: false
+  },
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,

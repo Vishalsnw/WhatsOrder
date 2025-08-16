@@ -1,25 +1,35 @@
 
 #!/bin/bash
 
+set -e  # Exit on any error
+set -x  # Print commands as they execute
+
 echo "🚀 Building WhatsOrder Android App..."
+
+# Function to handle errors
+handle_error() {
+    echo "❌ Build failed at step: $1"
+    echo "Check the logs above for specific error details"
+    exit 1
+}
 
 # Install dependencies if needed
 if [ ! -d "node_modules" ]; then
     echo "📦 Installing dependencies..."
-    npm install
+    npm install || handle_error "npm install"
 fi
 
 # Install Capacitor and plugins
 echo "📱 Installing Capacitor..."
-npm install @capacitor/core @capacitor/cli @capacitor/android
-npm install @capacitor/camera @capacitor/geolocation @capacitor/push-notifications
-npm install @capacitor/local-notifications @capacitor/preferences @capacitor/share
-npm install @capacitor/device @capacitor/network @capacitor/filesystem
-npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics
+npm install @capacitor/core @capacitor/cli @capacitor/android || handle_error "Capacitor core installation"
+npm install @capacitor/camera @capacitor/geolocation @capacitor/push-notifications || handle_error "Capacitor plugins batch 1"
+npm install @capacitor/local-notifications @capacitor/preferences @capacitor/share || handle_error "Capacitor plugins batch 2"
+npm install @capacitor/device @capacitor/network @capacitor/filesystem || handle_error "Capacitor plugins batch 3"
+npm install @capacitor/status-bar @capacitor/keyboard @capacitor/haptics || handle_error "Capacitor plugins batch 4"
 
 # Fix any audit issues first
 echo "🔧 Fixing audit issues..."
-npm audit fix --force || true
+npm audit fix --force || echo "⚠️ Audit fix failed, continuing..."
 
 # Clean previous builds
 echo "🧹 Cleaning previous builds..."
@@ -27,7 +37,7 @@ rm -rf .next out
 
 # Build the web app
 echo "🔨 Building web app..."
-npm run build
+npm run build || handle_error "Next.js build"
 
 # Verify the out directory was created
 if [ ! -d "out" ]; then
@@ -43,7 +53,7 @@ fi
 
 if [ ! -f "out/index.html" ]; then
     echo "❌ No index.html found in out directory"
-    exit 1
+    handle_error "Missing index.html"
 fi
 
 echo "✅ Web app built successfully"
@@ -51,18 +61,18 @@ echo "✅ Web app built successfully"
 # Initialize Capacitor (only if not already initialized)
 if [ ! -d "android" ]; then
     echo "⚡ Initializing Capacitor..."
-    npx cap init "WhatsOrder" "com.whatsorder.app" --web-dir=out
+    npx cap init "WhatsOrder" "com.whatsorder.app" --web-dir=out || handle_error "Capacitor init"
 fi
 
 # Add Android platform
 if [ ! -d "android" ]; then
     echo "🤖 Adding Android platform..."
-    npx cap add android
+    npx cap add android || handle_error "Adding Android platform"
 fi
 
 # Sync files to Android
 echo "🔄 Syncing files to Android..."
-npx cap sync android
+npx cap sync android || handle_error "Capacitor sync"
 
 echo "✅ Android project ready!"
 echo ""
