@@ -1,6 +1,6 @@
 {
   "packageId": "com.whatsorder.app",
-  "host": "https://whats-order-osr3.vercel.app",
+  "host": "https://5935d993-0971-40e2-92a8-fd6205bc6395-00-1l1xuzexad8jc.riker.replit.dev",
   "name": "WhatsOrder",
   "launcherName": "WhatsOrder",
   "display": "standalone",
@@ -8,8 +8,8 @@
   "navigationColor": "#3b82f6",
   "backgroundColor": "#ffffff",
   "startUrl": "/",
-  "iconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
-  "maskableIconUrl": "https://whats-order-osr3.vercel.app/logo.svg",
+  "iconUrl": "https://5935d993-0971-40e2-92a8-fd6205bc6395-00-1l1xuzexad8jc.riker.replit.dev/logo.svg",
+  "maskableIconUrl": "https://5935d993-0971-40e2-92a8-fd6205bc6395-00-1l1xuzexad8jc.riker.replit.dev/logo.svg",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./release-key.jks",
@@ -21,7 +21,7 @@
   "appVersionCode": 1,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://whats-order-osr3.vercel.app/manifest.json",
+  "webManifestUrl": "https://5935d993-0971-40e2-92a8-fd6205bc6395-00-1l1xuzexad8jc.riker.replit.dev/manifest.json",
   "fallbackType": "customtabs",
   "features": {
     "locationDelegation": {
