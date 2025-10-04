@@ -10,11 +10,17 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
-// Server component
-export default function PreviewPage({ params }: { params: { slug: string } }) {
+// Server component - Next.js 15 requires params to be awaited
+export default async function PreviewPage({ 
+  params 
+}: { 
+  params: Promise<{ slug: string }> 
+}) {
+  const { slug } = await params;
+  
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <PreviewClient slug={params.slug} />
+      <PreviewClient slug={slug} />
     </Suspense>
   );
-    }
+}

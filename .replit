@@ -5,7 +5,9 @@ run = "npm run dev"
 channel = "stable-25_05"
 
 [deployment]
-run = ["sh", "-c", "npm run dev"]
+run = ["next", "start"]
+deploymentTarget = "autoscale"
+build = ["next", "build"]
 
 [[ports]]
 localPort = 3000
@@ -114,3 +116,6 @@ args = "npm run build 2>&1 | tee build.log"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "echo \"Build completed. Check build.log for details.\""
+
+[agent]
+expertMode = true
