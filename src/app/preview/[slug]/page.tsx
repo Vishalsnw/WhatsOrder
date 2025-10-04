@@ -16,11 +16,11 @@ export default async function PreviewPage({
 }: { 
   params: Promise<{ slug: string }> 
 }) {
-  const { slug } = await params;
+  await params;
   
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <PreviewClient slug={slug} />
+      <PreviewClient />
     </Suspense>
   );
 }

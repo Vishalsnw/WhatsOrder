@@ -14,7 +14,7 @@ const nextConfig = {
   experimental: {
     esmExternals: false
   },
-  webpack: (config) => {
+  webpack: (config: any) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
