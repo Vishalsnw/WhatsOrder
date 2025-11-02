@@ -435,13 +435,28 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
           <div className="w-full bg-white rounded-t-3xl max-h-[80vh] flex flex-col animate-slide-in-bottom">
             <div className="p-4 border-b border-gray-200 flex-shrink-0">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <h3 className="material-headline6">Add Product</h3>
                 <button
                   onClick={() => setShowProductForm(false)}
                   className="p-2 rounded-full hover:bg-gray-100"
                 >
                   ✕
+                </button>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowProductForm(false)}
+                  className="flex-1 material-button material-button-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={addProduct}
+                  disabled={!currentProduct.name || currentProduct.price <= 0}
+                  className="flex-1 material-button material-button-primary disabled:opacity-50"
+                >
+                  Add Product
                 </button>
               </div>
             </div>
@@ -512,24 +527,6 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
                     className="mt-2 w-20 h-20 rounded-xl object-cover"
                   />
                 )}
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setShowProductForm(false)}
-                  className="flex-1 material-button material-button-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={addProduct}
-                  disabled={!currentProduct.name || currentProduct.price <= 0}
-                  className="flex-1 material-button material-button-primary disabled:opacity-50"
-                >
-                  Add Product
-                </button>
               </div>
             </div>
           </div>
