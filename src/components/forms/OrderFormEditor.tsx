@@ -433,8 +433,8 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
       {/* Product Form Modal */}
       {showProductForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="w-full bg-white rounded-t-3xl max-h-[80vh] overflow-auto animate-slide-in-bottom">
-            <div className="p-4 border-b border-gray-200">
+          <div className="w-full bg-white rounded-t-3xl max-h-[80vh] flex flex-col animate-slide-in-bottom">
+            <div className="p-4 border-b border-gray-200 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h3 className="material-headline6">Add Product</h3>
                 <button
@@ -446,7 +446,7 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
               </div>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="material-subtitle2 text-gray-700">Product Name *</label>
                 <input
@@ -513,8 +513,10 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
                   />
                 )}
               </div>
+            </div>
 
-              <div className="flex space-x-3 pt-4">
+            <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+              <div className="flex space-x-3">
                 <button
                   onClick={() => setShowProductForm(false)}
                   className="flex-1 material-button material-button-secondary"
