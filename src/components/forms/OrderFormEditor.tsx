@@ -432,8 +432,8 @@ export default function OrderFormEditor({ formId, initialData }: OrderFormEditor
 
       {/* Product Form Modal */}
       {showProductForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="w-full bg-white rounded-t-3xl max-h-[80vh] flex flex-col animate-slide-in-bottom">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-white rounded-3xl h-[90vh] flex flex-col animate-slide-in-bottom shadow-2xl">
             <div className="p-4 border-b border-gray-200 flex-shrink-0">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="material-headline6">Add Product</h3>
