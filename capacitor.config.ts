@@ -30,6 +30,11 @@ const config: any = {
       smallIcon: "ic_stat_icon_config_sample",
       iconColor: "#488AFF",
       sound: "beep.wav"
+    },
+    Camera: {
+      // Use Android photo picker for selecting images from gallery
+      // Only request camera permission when taking photos
+      androidPhotoPickerGallery: true
     }
   }
 };
