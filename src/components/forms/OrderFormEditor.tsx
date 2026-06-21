@@ -38,7 +38,7 @@ const OrderFormEditor = ({ products }: OrderFormEditorProps) => {
 
     await createOrderForm(user.uid, form as any);
     setIsSubmitting(false);
-    router.push('/dashboard/forms');
+    router.push('/my-forms');
   };
 
   return (
