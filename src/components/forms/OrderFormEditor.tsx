@@ -3,8 +3,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../context/AuthContext'; // Adjust path
-import { createOrderForm, Product } from '../../../lib/firestore'; // Adjust path
+import { useAuth } from '../../context/AuthContext'; // Adjust path
+import { createOrderForm, Product } from '../../lib/firestore'; // Adjust path
 
 interface OrderFormEditorProps {
   products: Product[];
