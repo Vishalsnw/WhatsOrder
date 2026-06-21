@@ -105,7 +105,7 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-4">
-          <Link href="/dashboard/create" className="material-card p-4 hover:scale-105 transition-transform duration-200">
+          <Link href="/dashboard/forms/new" className="material-card p-4 hover:scale-105 transition-transform duration-200">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <span className="text-lg">✨</span>
@@ -156,7 +156,7 @@ export default function DashboardPage() {
               <p className="material-body2 text-gray-600 mb-4">
                 Create your first order form to get started
               </p>
-              <Link href="/dashboard/create" className="material-button material-button-primary">
+              <Link href="/dashboard/forms/new" className="material-button material-button-primary">
                 <span className="mr-2">✨</span>
                 Create Your First Form
               </Link>

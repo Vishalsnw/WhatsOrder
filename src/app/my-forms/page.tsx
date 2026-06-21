@@ -147,7 +147,7 @@ export default function MyFormsPage() {
         {/* Actions */}
         <div className="flex items-center justify-between">
           <div className="flex space-x-2">
-            <Link href="/create" className="material-button material-button-primary">
+            <Link href="/dashboard/forms/new/new" className="material-button material-button-primary">
               <span className="mr-2">✨</span>
               Create New Form
             </Link>
@@ -173,7 +173,7 @@ export default function MyFormsPage() {
             <p className="material-body2 text-gray-600 mb-6">
               Create your first order form to start collecting orders via WhatsApp
             </p>
-            <Link href="/create" className="material-button material-button-primary">
+            <Link href="/dashboard/forms/new/new" className="material-button material-button-primary">
               <span className="mr-2">✨</span>
               Create Your First Form
             </Link>

@@ -113,12 +113,19 @@ export const createOrderForm = async (
   }
 ): Promise<string> => {
   const slug = generateSlug(form.businessName);
-  const ref = collection(db, 'users', uid, 'forms');
-  const docRef = await addDoc(ref, {
+  const formData = {
     ...form,
     slug,
+    userId: uid,
     createdAt: Timestamp.now(),
-  });
+  };
+
+  const userFormCollectionRef = collection(db, 'users', uid, 'forms');
+  const docRef = await addDoc(userFormCollectionRef, formData);
+
+  const publicFormDocRef = doc(db, 'publicForms', docRef.id);
+  await setDoc(publicFormDocRef, formData);
+
   return docRef.id;
 };
 
@@ -151,8 +158,17 @@ export const updateOrderForm = async (
     products?: { name: string; price: number; image?: string }[];
   }
 ): Promise<void> => {
-  const ref = doc(db, 'users', uid, 'forms', formId);
-  await updateDoc(ref, { ...updates, updatedAt: Timestamp.now() });
+    const newUpdates: { [key: string]: any } = { ...updates, updatedAt: Timestamp.now() };
+
+  if (updates.businessName) {
+    newUpdates.slug = generateSlug(updates.businessName);
+  }
+
+  const userFormRef = doc(db, 'users', uid, 'forms', formId);
+  await updateDoc(userFormRef, newUpdates);
+
+  const publicFormRef = doc(db, 'publicForms', formId);
+  await updateDoc(publicFormRef, newUpdates);
 };
 
 // ✅ Delete form
@@ -160,8 +176,11 @@ export const deleteOrderForm = async (
   uid: string,
   formId: string
 ): Promise<void> => {
-  const ref = doc(db, 'users', uid, 'forms', formId);
-  await deleteDoc(ref);
+  const userFormRef = doc(db, 'users', uid, 'forms', formId);
+  await deleteDoc(userFormRef);
+
+  const publicFormRef = doc(db, 'publicForms', formId);
+  await deleteDoc(publicFormRef);
 };
 
 // ✅ Create a new order for a user
