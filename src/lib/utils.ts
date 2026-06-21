@@ -19,10 +19,10 @@ export function generateSlug(str: string): string {
 }
 
 /**
- * ✅ Validates a 10-digit Indian phone number with or without +91
+ * ✅ Validates a generic phone number
  */
 export function isValidPhone(phone: string): boolean {
-  return /^(\+91)?[6-9]\d{9}$/.test(phone.trim());
+  return /^\+(?:[0-9] ?){6,14}[0-9]$/.test(phone.trim());
 }
 
 /**
@@ -43,7 +43,7 @@ export function cleanObject<T extends Record<string, any>>(obj: T): Partial<T> {
     const value = obj[key];
     if (typeof value === 'string') {
       const trimmed = value.trim();
-      if (trimmed !== '') cleaned[key] = trimmed;
+      if (trimmed !== '') cleaned[key] = trimmed as any;
     } else if (value !== null && value !== undefined) {
       cleaned[key] = value;
     }

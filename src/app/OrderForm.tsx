@@ -11,11 +11,12 @@ export default function OrderFormPage() {
   const router = useRouter();
 
   const [businessName, setBusinessName] = useState('');
-  const [whatsappNumber, setWhatsappNumber] = useState('+91');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const [products, setProducts] = useState([{ name: '', price: '', image: '' }]);
   const [generatedLink, setGeneratedLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [currency, setCurrency] = useState('USD');
 
   const handleProductChange = (
     index: number,
@@ -51,8 +52,8 @@ export default function OrderFormPage() {
       return;
     }
 
-    if (!whatsappNumber.trim() || !/^\+91\d{10}$/.test(whatsappNumber)) {
-      alert('Please enter a valid WhatsApp number (+91XXXXXXXXXX).');
+    if (!whatsappNumber.trim() || !/^\+(?:[0-9] ?){6,14}[0-9]$/.test(whatsappNumber)) {
+      alert('Please enter a valid WhatsApp number (e.g. +27...).');
       return;
     }
 
@@ -82,6 +83,7 @@ export default function OrderFormPage() {
       phone: whatsappNumber.trim(),
       biz: businessName.trim(),
       products: productQuery,
+      currency: currency,
     }).toString();
 
     const fullURL = `${window.location.origin}/preview/${slug}?${query}`;
@@ -96,6 +98,7 @@ export default function OrderFormPage() {
           whatsappNumber: whatsappNumber.trim(),
           slug,
           products: validProducts,
+          currency,
           createdAt: serverTimestamp(),
         });
 
@@ -106,7 +109,7 @@ export default function OrderFormPage() {
           .map((p) => `${encodeURIComponent(p.name)}-${p.price}${p.image ? `-${encodeURIComponent(p.image)}` : ''}`)
           .join(',');
 
-        const previewUrl = `/preview/${slug}?biz=${encodeURIComponent(businessName.trim())}&phone=${encodeURIComponent(whatsappNumber.trim())}&products=${encodedProducts}`;
+        const previewUrl = `/preview/${slug}?biz=${encodeURIComponent(businessName.trim())}&phone=${encodeURIComponent(whatsappNumber.trim())}&products=${encodedProducts}&currency=${currency}`;
         
         setTimeout(() => router.push(previewUrl), 1500);
       }
@@ -164,15 +167,22 @@ export default function OrderFormPage() {
           />
           <input
             type="tel"
-            placeholder="WhatsApp Number (e.g. +91XXXXXXXXXX)"
+            placeholder="WhatsApp Number (e.g. +27...)"
             value={whatsappNumber}
-            onChange={(e) => {
-              const value = e.target.value.replace(/^\+?91/, '');
-              setWhatsappNumber('+91' + value);
-            }}
+            onChange={(e) => setWhatsappNumber(e.target.value)}
             className="w-full border px-3 py-2 rounded-md"
-            maxLength={13}
           />
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            className="w-full border px-3 py-2 rounded-md"
+          >
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="ZAR">ZAR (R)</option>
+            <option value="INR">INR (₹)</option>
+          </select>
 
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">🛍️ Products</h3>
@@ -259,4 +269,4 @@ export default function OrderFormPage() {
       </div>
     </main>
   );
-                }
+}
