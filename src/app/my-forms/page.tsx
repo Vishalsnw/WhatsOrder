@@ -48,17 +48,22 @@ export default function MyFormsPage() {
       const snapshot = await getDocs(q);
 
       const formsData: FormData[] = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          businessName: data.businessName || 'Untitled Form',
-          slug: data.slug || data.businessName?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || '',
-          createdAt: data.createdAt?.toDate() || new Date(),
-          products: data.products || [],
-          views: data.views || 0,
-          orders: data.orders || 0
-        };
-      });
+        try {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            businessName: data.businessName || 'Untitled Form',
+            slug: data.slug || data.businessName?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || '',
+            createdAt: data.createdAt?.toDate() || new Date(),
+            products: data.products || [],
+            views: data.views || 0,
+            orders: data.orders || 0
+          };
+        } catch (error) {
+          console.error(`Error processing form ${doc.id}:`, error);
+          return null;
+        }
+      }).filter(form => form !== null) as FormData[];
 
       setForms(formsData);
     } catch (error) {
@@ -258,7 +263,7 @@ export default function MyFormsPage() {
                         ) : (
                           <>
                             <span className="mr-1">🗑️</span>
-                            Delete
+                            Delete Form
                           </>
                         )}
                       </button>
