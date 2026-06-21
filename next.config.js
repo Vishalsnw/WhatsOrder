@@ -15,7 +15,7 @@ const nextConfig = {
   // experimental: {
   //   esmExternals: false
   // },
-  // webpack: (config: any) => {
+  // webpack: (config) => {
   //   config.resolve.fallback = {
   //     ...config.resolve.fallback,
   //     fs: false,
@@ -26,4 +26,4 @@ const nextConfig = {
   // },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
