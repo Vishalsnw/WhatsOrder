@@ -1,12 +1,11 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../../context/AuthContext'; // Adjust path as needed
-import { getProducts, Product } from '../../../../lib/firestore'; // Adjust path as needed
-import OrderFormEditor from '../../../../components/forms/OrderFormEditor'; // Adjust path as needed
-import DashboardLayout from '../../../../components/layout/DashboardLayout'; // Adjust path as needed
+import { useAuth } from '@/context/AuthContext'; // Adjust path as needed
+import { getProducts, Product } from '@/lib/firestore'; // Adjust path as needed
+import OrderFormEditor from '@/components/forms/OrderFormEditor'; // Adjust path as needed
+import DashboardLayout from '@/components/layout/DashboardLayout'; // Adjust path as needed
 
 export default function NewFormPage() {
   const { user } = useAuth();
