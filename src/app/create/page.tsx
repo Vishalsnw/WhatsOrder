@@ -1,59 +1,88 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext'; // Adjust path as needed
-import { getProducts, Product } from '@/lib/firestore'; // Adjust path as needed
-import OrderFormEditor from '@/components/forms/OrderFormEditor'; // Adjust path as needed
-import DashboardLayout from '@/components/layout/DashboardLayout'; // Adjust path as needed
+import { useState } from 'react';
 
-export default function NewFormPage() {
-  const { user } = useAuth();
-  const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function CreateOrderForm() {
+  const [biz, setBiz] = useState('');
+  const [phone, setPhone] = useState('');
+  const [products, setProducts] = useState('');
+  const [generatedLink, setGeneratedLink] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      const fetchProducts = async () => {
-        const userProducts = await getProducts(user.uid);
-        setProducts(userProducts);
-        setLoading(false);
-      };
-
-      fetchProducts();
-    } else {
-      router.push('/login');
+  const handleGenerateLink = () => {
+    if (!biz.trim() || !phone.trim() || !products.trim()) {
+      alert('Please fill all fields');
+      return;
     }
-  }, [user, router]);
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+    const slug = biz
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+
+    const encodedProducts = products
+      .split('\n')
+      .map((line) => {
+        const [name, price, image = ''] = line
+          .split('-')
+          .map((s) => encodeURIComponent(s.trim()));
+        return `${name}-${price}-${image}`;
+      })
+      .join(',');
+
+    const link = `/preview/${slug}?biz=${encodeURIComponent(biz)}&phone=${encodeURIComponent(
+      phone
+    )}&products=${encodedProducts}`;
+
+    setGeneratedLink(link);
+  };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="material-card p-6 bg-gradient-to-r from-green-600 to-green-700 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="material-headline5 text-white">Create New Form</h1>
-              <p className="material-subtitle1 text-green-100">Select products from your catalog to include in this form.</p>
-            </div>
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-2xl">✨</span>
-            </div>
-          </div>
-        </div>
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
+      <div className="bg-white p-6 rounded-xl shadow-lg max-w-lg w-full space-y-4">
+        <h2 className="text-2xl font-bold text-center text-indigo-600">🔗 Create WhatsOrder Link</h2>
 
-        <OrderFormEditor products={products} />
+        <input
+          placeholder="Business Name"
+          value={biz}
+          onChange={(e) => setBiz(e.target.value)}
+          className="w-full border px-3 py-2 rounded"
+        />
+        <input
+          placeholder="Phone (e.g. 919999888877)"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="w-full border px-3 py-2 rounded"
+        />
+        <textarea
+          placeholder={`Enter products like:\nBurger - 50 - https://img.com/burger.jpg\nPizza - 120`}
+          value={products}
+          onChange={(e) => setProducts(e.target.value)}
+          className="w-full border px-3 py-2 rounded"
+          rows={5}
+        />
+
+        <button
+          onClick={handleGenerateLink}
+          className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded hover:bg-indigo-700 w-full"
+        >
+          🚀 Generate Link
+        </button>
+
+        {generatedLink && (
+          <div className="mt-4 text-center text-sm">
+            <p className="mb-1 text-gray-700">Preview your order:</p>
+            <a
+              href={generatedLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline break-all"
+            >
+              {generatedLink}
+            </a>
+          </div>
+        )}
       </div>
-    </DashboardLayout>
+    </main>
   );
-}
+        }
