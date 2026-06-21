@@ -32,7 +32,7 @@ const OrderFormEditor = ({ products }: OrderFormEditorProps) => {
     setIsSubmitting(true);
     const form = {
       businessName: formName,
-      phone: user.phone || '', // Assuming user object has phone
+      phone: user.phoneNumber || '', // Assuming user object has phone
       products: selectedProducts.map(({ id, name, price, image }) => ({ id, name, price, image })),
     };
 
