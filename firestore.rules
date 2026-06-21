@@ -2,31 +2,48 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own user document
+    // Users can read and write their own user document.
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Users can read and write their own forms
+
+      // Users can manage their own forms.
       match /forms/{formId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
-      // Users can read and write their own orders
-      match /orders/{orderId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
     }
-    
-    // Public forms can be read by anyone (for preview)
+
+    // Forms are publicly readable for previews.
+    // This rule assumes that you are storing public form data in a separate 'publicForms' collection.
+    // The write rule ensures only the owner (creator) of the form can modify it.
     match /publicForms/{formId} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
-    
-    // Orders can be written by anyone (customers placing orders)
+
+    // This is a more secure set of rules for your 'orders' collection.
     match /orders/{orderId} {
+      // Anyone can create an order (i.e., a customer placing an order).
+      // This rule includes basic data validation to ensure the order has the required fields.
+      // You should adjust the field names ('formId', 'customerDetails', 'items', 'createdAt')
+      // to match what your application sends when creating an order.
+      allow create: if request.resource.data.keys().hasAll(['formId', 'customerDetails', 'items', 'createdAt'])
+                      && request.resource.data.formId is string
+                      && request.resource.data.customerDetails is map
+                      && request.resource.data.items is list;
+
+      // Only authenticated users can read orders. For a more secure rule, you would want to
+      // restrict this to only the user who owns the form associated with the order.
       allow read: if request.auth != null;
-      allow write: if true;
+
+
+      // Nobody should be able to update or delete orders directly from the client-side.
+      allow update, delete: if false;
+    }
+
+    // The subcollection for orders within a user's document is for the user's management view.
+    match /users/{userId}/orders/{orderId} {
+        // This allows the user to manage (read, write) the orders that have been processed and associated with their account.
+        allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

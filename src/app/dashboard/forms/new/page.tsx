@@ -2,58 +2,33 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import OrderFormEditor from '@/components/forms/OrderFormEditor';
-
-const templates = {
-  restaurant: {
-    businessName: 'My Restaurant',
-    products: [
-      { name: 'Margherita Pizza', price: 12.99, image: '' },
-      { name: 'Chicken Wings', price: 8.99, image: '' },
-      { name: 'Caesar Salad', price: 7.99, image: '' }
-    ]
-  },
-  retail: {
-    businessName: 'My Store',
-    products: [
-      { name: 'T-Shirt', price: 19.99, image: '' },
-      { name: 'Jeans', price: 49.99, image: '' },
-      { name: 'Sneakers', price: 89.99, image: '' }
-    ]
-  },
-  services: {
-    businessName: 'My Service',
-    products: [
-      { name: 'Basic Service', price: 50.00, image: '' },
-      { name: 'Premium Service', price: 100.00, image: '' },
-      { name: 'Consultation', price: 25.00, image: '' }
-    ]
-  }
-};
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../../context/AuthContext'; // Adjust path as needed
+import { getProducts, Product } from '../../../../lib/firestore'; // Adjust path as needed
+import OrderFormEditor from '../../../../components/forms/OrderFormEditor'; // Adjust path as needed
+import DashboardLayout from '../../../../components/layout/DashboardLayout'; // Adjust path as needed
 
 export default function NewFormPage() {
-  const { user, loading } = useUser();
+  const { user } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const template = searchParams.get('template');
-  const [initialData, setInitialData] = useState<any>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (loading) return;
-    if (!user) {
+    if (user) {
+      const fetchProducts = async () => {
+        const userProducts = await getProducts(user.uid);
+        setProducts(userProducts);
+        setLoading(false);
+      };
+
+      fetchProducts();
+    } else {
       router.push('/login');
-      return;
     }
+  }, [user, router]);
 
-    if (template && templates[template as keyof typeof templates]) {
-      setInitialData(templates[template as keyof typeof templates]);
-    }
-  }, [user, loading, router, template]);
-
-  if (loading || !user) {
+  if (loading) {
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
@@ -70,9 +45,7 @@ export default function NewFormPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="material-headline5 text-white">Create New Form</h1>
-              <p className="material-subtitle1 text-green-100">
-                {template ? `Using ${template} template` : 'Build your custom form'}
-              </p>
+              <p className="material-subtitle1 text-green-100">Select products from your catalog to include in this form.</p>
             </div>
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-2xl">✨</span>
@@ -80,7 +53,7 @@ export default function NewFormPage() {
           </div>
         </div>
 
-        <OrderFormEditor initialData={initialData} />
+        <OrderFormEditor products={products} />
       </div>
     </DashboardLayout>
   );

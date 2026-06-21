@@ -1,21 +1,26 @@
 
-// Import CapacitorConfig type conditionally to avoid build errors on web
-let CapacitorConfig: any;
-try {
-  CapacitorConfig = require('@capacitor/cli').CapacitorConfig;
-} catch {
-  // Fallback for web builds where Capacitor isn't installed
-  CapacitorConfig = Object;
-}
+import { CapacitorConfig } from '@capacitor/cli';
 
-const config: any = {
+const config: CapacitorConfig = {
   appId: 'com.whatsorder.app',
   appName: 'WhatsOrder',
+  // The 'webDir' should point to the static export of your Next.js app.
+  // To generate this, add 'output: "export"' to your next.config.ts
+  // and run 'npm run build'. The output will be in the 'out' folder.
   webDir: 'out',
+  // The 'server.url' is for live-reloading during development.
+  // Point it to your Next.js dev server.
+  // Make sure to use your computer's IP address, not localhost.
+  server: {
+    url: 'http://192.168.1.100:5000', // <-- Replace with your computer's local IP address
+    cleartext: true,
+  },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000,
-      launchAutoHide: true,
+      // Set launchAutoHide to false to hide the splash screen programmatically
+      // when your app is ready.
+      launchShowDuration: 0,
+      launchAutoHide: false,
       backgroundColor: "#3b82f6",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
@@ -24,19 +29,17 @@ const config: any = {
       splashImmersive: true,
     },
     PushNotifications: {
-      presentationOptions: ["badge", "sound", "alert"]
+      presentationOptions: ["badge", "sound", "alert"],
     },
     LocalNotifications: {
       smallIcon: "ic_stat_icon_config_sample",
       iconColor: "#488AFF",
-      sound: "beep.wav"
+      sound: "beep.wav",
     },
     Camera: {
-      // Use Android photo picker for selecting images from gallery
-      // Only request camera permission when taking photos
-      androidPhotoPickerGallery: true
-    }
-  }
+      androidPhotoPickerGallery: true,
+    },
+  },
 };
 
 export default config;

@@ -11,18 +11,19 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  experimental: {
-    esmExternals: false
-  },
-  webpack: (config: any) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      net: false,
-      tls: false,
-    };
-    return config;
-  },
+  // The following configurations have been commented out to support Next.js 14.
+  // experimental: {
+  //   esmExternals: false
+  // },
+  // webpack: (config: any) => {
+  //   config.resolve.fallback = {
+  //     ...config.resolve.fallback,
+  //     fs: false,
+  //     net: false,
+  //     tls: false,
+  //   };
+  //   return config;
+  // },
 };
 
 export default nextConfig;
