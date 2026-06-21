@@ -6,7 +6,7 @@ import { useUser } from '@/hooks/useUser';
 import { collection, getDocs, query, where, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import DashboardLayout from '@/app/dashboard/layout';
 
 interface FormData {
   id: string;
@@ -234,7 +234,7 @@ export default function MyFormsPage() {
                         Copy Link
                       </button>
                        <button
-                        onClick={() => shareToWhatsApp(form.businessName, form.slug,.id)}
+                        onClick={() => shareToWhatsApp(form.businessName, form.slug, form.id)}
                         className="material-button material-button-secondary"
                       >
                         <span className="mr-1">🔗</span>
