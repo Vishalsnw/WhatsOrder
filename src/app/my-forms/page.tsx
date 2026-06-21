@@ -218,8 +218,7 @@ export default function MyFormsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
                       <Link 
                         href={`/dashboard/forms/${form.id}/preview`}
                         className="material-button material-button-secondary"
@@ -241,8 +240,6 @@ export default function MyFormsPage() {
                         <span className="mr-1">🔗</span>
                         Share to WhatsApp
                       </button>
-                    </div>
-                    <div className="flex space-x-2">
                       <Link 
                         href={`/dashboard/forms/${form.id}/edit`}
                         className="material-button material-button-primary"
@@ -267,7 +264,6 @@ export default function MyFormsPage() {
                           </>
                         )}
                       </button>
-                    </div>
                   </div>
                 </div>
               </div>
