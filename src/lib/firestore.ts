@@ -37,6 +37,14 @@ export interface Order {
     formId: string;
 }
 
+// Function to generate a URL-friendly slug from a string
+const generateSlug = (text: string): string => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric chars with -
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+};
+
 
 // ✅ Save or update user profile
 export const saveUserProfile = async (
@@ -104,9 +112,11 @@ export const createOrderForm = async (
     products: { name: string; price: number; image?: string }[];
   }
 ): Promise<string> => {
+  const slug = generateSlug(form.businessName);
   const ref = collection(db, 'users', uid, 'forms');
   const docRef = await addDoc(ref, {
     ...form,
+    slug,
     createdAt: Timestamp.now(),
   });
   return docRef.id;
