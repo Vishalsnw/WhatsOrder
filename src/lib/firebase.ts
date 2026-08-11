@@ -1,7 +1,7 @@
 // src/lib/firebase.ts
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
+import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -23,5 +23,8 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Anonymous sign-in function
+// Sign-in functions
 export const signInAnonymouslyUser = () => signInAnonymously(auth);
+
+export const googleProvider = new GoogleAuthProvider();
+export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
