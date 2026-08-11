@@ -27,7 +27,7 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling (KES KSh)' },
 ];
 
-export function getCurrencySymbol(currencyCode?: string, fallback: string = '₹'): string {
+export function getCurrencySymbol(currencyCode?: string, fallback: string = '$'): string {
   if (!currencyCode) return fallback;
   const match = CURRENCIES.find(c => c.code.toUpperCase() === currencyCode.toUpperCase());
   if (match) return match.symbol;
@@ -36,7 +36,7 @@ export function getCurrencySymbol(currencyCode?: string, fallback: string = '₹
   return fallback;
 }
 
-export function formatPrice(amount: number | string, symbol: string = '₹'): string {
+export function formatPrice(amount: number | string, symbol: string = '$'): string {
   const num = typeof amount === 'number' ? amount : Number(amount) || 0;
   return `${symbol}${num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }

@@ -42,8 +42,10 @@ service cloud.firestore {
 
     // The subcollection for orders within a user's document is for the user's management view.
     match /users/{userId}/orders/{orderId} {
-        // This allows the user to manage (read, write) the orders that have been processed and associated with their account.
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        // This allows the user to manage (read, update, delete) the orders associated with their account.
+        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+        // Allow customers (public visitors) to submit order entries into the seller's orders inbox.
+        allow create: if true;
     }
   }
 }

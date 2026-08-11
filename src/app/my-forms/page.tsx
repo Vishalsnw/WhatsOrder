@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { collection, getDocs, query, where, orderBy, deleteDoc, doc } from 'firebase/firestore';
@@ -28,17 +28,7 @@ export default function MyFormsPage() {
   const [loadingForms, setLoadingForms] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
-    loadForms();
-  }, [user, loading, router]);
-
-  const loadForms = async () => {
+  const loadForms = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -73,7 +63,17 @@ export default function MyFormsPage() {
     } finally {
       setLoadingForms(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    loadForms();
+  }, [user, loading, router, loadForms]);
 
   const handleDelete = async (formId: string) => {
     if (!user) return;
@@ -147,7 +147,7 @@ export default function MyFormsPage() {
         {/* Actions */}
         <div className="flex items-center justify-between">
           <div className="flex space-x-2">
-            <Link href="/dashboard/forms/new/new" className="material-button material-button-primary">
+            <Link href="/dashboard/create" className="material-button material-button-primary">
               <span className="mr-2">✨</span>
               Create New Form
             </Link>
@@ -173,7 +173,7 @@ export default function MyFormsPage() {
             <p className="material-body2 text-gray-600 mb-6">
               Create your first order form to start collecting orders via WhatsApp
             </p>
-            <Link href="/dashboard/forms/new/new" className="material-button material-button-primary">
+            <Link href="/dashboard/create" className="material-button material-button-primary">
               <span className="mr-2">✨</span>
               Create Your First Form
             </Link>

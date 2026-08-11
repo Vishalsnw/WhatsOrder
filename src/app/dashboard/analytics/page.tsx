@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/hooks/useUser';
-import { getAnalyticsData } from '@/lib/firestore';
+import { getAnalyticsData, getOrders, getUserForms, getUserProfile, Order, Form } from '@/lib/firestore';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Link from 'next/link';
 import { formatOrderTimestamp, COMMON_TIMEZONES, getCurrentTimeInTimezone } from '@/lib/timezones';
+import DailySummaryReportModal from '@/components/analytics/DailySummaryReportModal';
 
 export default function AnalyticsPage() {
   const { user, loading: authLoading } = useUser();
@@ -23,26 +24,38 @@ export default function AnalyticsPage() {
     recentOrders: [],
     sellerTimezone: 'Asia/Kolkata',
   });
+  const [rawOrders, setRawOrders] = useState<Order[]>([]);
+  const [rawForms, setRawForms] = useState<Form[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isDailyReportOpen, setIsDailyReportOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [liveClock, setLiveClock] = useState('');
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
     }
 
     try {
-      const data = await getAnalyticsData(user.uid);
+      const [data, ordersList, formsList, profile] = await Promise.all([
+        getAnalyticsData(user.uid),
+        getOrders(user.uid),
+        getUserForms(user.uid),
+        getUserProfile(user.uid),
+      ]);
       setAnalyticsData(data);
+      setRawOrders(ordersList);
+      setRawForms(formsList);
+      setUserProfile(profile);
     } catch (error) {
       console.error('Error fetching analytics:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -52,7 +65,7 @@ export default function AnalyticsPage() {
     }
 
     loadStats();
-  }, [user, authLoading]);
+  }, [user, authLoading, loadStats]);
 
   // Update live clock for seller local time
   useEffect(() => {
@@ -118,7 +131,15 @@ export default function AnalyticsPage() {
                 Real-time performance metrics and order summary in your local timezone
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setIsDailyReportOpen(true)}
+                className="inline-flex items-center justify-center space-x-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition-colors shadow-xs"
+              >
+                <span>📊</span>
+                <span>Daily Report</span>
+              </button>
+
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -162,16 +183,27 @@ export default function AnalyticsPage() {
         {/* Timezone-Specific Highlights */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Today's Sales */}
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 rounded-2xl shadow-sm space-y-2">
-            <div className="flex justify-between items-center opacity-90 text-xs font-bold uppercase tracking-wider">
-              <span>Today&apos;s Sales ({tzLabel})</span>
-              <span className="text-lg">☀️</span>
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 rounded-2xl shadow-sm space-y-3 flex flex-col justify-between">
+            <div className="space-y-1">
+              <div className="flex justify-between items-center opacity-90 text-xs font-bold uppercase tracking-wider">
+                <span>Today&apos;s Sales ({tzLabel})</span>
+                <span className="text-lg">☀️</span>
+              </div>
+              <div className="text-3xl font-extrabold">
+                {currencySymbol}{todayRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div className="text-xs text-emerald-100 font-medium">
+                {todayOrders} order(s) placed today in seller local time
+              </div>
             </div>
-            <div className="text-3xl font-extrabold">
-              {currencySymbol}{todayRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div className="text-xs text-emerald-100 font-medium">
-              {todayOrders} order(s) placed today in seller local time
+            <div>
+              <button
+                onClick={() => setIsDailyReportOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center space-x-1.5 bg-white/20 hover:bg-white/30 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors border border-white/20"
+              >
+                <span>📊</span>
+                <span>View Daily Summary Report →</span>
+              </button>
             </div>
           </div>
 
@@ -370,6 +402,14 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
+
+      <DailySummaryReportModal
+        orders={rawOrders}
+        forms={rawForms}
+        userProfile={userProfile}
+        isOpen={isDailyReportOpen}
+        onClose={() => setIsDailyReportOpen(false)}
+      />
     </DashboardLayout>
   );
 }

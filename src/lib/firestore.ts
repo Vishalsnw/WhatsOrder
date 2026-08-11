@@ -20,10 +20,33 @@ import { getCurrencySymbol } from './currencies';
 
 // Product Type Definition
 export interface Product {
-  id: string;
+  id?: string;
   name: string;
   price: number;
   image?: string; // URL of the product image
+  description?: string;
+  stock?: number; // Available inventory count
+  isUnlimited?: boolean; // If true, stock tracking is skipped
+  isOutOfStock?: boolean; // Manual or auto out-of-stock toggle
+  available?: boolean; // Standard availability flag
+}
+
+// Delivery Zone & Config Type Definitions
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  fee: number;
+}
+
+export interface DeliveryConfig {
+  enabled: boolean;
+  type: 'flat' | 'zones' | 'tiered';
+  baseFee: number;
+  enableFreeDelivery: boolean;
+  freeDeliveryThreshold: number;
+  zones?: DeliveryZone[];
+  enablePickup?: boolean;
+  pickupAddress?: string;
 }
 
 // Order Type Definition
@@ -32,14 +55,32 @@ export interface Order {
     customerName: string;
     customerPhone: string;
     items: { productId?: string; quantity: number; name: string; price: number }[];
+    subtotal?: number;
+    deliveryFee?: number;
+    deliveryZone?: string;
     total: number;
     currency?: string;
     currencySymbol?: string;
     fulfillmentType?: 'delivery' | 'pickup';
+    paymentMethod?: string;
     address?: string;
-    status?: 'pending' | 'confirmed' | 'shipped' | 'completed';
+    status?: 'pending' | 'confirmed' | 'shipped' | 'completed' | 'cancelled';
     createdAt: number; // Using number for ms timestamp
     formId?: string;
+}
+
+// Form Type Definition
+export interface Form {
+    id: string;
+    title?: string;
+    businessName?: string;
+    currency?: string;
+    currencySymbol?: string;
+    products?: Product[];
+    deliveryConfig?: DeliveryConfig;
+    views?: number;
+    slug?: string;
+    createdAt?: any;
 }
 
 // Function to generate a URL-friendly slug from a string
@@ -196,7 +237,61 @@ export const createOrder = async (uid: string, orderData: Omit<Order, 'id' | 'cr
         createdAt: Timestamp.now(),
         status: 'pending', // Default status
     });
+
+    // Auto deduct inventory if formId exists
+    if (orderData.formId && orderData.items && orderData.items.length > 0) {
+      await deductFormInventory(orderData.formId, uid, orderData.items);
+    }
+
     return docRef.id;
+};
+
+// ✅ Deduct inventory stock for ordered items in a form
+export const deductFormInventory = async (
+  formId: string,
+  sellerUid: string,
+  orderedItems: { name: string; quantity: number }[]
+): Promise<void> => {
+  if (!formId) return;
+  try {
+    const publicFormRef = doc(db, 'publicForms', formId);
+    const publicFormSnap = await getDoc(publicFormRef);
+
+    if (!publicFormSnap.exists()) return;
+
+    const formData = publicFormSnap.data();
+    if (!formData || !Array.isArray(formData.products)) return;
+
+    let updated = false;
+    const updatedProducts = formData.products.map((p: any) => {
+      const match = orderedItems.find(item => item.name === p.name);
+      if (match && match.quantity > 0) {
+        // If stock tracking is active
+        if (p.isUnlimited !== true && typeof p.stock === 'number') {
+          const newStock = Math.max(0, Number(p.stock) - match.quantity);
+          const isOutOfStock = newStock <= 0;
+          updated = true;
+          return {
+            ...p,
+            stock: newStock,
+            isOutOfStock: isOutOfStock || p.isOutOfStock,
+            available: !isOutOfStock,
+          };
+        }
+      }
+      return p;
+    });
+
+    if (updated) {
+      await updateDoc(publicFormRef, { products: updatedProducts, updatedAt: Timestamp.now() });
+      if (sellerUid) {
+        const userFormRef = doc(db, 'users', sellerUid, 'forms', formId);
+        await updateDoc(userFormRef, { products: updatedProducts, updatedAt: Timestamp.now() });
+      }
+    }
+  } catch (err) {
+    console.error('Error deducting form inventory:', err);
+  }
 };
 
 // ✅ Get all orders for a user
@@ -224,6 +319,8 @@ export const getOrders = async (uid: string): Promise<Order[]> => {
         total: Number(data.total) || 0,
         currency: data.currency || '',
         currencySymbol: data.currencySymbol || '',
+        fulfillmentType: data.fulfillmentType || 'delivery',
+        address: data.address || '',
         status: data.status || 'pending',
         createdAt: createdAtMs,
         formId: data.formId || '',

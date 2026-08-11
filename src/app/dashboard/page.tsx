@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
@@ -25,17 +25,7 @@ export default function DashboardPage() {
   const [forms, setForms] = useState<FormData[]>([]);
   const [loadingForms, setLoadingForms] = useState(true);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
-    loadForms();
-  }, [user, loading, router]);
-
-  const loadForms = async () => {
+  const loadForms = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -63,7 +53,17 @@ export default function DashboardPage() {
     } finally {
       setLoadingForms(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    loadForms();
+  }, [user, loading, router, loadForms]);
 
   if (loading || !user) {
     return (
@@ -104,8 +104,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Link href="/create" className="material-card p-4 hover:scale-105 transition-transform duration-200">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Link href="/dashboard/create" className="material-card p-4 hover:scale-105 transition-transform duration-200">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <span className="text-lg">✨</span>
@@ -123,8 +123,20 @@ export default function DashboardPage() {
                 <span className="text-lg">📊</span>
               </div>
               <div>
-                <h3 className="material-subtitle1 text-gray-900">Analytics</h3>
-                <p className="material-caption text-gray-600">View performance</p>
+                <h3 className="material-subtitle1 text-gray-900 font-bold">Daily Business Report</h3>
+                <p className="material-caption text-gray-600">Analytics & WhatsApp Summary</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/dashboard/orders" className="material-card p-4 hover:scale-105 transition-transform duration-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-lg">🛒</span>
+              </div>
+              <div>
+                <h3 className="material-subtitle1 text-gray-900">Customer Orders</h3>
+                <p className="material-caption text-gray-600">Track & Update Statuses</p>
               </div>
             </div>
           </Link>
@@ -156,7 +168,7 @@ export default function DashboardPage() {
               <p className="material-body2 text-gray-600 mb-4">
                 Create your first order form to get started
               </p>
-              <Link href="/create" className="material-button material-button-primary">
+              <Link href="/dashboard/create" className="material-button material-button-primary">
                 <span className="mr-2">✨</span>
                 Create Your First Form
               </Link>

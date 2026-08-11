@@ -17,6 +17,9 @@ interface WhatsAppTemplateSelectorProps {
   fulfillmentType: 'delivery' | 'pickup';
   fullAddress: string;
   items: Array<{ name: string; quantity: number; price: number }>;
+  subtotal?: number;
+  deliveryFee?: number;
+  deliveryFeeLabel?: string;
   totalAmount: number;
   currencySymbol: string;
   paymentMethods?: PaymentMethodsConfig;
@@ -33,6 +36,9 @@ export default function WhatsAppTemplateSelector({
   fulfillmentType,
   fullAddress,
   items,
+  subtotal,
+  deliveryFee,
+  deliveryFeeLabel,
   totalAmount,
   currencySymbol,
   paymentMethods,
@@ -48,6 +54,9 @@ export default function WhatsAppTemplateSelector({
     fulfillmentType,
     fullAddress: fullAddress || '123 Main Street, City',
     items: items.length > 0 ? items : [{ name: 'Sample Product', quantity: 2, price: 15 }],
+    subtotal: subtotal ?? (totalAmount > 0 ? totalAmount : 30),
+    deliveryFee: deliveryFee ?? 0,
+    deliveryFeeLabel: deliveryFeeLabel ?? (deliveryFee === 0 ? 'FREE 🎉' : undefined),
     totalAmount: totalAmount > 0 ? totalAmount : 30,
     currencySymbol,
     langCode: selectedLanguage,

@@ -16,6 +16,9 @@ export interface WhatsAppReceiptParams {
   fulfillmentType: 'delivery' | 'pickup';
   fullAddress: string;
   items: ReceiptItem[];
+  subtotal?: number;
+  deliveryFee?: number;
+  deliveryFeeLabel?: string;
   totalAmount: number;
   currencySymbol: string;
   langCode: string;
@@ -114,6 +117,11 @@ ${t.waAddress || 'Address'}: ${fullAddress}`;
     }
   }
 
+  const subtotalLine = typeof params.subtotal === 'number' ? `\n📊 *Subtotal:* ${currencySymbol}${params.subtotal}` : '';
+  const deliveryLine = typeof params.deliveryFee === 'number'
+    ? `\n🚚 *Delivery:* ${params.deliveryFee === 0 ? 'FREE 🎉' : `${currencySymbol}${params.deliveryFee}`}`
+    : params.deliveryFeeLabel ? `\n🚚 *Delivery:* ${params.deliveryFeeLabel}` : '';
+
   return `🧾 *${t.orderSummary || 'ORDER RECEIPT'}*
 --------------------------------
 🏪 *${businessName}*
@@ -128,7 +136,7 @@ ${t.waAddress || 'Address'}: ${fullAddress}`;
 📦 *${t.selectProducts || 'Items Ordered'}*
 ${itemLines}
 
---------------------------------
+--------------------------------${subtotalLine}${deliveryLine}
 💵 *${t.orderTotal || 'TOTAL AMOUNT'}: ${currencySymbol}${totalAmount}*
 --------------------------------${paymentSnippet}
 

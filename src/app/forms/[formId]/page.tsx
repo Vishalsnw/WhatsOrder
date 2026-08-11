@@ -34,10 +34,10 @@ const PublicFormPage = () => {
     }
   }, [formId]);
 
-  const handleQuantityChange = (productId: string, quantity: number) => {
+  const handleQuantityChange = (identifier: string, quantity: number) => {
     setItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity: Math.max(0, quantity) } : item
+        (item.id === identifier || item.name === identifier) ? { ...item, quantity: Math.max(0, quantity) } : item
       )
     );
   };
@@ -90,8 +90,8 @@ const PublicFormPage = () => {
         <p className="text-gray-600 mb-6">Place your order below.</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between">
+          {items.map((item, idx) => (
+            <div key={item.id || idx} className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">{item.name}</h3>
                 <p className="text-gray-600">₹{item.price}</p>
@@ -100,7 +100,7 @@ const PublicFormPage = () => {
                 type="number"
                 min="0"
                 value={item.quantity}
-                onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value))}
+                onChange={(e) => handleQuantityChange(item.id || item.name, parseInt(e.target.value) || 0)}
                 className="w-20 px-2 py-1 border rounded-lg text-center"
               />
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { db } from '@/lib/firebase';
@@ -13,12 +13,17 @@ import { LANGUAGES, getTranslations } from '@/lib/languages';
 import PhoneInput from '@/components/forms/PhoneInput';
 import { formatWhatsAppNumber } from '@/lib/countryCodes';
 import PaymentOptionsInputs, { PaymentMethodsConfig } from '@/components/forms/PaymentOptionsInputs';
+import DeliveryConfigInputs from '@/components/forms/DeliveryConfigInputs';
+import { DeliveryConfig } from '@/lib/firestore';
 
 interface ProductInput {
   name: string;
   price: string;
   description?: string;
   file?: File | null;
+  stock?: string;
+  isUnlimited?: boolean;
+  isOutOfStock?: boolean;
 }
 
 export default function CreateFormPage() {
@@ -26,12 +31,38 @@ export default function CreateFormPage() {
   const router = useRouter();
 
   const [businessName, setBusinessName] = useState('');
-  const [whatsapp, setWhatsapp] = useState('+91');
+  const [whatsapp, setWhatsapp] = useState('+1');
   const [welcomeMsg, setWelcomeMsg] = useState('Welcome! Browse our products and place your order.');
   const [currency, setCurrency] = useState('USD');
   const [language, setLanguage] = useState('en');
   const [defaultTemplateStyle, setDefaultTemplateStyle] = useState<'receipt' | 'detailed' | 'minimal'>('receipt');
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsConfig>({});
+  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>({
+    enabled: true,
+    type: 'flat',
+    baseFee: 5,
+    enableFreeDelivery: true,
+    freeDeliveryThreshold: 50,
+    zones: [
+      { id: 'zone-1', name: 'Local Area (0-5 km)', fee: 3 },
+      { id: 'zone-2', name: 'City Center', fee: 5 },
+      { id: 'zone-3', name: 'Suburbs / Outskirts', fee: 10 },
+    ],
+    enablePickup: true,
+    pickupAddress: '',
+  });
+
+  // Auto-load saved currency preference
+  useEffect(() => {
+    try {
+      const savedCurrency = localStorage.getItem('whatsorder_preferred_currency');
+      if (savedCurrency) {
+        setCurrency(savedCurrency);
+      }
+    } catch (e) {
+      console.error('Failed to load currency preference', e);
+    }
+  }, []);
 
   const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);
@@ -42,12 +73,12 @@ export default function CreateFormPage() {
     }
   };
   const [products, setProducts] = useState<ProductInput[]>([
-    { name: '', price: '', description: '', file: null }
+    { name: '', price: '', description: '', file: null, stock: '10', isUnlimited: true, isOutOfStock: false }
   ]);
   const [saving, setSaving] = useState(false);
 
   const handleAddProduct = () => {
-    setProducts([...products, { name: '', price: '', description: '', file: null }]);
+    setProducts([...products, { name: '', price: '', description: '', file: null, stock: '10', isUnlimited: true, isOutOfStock: false }]);
   };
 
   const handleRemoveProduct = (index: number) => {
@@ -111,12 +142,18 @@ export default function CreateFormPage() {
           if (p.file) {
             imageUrl = await uploadImage(p.file);
           }
+          const isUnlim = p.isUnlimited ?? true;
+          const numStock = !isUnlim && p.stock !== undefined ? Math.max(0, parseInt(p.stock, 10) || 0) : 9999;
+          const isOut = Boolean(p.isOutOfStock) || (!isUnlim && numStock <= 0);
           return {
             name: p.name.trim(),
             price: Number(p.price),
             description: p.description || '',
             image: imageUrl,
-            available: true,
+            stock: isUnlim ? undefined : numStock,
+            isUnlimited: isUnlim,
+            isOutOfStock: isOut,
+            available: !isOut,
           };
         })
       );
@@ -141,6 +178,7 @@ export default function CreateFormPage() {
         defaultTemplateStyle,
         userId: user.uid,
         paymentMethods: paymentMethods || {},
+        deliveryConfig: deliveryConfig || {},
         customization: {
           welcomeMessage: welcomeMsg,
           primaryColor: '#2563eb',
@@ -165,6 +203,13 @@ export default function CreateFormPage() {
         await setDoc(doc(db, 'publicForms', docRef.id), formData);
       } catch (err) {
         console.warn('Could not save to publicForms:', err);
+      }
+
+      // Save currency preference for future form creations
+      try {
+        localStorage.setItem('whatsorder_preferred_currency', currency);
+      } catch (e) {
+        console.error('Failed to save currency preference', e);
       }
 
       alert('✅ Order Form Created Successfully!');
@@ -255,6 +300,9 @@ export default function CreateFormPage() {
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  ⚡ Preferred currency is auto-saved as your default for all new forms.
+                </p>
               </div>
 
               <div>
@@ -361,12 +409,62 @@ export default function CreateFormPage() {
                       className="text-xs text-gray-600"
                     />
                   </div>
+
+                  {/* Stock & Inventory Control */}
+                  <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-gray-700 flex items-center gap-1">
+                        📦 Inventory Management
+                      </span>
+                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={product.isUnlimited ?? true}
+                          onChange={(e) => handleProductChange(idx, 'isUnlimited', e.target.checked)}
+                          className="rounded text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
+                        />
+                        <span className="text-gray-600 font-medium">Unlimited Stock</span>
+                      </label>
+                    </div>
+
+                    {!(product.isUnlimited ?? true) && (
+                      <div className="flex items-center gap-3 pt-1">
+                        <div className="flex-1">
+                          <label className="block text-[11px] font-medium text-gray-500 mb-0.5">Quantity in Stock</label>
+                          <input
+                            type="number"
+                            placeholder="e.g. 10"
+                            min="0"
+                            value={product.stock ?? '10'}
+                            onChange={(e) => handleProductChange(idx, 'stock', e.target.value)}
+                            className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-xs bg-white"
+                          />
+                        </div>
+
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none mt-4">
+                          <input
+                            type="checkbox"
+                            checked={product.isOutOfStock || false}
+                            onChange={(e) => handleProductChange(idx, 'isOutOfStock', e.target.checked)}
+                            className="rounded text-red-600 focus:ring-red-500 h-3.5 w-3.5"
+                          />
+                          <span className="text-xs font-semibold text-red-600">Mark Out of Stock</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="pt-2 border-t border-gray-200">
+          <div className="pt-2 border-t border-gray-200 space-y-4">
+            <DeliveryConfigInputs
+              config={deliveryConfig}
+              currencySymbol={getCurrencySymbol(currency)}
+              onChange={setDeliveryConfig}
+            />
+
             <PaymentOptionsInputs
               paymentMethods={paymentMethods}
               onChange={setPaymentMethods}

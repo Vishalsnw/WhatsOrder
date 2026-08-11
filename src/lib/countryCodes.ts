@@ -52,7 +52,7 @@ export function formatWhatsAppNumber(phone: string, defaultDialCode = '+1'): str
   } else {
     // If user provided a plain local number without dial code
     const rawDial = defaultDialCode.replace(/\D/g, '');
-    // If the number starts with 0 (e.g. 07123456789 in UK), strip leading 0
+    // If the number starts with 0 (e.g. 09876543210), strip leading 0
     if (cleaned.startsWith('0')) {
       cleaned = cleaned.substring(1);
     }
@@ -66,10 +66,11 @@ export function formatWhatsAppNumber(phone: string, defaultDialCode = '+1'): str
 /**
  * Parse phone into dialCode and local phone
  */
-export function parsePhoneNumber(fullPhone: string): { dialCode: string; localNumber: string } {
-  if (!fullPhone) return { dialCode: '+1', localNumber: '' };
+export function parsePhoneNumber(fullPhone: string, defaultDialCode = '+1'): { dialCode: string; localNumber: string } {
+  if (!fullPhone) return { dialCode: defaultDialCode, localNumber: '' };
   
   const digitsOnly = fullPhone.replace(/\D/g, '');
+  if (!digitsOnly) return { dialCode: defaultDialCode, localNumber: '' };
   
   // Try matching against sorted dialCodes by length descending
   const sortedCodes = [...COUNTRY_CODES].sort((a, b) => b.dialCode.length - a.dialCode.length);
@@ -83,6 +84,6 @@ export function parsePhoneNumber(fullPhone: string): { dialCode: string; localNu
     }
   }
 
-  // Fallback to +1 if not matched
-  return { dialCode: '+1', localNumber: digitsOnly };
+  // Fallback to default dial code if not matched
+  return { dialCode: defaultDialCode, localNumber: digitsOnly };
 }

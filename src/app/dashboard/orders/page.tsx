@@ -1,46 +1,70 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/hooks/useUser';
-import { getOrders, Order, getUserProfile } from '@/lib/firestore';
+import { getOrders, Order, getUserProfile, getUserForms } from '@/lib/firestore';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 import { getCurrencySymbol } from '@/lib/currencies';
 import { formatWhatsAppNumber } from '@/lib/countryCodes';
-import { formatOrderTimestamp, getUserBrowserTimezone, COMMON_TIMEZONES } from '@/lib/timezones';
+import { formatOrderTimestamp, getUserBrowserTimezone } from '@/lib/timezones';
+import StatusNotificationModal from '@/components/orders/StatusNotificationModal';
+import OrderReceiptModal from '@/components/orders/OrderReceiptModal';
+import DailySummaryReportModal from '@/components/analytics/DailySummaryReportModal';
+import { OrderStatusType } from '@/lib/whatsappStatusNotification';
 
 export default function OrdersPage() {
   const { user, loading: authLoading } = useUser();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [forms, setForms] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [sellerTimezone, setSellerTimezone] = useState<string>('Asia/Kolkata');
+  const [businessName, setBusinessName] = useState<string>('Our Store');
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isDailyReportOpen, setIsDailyReportOpen] = useState(false);
+  
+  // Modal state
+  const [notifyOrder, setNotifyOrder] = useState<Order | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchOrders = async () => {
+  // Receipt Modal state
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+
+  const fetchOrders = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
     }
 
     try {
-      const [userOrders, profile] = await Promise.all([
+      const [userOrders, profile, forms] = await Promise.all([
         getOrders(user.uid),
         getUserProfile(user.uid),
+        getUserForms(user.uid),
       ]);
       setOrders(userOrders);
+      setForms(forms || []);
+      setUserProfile(profile || null);
       if (profile?.timezone) {
         setSellerTimezone(profile.timezone);
       } else {
         setSellerTimezone(getUserBrowserTimezone());
+      }
+      if (forms && forms.length > 0 && forms[0].businessName) {
+        setBusinessName(forms[0].businessName);
+      } else if (user.displayName) {
+        setBusinessName(user.displayName);
       }
     } catch (err) {
       console.error('Error fetching orders:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -50,7 +74,7 @@ export default function OrdersPage() {
     }
 
     fetchOrders();
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchOrders]);
 
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     if (!user) return;
@@ -62,12 +86,24 @@ export default function OrdersPage() {
       setOrders(prev =>
         prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
+      
+      // Prompt modal to immediately notify customer
+      const updatedOrd = orders.find(o => o.id === orderId);
+      if (updatedOrd) {
+        setNotifyOrder({ ...updatedOrd, status: newStatus });
+        setIsModalOpen(true);
+      }
     } catch (err) {
       console.error('Error updating order status:', err);
       alert('Could not update order status.');
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const openNotifyModalForOrder = (order: Order) => {
+    setNotifyOrder(order);
+    setIsModalOpen(true);
   };
 
   if (authLoading || loading) {
@@ -93,15 +129,23 @@ export default function OrdersPage() {
               Track and update order statuses received via WhatsApp forms
             </p>
           </div>
-          <button
-            onClick={() => {
-              setLoading(true);
-              fetchOrders();
-            }}
-            className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-sm font-medium transition-colors"
-          >
-            🔄 Refresh Orders
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setIsDailyReportOpen(true)}
+              className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-sm transition-colors shadow-xs"
+            >
+              📊 Daily Report
+            </button>
+            <button
+              onClick={() => {
+                setLoading(true);
+                fetchOrders();
+              }}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-sm font-medium transition-colors"
+            >
+              🔄 Refresh Orders
+            </button>
+          </div>
         </div>
 
         {orders.length === 0 ? (
@@ -196,17 +240,40 @@ export default function OrdersPage() {
                         </span>
                       </td>
                       <td className="p-4">
-                        <select
-                          value={order.status}
-                          disabled={updatingId === order.id}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
-                          className="text-xs px-2 py-1.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="completed">Completed</option>
-                        </select>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                          <select
+                            value={order.status}
+                            disabled={updatingId === order.id}
+                            onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
+                            className="text-xs px-2.5 py-1.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-gray-800"
+                          >
+                            <option value="pending">⏳ Pending</option>
+                            <option value="confirmed">🎉 Confirmed</option>
+                            <option value="shipped">🚚 Shipped</option>
+                            <option value="completed">✅ Completed</option>
+                          </select>
+
+                          <button
+                            type="button"
+                            onClick={() => openNotifyModalForOrder(order)}
+                            title="1-Click WhatsApp Notification"
+                            className="text-xs px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-xs transition-all flex items-center gap-1 shrink-0"
+                          >
+                            <span>💬 Notify</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReceiptOrder(order);
+                              setIsReceiptOpen(true);
+                            }}
+                            title="View / Download PDF Receipt"
+                            className="text-xs px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold rounded-lg shadow-xs transition-all flex items-center gap-1 shrink-0"
+                          >
+                            <span>🧾 Invoice / PDF</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -216,6 +283,34 @@ export default function OrdersPage() {
             </div>
           </div>
         )}
+
+        {/* 1-Click Status Notification Modal */}
+        <StatusNotificationModal
+          order={notifyOrder}
+          businessName={businessName}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onStatusChangeAndNotify={async (orderId, newStatus) => {
+            await handleStatusChange(orderId, newStatus);
+          }}
+        />
+
+        {/* Digital Receipt & PDF Generator Modal */}
+        <OrderReceiptModal
+          order={receiptOrder}
+          businessName={businessName}
+          isOpen={isReceiptOpen}
+          onClose={() => setIsReceiptOpen(false)}
+        />
+
+        {/* Daily Business Summary Report Modal */}
+        <DailySummaryReportModal
+          orders={orders}
+          forms={forms}
+          userProfile={userProfile}
+          isOpen={isDailyReportOpen}
+          onClose={() => setIsDailyReportOpen(false)}
+        />
       </div>
     </DashboardLayout>
   );

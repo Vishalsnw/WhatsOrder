@@ -10,6 +10,7 @@ interface PhoneInputProps {
   required?: boolean;
   placeholder?: string;
   helperText?: string;
+  defaultDialCode?: string;
 }
 
 export default function PhoneInput({
@@ -19,20 +20,21 @@ export default function PhoneInput({
   required = true,
   placeholder = '123 456 7890',
   helperText = 'Orders will be sent directly to this WhatsApp number.',
+  defaultDialCode = '+1',
 }: PhoneInputProps) {
   // Parse initial value into dial code & local number
-  const parsed = parsePhoneNumber(value || '');
-  const [dialCode, setDialCode] = useState(parsed.dialCode || '+1');
+  const parsed = parsePhoneNumber(value || '', defaultDialCode);
+  const [dialCode, setDialCode] = useState(parsed.dialCode || defaultDialCode);
   const [localNumber, setLocalNumber] = useState(parsed.localNumber || '');
 
   // Keep internal state synced if external value changes
   useEffect(() => {
     if (value) {
-      const p = parsePhoneNumber(value);
+      const p = parsePhoneNumber(value, defaultDialCode);
       setDialCode(p.dialCode);
       setLocalNumber(p.localNumber);
     }
-  }, [value]);
+  }, [value, defaultDialCode]);
 
   const handleDialCodeChange = (newCode: string) => {
     setDialCode(newCode);

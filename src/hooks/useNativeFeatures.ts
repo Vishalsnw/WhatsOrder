@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 // Dynamic imports for Capacitor to avoid build errors on web
 let Capacitor: any;
@@ -49,40 +49,9 @@ export const useNativeFeatures = () => {
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
   const [networkStatus, setNetworkStatus] = useState<any>(null);
 
-  useEffect(() => {
-    if (Capacitor) {
-      setIsNative(Capacitor.isNativePlatform());
-
-      if (Capacitor.isNativePlatform()) {
-        initializeNativeFeatures();
-      }
-    }
-  }, []);
-
-  const initializeNativeFeatures = async () => {
-    try {
-      // Get device info
-      const info = await Device.getInfo();
-      setDeviceInfo(info);
-
-      // Get network status
-      const status = await Network.getStatus();
-      setNetworkStatus(status);
-
-      // Listen for network changes
-      Network.addListener('networkStatusChange', (status: any) => {
-        setNetworkStatus(status);
-      });
-
-      // Initialize push notifications
-      await initializePushNotifications();
-    } catch (error) {
-      console.error('Error initializing native features:', error);
-    }
-  };
-
   const initializePushNotifications = async () => {
     try {
+      if (!PushNotifications) return;
       // Request permission for push notifications
       let permStatus = await PushNotifications.checkPermissions();
 
@@ -99,7 +68,6 @@ export const useNativeFeatures = () => {
       // On success, we should be able to receive notifications
       PushNotifications.addListener('registration', (token: any) => {
         console.log('Push registration success, token: ' + token.value);
-        // Send token to your server
       });
 
       PushNotifications.addListener('registrationError', (error: any) => {
@@ -109,14 +77,42 @@ export const useNativeFeatures = () => {
       PushNotifications.addListener('pushNotificationReceived', (notification: any) => {
         console.log('Push received: ' + JSON.stringify(notification));
       });
-
-      PushNotifications.addListener('pushNotificationActionPerformed', (notification: any) => {
-        console.log('Push action performed: ' + JSON.stringify(notification));
-      });
     } catch (error) {
       console.error('Push notification setup failed:', error);
     }
   };
+
+  const initializeNativeFeatures = useCallback(async () => {
+    try {
+      if (Device) {
+        const info = await Device.getInfo();
+        setDeviceInfo(info);
+      }
+
+      if (Network) {
+        const status = await Network.getStatus();
+        setNetworkStatus(status);
+
+        Network.addListener('networkStatusChange', (status: any) => {
+          setNetworkStatus(status);
+        });
+      }
+
+      await initializePushNotifications();
+    } catch (error) {
+      console.error('Error initializing native features:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Capacitor) {
+      setIsNative(Capacitor.isNativePlatform());
+
+      if (Capacitor.isNativePlatform()) {
+        initializeNativeFeatures();
+      }
+    }
+  }, [initializeNativeFeatures]);
 
   const takePicture = async () => {
     try {
