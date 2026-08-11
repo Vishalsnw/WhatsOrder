@@ -36,7 +36,7 @@ const ProductsPage = () => {
       </div>
 
       {products.length === 0 ? (
-        <p>You haven't added any products yet. Click the button above to get started!</p>
+        <p>You haven&apos;t added any products yet. Click the button above to get started!</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (

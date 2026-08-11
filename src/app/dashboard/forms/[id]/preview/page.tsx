@@ -6,6 +6,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/hooks/useUser';
 import Link from 'next/link';
+import { getCurrencySymbol } from '@/lib/currencies';
+import { getTranslations, isRTL } from '@/lib/languages';
+import PaymentSummaryWidget from '@/components/forms/PaymentSummaryWidget';
 
 interface Product {
   name: string;
@@ -91,11 +94,16 @@ export default function FormPreviewPage({ params }: { params: Promise<{ id: stri
     );
   }
 
+  const language = formData.language || formData.customization?.language || 'en';
+  const translations = getTranslations(language);
+  const rtl = isRTL(language);
+
   const businessName = formData.businessName || 'Business';
-  const welcomeMessage = formData.customization?.welcomeMessage || 'Welcome! Browse our products and place your order.';
+  const welcomeMessage = formData.customization?.welcomeMessage || translations.welcomeMessageDefault;
   const primaryColor = formData.customization?.primaryColor || '#2563eb';
   const logo = formData.customization?.logo;
   const products = formData.products || [];
+  const currencySymbol = formData.currencySymbol || getCurrencySymbol(formData.currency || formData.customization?.currency || 'USD');
 
   const copyShareLink = () => {
     const shareUrl = `${window.location.origin}/preview/${formData.slug}?id=${formData.id}`;
@@ -147,7 +155,7 @@ export default function FormPreviewPage({ params }: { params: Promise<{ id: stri
 
       {/* Form Preview (same as customer view but non-functional) */}
       <div className="pb-8">
-        <div className="bg-white min-h-screen max-w-md mx-auto w-full overflow-hidden sm:rounded-2xl sm:shadow-xl sm:my-8 sm:min-h-auto">
+        <div className="bg-white min-h-screen max-w-md mx-auto w-full overflow-hidden sm:rounded-2xl sm:shadow-xl sm:my-8 sm:min-h-auto" dir={rtl ? 'rtl' : 'ltr'}>
           {/* Header with Logo */}
           <div 
             className="p-6 text-white text-center"
@@ -177,8 +185,8 @@ export default function FormPreviewPage({ params }: { params: Promise<{ id: stri
             ) : (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <span className="mr-2">🛍️</span>
-                  Our Products
+                  <span className={rtl ? 'ml-2' : 'mr-2'}>🛍️</span>
+                  {translations.selectProducts}
                 </h3>
 
                 {products.map((product: Product, index: number) => (
@@ -205,16 +213,16 @@ export default function FormPreviewPage({ params }: { params: Promise<{ id: stri
                           <p className="text-sm text-gray-600 truncate">{product.description}</p>
                         )}
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-lg font-bold text-green-600">₹{product.price}</span>
+                          <span className="text-lg font-bold text-green-600">{currencySymbol}{product.price}</span>
                           {product.available === false && (
                             <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full">
-                              Out of Stock
+                              {translations.outOfStock}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
                         <button className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
                           -
                         </button>
@@ -232,32 +240,48 @@ export default function FormPreviewPage({ params }: { params: Promise<{ id: stri
             {/* Customer Details Preview */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <span className="mr-2">👤</span>
-                Customer Details
+                <span className={rtl ? 'ml-2' : 'mr-2'}>👤</span>
+                {translations.yourDetails}
               </h3>
 
               <input
                 type="text"
-                placeholder="Customer's Full Name"
+                placeholder={translations.fullNamePlaceholder}
+                disabled
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50"
+              />
+
+              <input
+                type="text"
+                placeholder={translations.phonePlaceholder}
                 disabled
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50"
               />
 
               <textarea
-                placeholder="Delivery Address"
+                placeholder={translations.addressPlaceholder}
                 disabled
                 rows={3}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 resize-none"
               />
             </div>
 
+            {/* Payment Summary Widget */}
+            <PaymentSummaryWidget
+              paymentMethods={formData?.paymentMethods}
+              translations={translations}
+              totalAmount={0}
+              currencySymbol={currencySymbol}
+              businessName={businessName}
+            />
+
             {/* Place Order Button Preview */}
             <button
               disabled
-              className="w-full bg-green-600 text-white font-semibold py-4 rounded-xl flex items-center justify-center space-x-2 shadow-lg opacity-75"
+              className="w-full bg-green-600 text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg opacity-75"
             >
               <span>📱</span>
-              <span>Place Order on WhatsApp</span>
+              <span>{translations.sendWhatsAppBtn}</span>
             </button>
 
             <p className="text-center text-sm text-gray-500">

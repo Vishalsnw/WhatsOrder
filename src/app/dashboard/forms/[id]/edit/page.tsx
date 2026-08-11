@@ -9,6 +9,11 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { CURRENCIES, getCurrencySymbol } from '@/lib/currencies';
+import { LANGUAGES } from '@/lib/languages';
+import PhoneInput from '@/components/forms/PhoneInput';
+import { formatWhatsAppNumber } from '@/lib/countryCodes';
+import PaymentOptionsInputs, { PaymentMethodsConfig } from '@/components/forms/PaymentOptionsInputs';
 
 interface Product {
   name: string;
@@ -25,6 +30,10 @@ export default function EditFormPage() {
 
   const [bizName, setBizName] = useState('');
   const [whatsapp, setWhatsapp] = useState('+91');
+  const [currency, setCurrency] = useState('USD');
+  const [language, setLanguage] = useState('en');
+  const [defaultTemplateStyle, setDefaultTemplateStyle] = useState<'receipt' | 'detailed' | 'minimal'>('receipt');
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodsConfig>({});
   const [products, setProducts] = useState<Product[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -52,6 +61,10 @@ export default function EditFormPage() {
           const data = userFormSnap.data();
           setBizName(data.businessName || '');
           setWhatsapp(data.phoneNumber || data.whatsappNumber || '+91');
+          setCurrency(data.currency || data.customization?.currency || 'USD');
+          setLanguage(data.language || data.customization?.language || 'en');
+          if (data.defaultTemplateStyle) setDefaultTemplateStyle(data.defaultTemplateStyle);
+          setPaymentMethods(data.paymentMethods || {});
           setProducts(data.products || []);
         } else {
           alert('Form not found.');
@@ -146,11 +159,21 @@ export default function EditFormPage() {
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9-]/g, '');
 
+      const currSymbol = getCurrencySymbol(currency);
+
+      const formattedPhone = '+' + formatWhatsAppNumber(whatsapp);
+
       // Update in user's subcollection
       await updateDoc(doc(db, 'users', user!.uid, 'forms', id!), {
         businessName: bizName.trim(),
-        phoneNumber: '+91' + cleanPhone.slice(-10),
+        phoneNumber: formattedPhone,
+        whatsappNumber: formattedPhone,
         products: updatedProducts,
+        currency,
+        currencySymbol: currSymbol,
+        language,
+        defaultTemplateStyle,
+        paymentMethods: paymentMethods || {},
         slug: slug,
         updatedAt: new Date(),
       });
@@ -159,8 +182,14 @@ export default function EditFormPage() {
       try {
         await updateDoc(doc(db, 'publicForms', id!), {
           businessName: bizName.trim(),
-          phoneNumber: '+91' + cleanPhone.slice(-10),
+          phoneNumber: formattedPhone,
+          whatsappNumber: formattedPhone,
           products: updatedProducts,
+          currency,
+          currencySymbol: currSymbol,
+          language,
+          defaultTemplateStyle,
+          paymentMethods: paymentMethods || {},
           slug: slug,
           updatedAt: new Date(),
           userId: user!.uid,
@@ -228,22 +257,58 @@ export default function EditFormPage() {
                 </div>
 
                 <div>
-                  <label className="material-subtitle2 text-gray-700">WhatsApp Number *</label>
-                  <input
-                    type="tel"
-                    placeholder="e.g. +91XXXXXXXXXX"
+                  <PhoneInput
                     value={whatsapp}
-                    onChange={(e) => {
-                      const clean = e.target.value.replace(/\D/g, '');
-                      if (clean.startsWith('91')) {
-                        setWhatsapp('+' + clean);
-                      } else {
-                        setWhatsapp('+91' + clean.slice(-10));
-                      }
-                    }}
-                    className="material-input-filled mt-1"
-                    maxLength={13}
+                    onChange={(val) => setWhatsapp(val)}
+                    label="WhatsApp Number (With Country Flag & Dial Code) 📱"
+                    required
+                    helperText="Customers will send WhatsApp order messages directly to this number."
                   />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="material-subtitle2 text-gray-700">Store Currency 💱 *</label>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="material-input-filled mt-1 bg-white"
+                    >
+                      {CURRENCIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="material-subtitle2 text-gray-700">Form Language 🌐 *</label>
+                    <select
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                      className="material-input-filled mt-1 bg-white"
+                    >
+                      {LANGUAGES.map((l) => (
+                        <option key={l.code} value={l.code}>
+                          {l.flag} {l.name} ({l.nativeName}) {l.dir === 'rtl' ? '— [RTL]' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="material-subtitle2 text-gray-700">Default Receipt Format 🧾</label>
+                    <select
+                      value={defaultTemplateStyle}
+                      onChange={(e) => setDefaultTemplateStyle(e.target.value as any)}
+                      className="material-input-filled mt-1 bg-white"
+                    >
+                      <option value="receipt">Formatted Receipt 🧾 (Detailed with totals & payment links)</option>
+                      <option value="detailed">Detailed Summary 📋 (Full order breakdown)</option>
+                      <option value="minimal">Quick Message ⚡ (Short & simple list)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -306,7 +371,7 @@ export default function EditFormPage() {
                         </div>
 
                         <div>
-                          <label className="material-caption text-gray-600">Price (₹) *</label>
+                          <label className="material-caption text-gray-600">Price ({getCurrencySymbol(currency)}) *</label>
                           <input
                             type="number"
                             placeholder="Enter price"
@@ -342,6 +407,13 @@ export default function EditFormPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="pt-2 border-t border-gray-200">
+              <PaymentOptionsInputs
+                paymentMethods={paymentMethods}
+                onChange={setPaymentMethods}
+              />
             </div>
 
             {/* Actions */}

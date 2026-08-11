@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getUserProfile, saveUserProfile } from '@/lib/firestore';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { COMMON_TIMEZONES, getCurrentTimeInTimezone, getUserBrowserTimezone } from '@/lib/timezones';
 
 export default function ProfilePage() {
   const { user, loading } = useUser();
@@ -14,6 +15,8 @@ export default function ProfilePage() {
   const [businessName, setBusinessName] = useState('');
   const [businessPhone, setBusinessPhone] = useState('');
   const [businessAddress, setBusinessAddress] = useState('');
+  const [timezone, setTimezone] = useState<string>('Asia/Kolkata');
+  const [liveTime, setLiveTime] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -24,22 +27,62 @@ export default function ProfilePage() {
       return;
     }
 
-    // Load existing profile data
-    setDisplayName(user.displayName || '');
-    setBusinessPhone(user.phoneNumber || '');
+    const defaultTz = getUserBrowserTimezone();
+    setTimezone(defaultTz);
+
+    // Load existing profile from Firestore
+    const loadProfileData = async () => {
+      try {
+        const profile = await getUserProfile(user.uid);
+        if (profile) {
+          if (profile.name) setDisplayName(profile.name);
+          if (profile.businessName) setBusinessName(profile.businessName);
+          if (profile.phone) setBusinessPhone(profile.phone);
+          if (profile.businessAddress) setBusinessAddress(profile.businessAddress);
+          if (profile.timezone) setTimezone(profile.timezone);
+        } else {
+          setDisplayName(user.displayName || '');
+          setBusinessPhone(user.phoneNumber || '');
+        }
+      } catch (err) {
+        console.error('Error fetching seller profile:', err);
+      }
+    };
+
+    loadProfileData();
   }, [user, loading, router]);
+
+  // Update live clock for seller local time
+  useEffect(() => {
+    const updateClock = () => {
+      setLiveTime(getCurrentTimeInTimezone(timezone));
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, [timezone]);
 
   const handleSave = async () => {
     if (!user) return;
 
     setSaving(true);
     try {
-      await updateProfile(user, {
-        displayName: displayName
-      });
+      if (displayName) {
+        await updateProfile(user, {
+          displayName: displayName
+        });
+      }
 
-      setMessage('Profile updated successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      await saveUserProfile(user.uid, {
+        name: displayName,
+        phone: businessPhone || user.phoneNumber || '',
+        businessName,
+        businessAddress,
+        timezone,
+      } as any);
+
+      setMessage('Profile & Timezone settings updated successfully!');
+      setTimeout(() => setMessage(''), 4000);
     } catch (error) {
       console.error('Error updating profile:', error);
       setMessage('Error updating profile. Please try again.');
@@ -128,9 +171,41 @@ export default function ProfilePage() {
               <textarea
                 value={businessAddress}
                 onChange={(e) => setBusinessAddress(e.target.value)}
-                className="material-input min-h-[100px]"
+                className="material-input min-h-[80px]"
                 placeholder="Enter your business address"
               />
+            </div>
+
+            {/* Timezone Selection Section */}
+            <div className="pt-2 border-t border-gray-100">
+              <label className="material-label flex items-center gap-1.5 font-bold text-gray-900">
+                <span>🌐</span> Seller Local Timezone
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Order timestamps, analytics reports, and daily sales totals will automatically adjust to this timezone.
+              </p>
+
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl font-medium text-sm text-gray-900 focus:ring-2 focus:ring-teal-500 focus:bg-white focus:outline-none"
+              >
+                {COMMON_TIMEZONES.map((tz) => (
+                  <option key={tz.iana} value={tz.iana}>
+                    {tz.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Live Timezone Clock Preview */}
+              <div className="mt-2.5 p-3 bg-teal-50 border border-teal-200/80 rounded-xl flex items-center justify-between text-xs">
+                <span className="font-semibold text-teal-900 flex items-center gap-1.5">
+                  <span className="text-sm">⏰</span> Current Time in Selected Timezone:
+                </span>
+                <span className="font-mono font-bold text-teal-800 bg-white px-2 py-1 rounded border border-teal-200 shadow-xs">
+                  {liveTime || 'Calculating...'}
+                </span>
+              </div>
             </div>
           </div>
 

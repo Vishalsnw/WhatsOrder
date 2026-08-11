@@ -8,9 +8,10 @@ import { createOrderForm, Product } from '../../lib/firestore'; // Adjust path
 
 interface OrderFormEditorProps {
   products: Product[];
+  currencySymbol?: string;
 }
 
-const OrderFormEditor = ({ products }: OrderFormEditorProps) => {
+const OrderFormEditor = ({ products, currencySymbol = '$' }: OrderFormEditorProps) => {
   const router = useRouter();
   const { user } = useAuth();
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
@@ -65,7 +66,7 @@ const OrderFormEditor = ({ products }: OrderFormEditorProps) => {
               className={`p-4 border rounded-lg cursor-pointer ${selectedProducts.find((p) => p.id === product.id) ? 'bg-blue-100 border-blue-500' : 'bg-white'}`}>
               <img src={product.image || '/placeholder.png'} alt={product.name} className="w-full h-24 object-cover rounded-md mb-2" />
               <h4 className="font-semibold">{product.name}</h4>
-              <p className="text-gray-600">₹{product.price}</p>
+              <p className="text-gray-600">{currencySymbol}{product.price}</p>
             </div>
           ))}
         </div>

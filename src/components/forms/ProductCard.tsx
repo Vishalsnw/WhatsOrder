@@ -7,6 +7,7 @@ interface ProductCardProps {
   price: number;
   image?: string;
   quantity: number;
+  currencySymbol?: string;
   onQuantityChange: (newQuantity: number) => void;
 }
 
@@ -15,6 +16,7 @@ export default function ProductCard({
   price,
   image,
   quantity,
+  currencySymbol = '$',
   onQuantityChange,
 }: ProductCardProps) {
   return (
@@ -33,7 +35,7 @@ export default function ProductCard({
 
       <div className="flex-1">
         <p className="font-semibold text-gray-800">{name}</p>
-        <p className="text-sm text-gray-600">₹{price}</p>
+        <p className="text-sm text-gray-600">{currencySymbol}{price}</p>
       </div>
 
       <input

@@ -93,10 +93,10 @@ export default function DemoPage() {
             <div className="border-l-4 border-blue-500 pl-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">🔐 Step 1: Sign Up / Login</h3>
               <div className="space-y-2 text-gray-700">
-                <p>• Click on "Get Started" or visit the login page</p>
-                <p>• Choose "Continue as Guest" for anonymous login</p>
+                <p>• Click on &quot;Get Started&quot; or visit the login page</p>
+                <p>• Choose &quot;Continue as Guest&quot; for anonymous login</p>
                 <p>• Set your display name when prompted</p>
-                <p>• You'll be redirected to your dashboard</p>
+                <p>• You&apos;ll be redirected to your dashboard</p>
               </div>
             </div>
 
@@ -104,8 +104,8 @@ export default function DemoPage() {
             <div className="border-l-4 border-green-500 pl-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">✨ Step 2: Create Your First Form</h3>
               <div className="space-y-2 text-gray-700">
-                <p>• Click "Create Form" from dashboard or sidebar</p>
-                <p>• Choose "Start from Scratch" or select a template</p>
+                <p>• Click &quot;Create Form&quot; from dashboard or sidebar</p>
+                <p>• Choose &quot;Start from Scratch&quot; or select a template</p>
                 <p>• Enter your business name</p>
                 <p>• Add your WhatsApp number (with country code)</p>
                 <p>• Choose a unique form URL slug</p>
@@ -116,7 +116,7 @@ export default function DemoPage() {
             <div className="border-l-4 border-purple-500 pl-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">🛍️ Step 3: Add Products</h3>
               <div className="space-y-2 text-gray-700">
-                <p>• Click "Add Product" to create your first item</p>
+                <p>• Click &quot;Add Product&quot; to create your first item</p>
                 <p>• Enter product name and price</p>
                 <p>• Upload product image (optional but recommended)</p>
                 <p>• Add product description</p>
@@ -129,7 +129,7 @@ export default function DemoPage() {
             <div className="border-l-4 border-yellow-500 pl-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">👀 Step 4: Customize & Preview</h3>
               <div className="space-y-2 text-gray-700">
-                <p>• Click "Preview Form" to see how it looks</p>
+                <p>• Click &quot;Preview Form&quot; to see how it looks</p>
                 <p>• Test the ordering process</p>
                 <p>• Make adjustments to products or styling</p>
                 <p>• Check mobile responsiveness</p>

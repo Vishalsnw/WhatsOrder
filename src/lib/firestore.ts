@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db, storage } from './firebase'; // Import storage
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Import storage functions
+import { getCurrencySymbol } from './currencies';
 
 // Product Type Definition
 export interface Product {
@@ -30,11 +31,15 @@ export interface Order {
     id: string;
     customerName: string;
     customerPhone: string;
-    items: { productId: string; quantity: number; name: string; price: number }[];
+    items: { productId?: string; quantity: number; name: string; price: number }[];
     total: number;
-    status: 'pending' | 'confirmed' | 'shipped' | 'completed';
+    currency?: string;
+    currencySymbol?: string;
+    fulfillmentType?: 'delivery' | 'pickup';
+    address?: string;
+    status?: 'pending' | 'confirmed' | 'shipped' | 'completed';
     createdAt: number; // Using number for ms timestamp
-    formId: string;
+    formId?: string;
 }
 
 // Function to generate a URL-friendly slug from a string
@@ -196,47 +201,146 @@ export const createOrder = async (uid: string, orderData: Omit<Order, 'id' | 'cr
 
 // ✅ Get all orders for a user
 export const getOrders = async (uid: string): Promise<Order[]> => {
+  try {
     const ordersRef = collection(db, 'users', uid, 'orders');
-    const q = query(ordersRef, orderBy('createdAt', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            createdAt: (data.createdAt as Timestamp).toMillis(),
-        } as Order;
+    const snap = await getDocs(ordersRef);
+    const ordersList = snap.docs.map(doc => {
+      const data = doc.data();
+      let createdAtMs = Date.now();
+      if (data.createdAt) {
+        if (typeof data.createdAt.toMillis === 'function') {
+          createdAtMs = data.createdAt.toMillis();
+        } else if (typeof data.createdAt === 'number') {
+          createdAtMs = data.createdAt;
+        } else if (data.createdAt.seconds) {
+          createdAtMs = data.createdAt.seconds * 1000;
+        }
+      }
+      return {
+        id: doc.id,
+        customerName: data.customerName || 'Customer',
+        customerPhone: data.customerPhone || '',
+        items: data.items || [],
+        total: Number(data.total) || 0,
+        currency: data.currency || '',
+        currencySymbol: data.currencySymbol || '',
+        status: data.status || 'pending',
+        createdAt: createdAtMs,
+        formId: data.formId || '',
+      } as Order;
     });
+
+    return ordersList.sort((a, b) => b.createdAt - a.createdAt);
+  } catch (err) {
+    console.error('Error fetching orders:', err);
+    return [];
+  }
 };
 
-// ✅ Get analytics data for a user
+import { isTodayInTimezone, isThisMonthInTimezone, getUserBrowserTimezone } from './timezones';
+
+// ✅ Get analytics data for a user with timezone accuracy
 export const getAnalyticsData = async (uid: string) => {
-  const orders = await getOrders(uid);
+  try {
+    const [orders, forms, userProfile] = await Promise.all([
+      getOrders(uid),
+      getUserForms(uid),
+      getUserProfile(uid),
+    ]);
 
-  if (orders.length === 0) {
-    return null;
-  }
+    const sellerTimezone = userProfile?.timezone || getUserBrowserTimezone();
 
-  const totalRevenue = orders.reduce((acc, order) => acc + order.total, 0);
-  const totalOrders = orders.length;
+    let totalRevenue = 0;
+    let todayRevenue = 0;
+    let todayOrders = 0;
+    let thisMonthRevenue = 0;
+    let thisMonthOrders = 0;
 
-  const productCounts: { [key: string]: number } = {};
-  orders.forEach(order => {
-    order.items.forEach(item => {
-      productCounts[item.name] = (productCounts[item.name] || 0) + item.quantity;
+    const totalOrders = orders.length;
+    const totalForms = forms.length;
+    let totalViews = 0;
+
+    forms.forEach(f => {
+      if (f.views && typeof f.views === 'number') {
+        totalViews += f.views;
+      }
     });
-  });
 
-  const topProducts = Object.entries(productCounts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+    const productCounts: { [key: string]: { name: string; count: number; revenue: number } } = {};
 
-  return {
-    totalRevenue,
-    totalOrders,
-    topProducts,
-  };
+    orders.forEach(order => {
+      const orderTotal = Number(order.total) || 0;
+      totalRevenue += orderTotal;
+
+      // Check timezone-accurate dates
+      const isToday = isTodayInTimezone(order.createdAt, sellerTimezone);
+      const isThisMonth = isThisMonthInTimezone(order.createdAt, sellerTimezone);
+
+      if (isToday) {
+        todayRevenue += orderTotal;
+        todayOrders += 1;
+      }
+
+      if (isThisMonth) {
+        thisMonthRevenue += orderTotal;
+        thisMonthOrders += 1;
+      }
+
+      if (Array.isArray(order.items)) {
+        order.items.forEach(item => {
+          const name = item.name || 'Product';
+          const qty = Number(item.quantity) || 1;
+          const price = Number(item.price) || 0;
+          if (!productCounts[name]) {
+            productCounts[name] = { name, count: 0, revenue: 0 };
+          }
+          productCounts[name].count += qty;
+          productCounts[name].revenue += qty * price;
+        });
+      }
+    });
+
+    const topProducts = Object.values(productCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    const primaryCurrencySymbol = forms[0]?.currencySymbol || forms[0]?.currency ? getCurrencySymbol(forms[0]?.currency) : '$';
+
+    return {
+      totalRevenue,
+      todayRevenue,
+      todayOrders,
+      thisMonthRevenue,
+      thisMonthOrders,
+      totalOrders,
+      totalForms,
+      totalViews,
+      avgOrderValue,
+      topProducts,
+      recentOrders: orders.slice(0, 5),
+      currencySymbol: primaryCurrencySymbol,
+      sellerTimezone,
+    };
+  } catch (error) {
+    console.error('Error calculating analytics:', error);
+    return {
+      totalRevenue: 0,
+      todayRevenue: 0,
+      todayOrders: 0,
+      thisMonthRevenue: 0,
+      thisMonthOrders: 0,
+      totalOrders: 0,
+      totalForms: 0,
+      totalViews: 0,
+      avgOrderValue: 0,
+      topProducts: [],
+      recentOrders: [],
+      currencySymbol: '$',
+      sellerTimezone: getUserBrowserTimezone(),
+    };
+  }
 };
 
 

@@ -148,7 +148,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {showNamePrompt && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Welcome! What's your name?</h2>
+            <h2 className="text-lg font-semibold mb-4">Welcome! What&apos;s your name?</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
