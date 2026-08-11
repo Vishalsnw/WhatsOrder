@@ -13,6 +13,8 @@ export default function HomePage() {
     if (!loading) {
       if (user) {
         router.push('/dashboard');
+      } else {
+        router.push('/login');
       }
     }
   }, [user, loading, router]);

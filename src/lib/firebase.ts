@@ -1,18 +1,20 @@
 // src/lib/firebase.ts
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// ✅ Firebase config from .env.local
+// ✅ Firebase configuration with fallback
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'demo-app.firebaseapp.com',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'demo-app',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'demo-app.appspot.com',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '1234567890',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:1234567890:web:1234567890',
+  apiKey: (process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'demo-api-key')
+    ? process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+    : 'AIzaSyAUp8mkrLHEUuT6zZppd2JAxdJfoYYFafc',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'whatsorder-f2c7b.firebaseapp.com',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'whatsorder-f2c7b',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'whatsorder-f2c7b.firebasestorage.app',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '735632166574',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:735632166574:web:249f558631e83a8b48673f',
 };
 
 // ✅ Prevent reinitializing Firebase
@@ -25,6 +27,3 @@ export const storage = getStorage(app);
 
 // Sign-in functions
 export const signInAnonymouslyUser = () => signInAnonymously(auth);
-
-export const googleProvider = new GoogleAuthProvider();
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
