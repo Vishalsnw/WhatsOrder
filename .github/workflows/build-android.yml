@@ -1,168 +1,73 @@
-name: Build TWA Android App
+name: Extract ZIP and Update Repo
 
 on:
   push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+    paths:
+      - '*.zip'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  build:
+  unzip-and-update:
     runs-on: ubuntu-latest
-
-    env:
-      JAVA_HOME: /usr/lib/jvm/adoptopenjdk-17-hotspot-amd64
-      BUBBLEWRAP_NO_INTERACTIVE: 'true'    # Optional: Bubblewrap non-interactive mode
-
     steps:
-      - name: Checkout repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          fetch-depth: 0
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Install expect
-        run: sudo apt-get update && sudo apt-get install -y expect
-
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
-      - name: Install dependencies and build web app
+      - name: Extract ZIP File and Clean Old Code
         run: |
-          npm ci
-          npm run build
+          # Find any .zip file in the repository root
+          ZIP_FILE=$(ls *.zip 2>/dev/null | head -n 1)
 
-      - name: Generate Keystore
+          if [ -z "$ZIP_FILE" ]; then
+            echo "❌ No .zip file found in root directory!"
+            exit 0
+          fi
+
+          echo "📦 Found ZIP file: $ZIP_FILE"
+
+          # Create a temporary directory for extraction
+          TEMP_DIR="temp_extract_$(date +%s)"
+          mkdir -p "$TEMP_DIR"
+
+          # Extract zip contents into temp directory
+          unzip -q "$ZIP_FILE" -d "$TEMP_DIR"
+
+          # Check if zip contains a single nested folder
+          NESTED_ITEMS=$(ls -A "$TEMP_DIR")
+          COUNT=$(echo "$NESTED_ITEMS" | wc -l)
+
+          if [ "$COUNT" -eq 1 ] && [ -d "$TEMP_DIR/$NESTED_ITEMS" ]; then
+            echo "📂 Detected nested wrapper folder: $NESTED_ITEMS"
+            SRC_DIR="$TEMP_DIR/$NESTED_ITEMS"
+          else
+            SRC_DIR="$TEMP_DIR"
+          fi
+
+          # Remove original ZIP file so it won't be committed
+          rm -f "$ZIP_FILE"
+
+          # Delete all existing root files/folders except .git, .github, and temp folder
+          find . -maxdepth 1 ! -name '.' ! -name '.git' ! -name '.github' ! -name "$TEMP_DIR" -exec rm -rf {} +
+
+          # Copy extracted files to repository root
+          cp -rn "$SRC_DIR/." . 2>/dev/null || cp -r "$SRC_DIR/." .
+          rm -rf "$TEMP_DIR"
+
+          echo "✅ Files extracted and repo updated successfully!"
+
+      - name: Commit and Push Updated Files
         run: |
-          keytool -genkeypair -alias key0 -keyalg RSA -keysize 2048 -validity 10000 \
-            -keystore release-key.jks -storepass keypass123 -keypass keypass123 \
-            -dname "CN=WhatsOrder,O=WhatsOrder,C=US"
-
-      - name: Validate local manifest
-        run: |
-          echo "Using local twa-manifest.json..."
-          echo "Manifest content:"
-          cat twa-manifest.json
-          echo "Validating JSON..."
-          node -e "JSON.parse(require('fs').readFileSync('twa-manifest.json', 'utf8')); console.log('✅ Manifest JSON is valid');"
-
-      - name: Create TWA project from local manifest
-        run: |
-          mkdir -p "$HOME/.android"
-          echo 'count=0' > "$HOME/.android/repositories.cfg"
-          
-          # Pre-accept all Android SDK licenses
-          mkdir -p "$HOME/.android/licenses"
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > "$HOME/.android/licenses/android-sdk-license"
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> "$HOME/.android/licenses/android-sdk-license"
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$HOME/.android/licenses/android-sdk-license"
-          
-          expect << 'EOF'
-          set timeout 600
-          log_user 1
-          
-          spawn bubblewrap init --manifest=./twa-manifest.json \
-            --packageId=com.whatsorder.app \
-            --signingKeyPath=./release-key.jks \
-            --signingKeyAlias=key0 \
-            --signingKeyPassword=keypass123 \
-            --storePassword=keypass123 \
-            --skipPwaValidation
-          
-          expect {
-            "*Do you want Bubblewrap to install the JDK*" {
-              send "no\r"
-              exp_continue
-            }
-            "*Path to your existing JDK*" {
-              send "$env(JAVA_HOME)\r"
-              exp_continue
-            }
-            "*Do you want Bubblewrap to install the Android SDK*" {
-              send "yes\r"
-              exp_continue
-            }
-            "*Accept*" {
-              send "y\r"
-              exp_continue
-            }
-            "*January*Accept*" {
-              send "y\r"
-              exp_continue
-            }
-            "*No checksum file was found*" {
-              send "Y\r"
-              exp_continue
-            }
-            "*would you like to regenerate*" {
-              send "Y\r"
-              exp_continue
-            }
-            "*All SDK package licenses accepted*" {
-              exp_continue
-            }
-            eof {
-              puts "Bubblewrap init completed successfully."
-            }
-            timeout {
-              puts "Timeout occurred during bubblewrap init."
-              exit 1
-            }
-          }
-          EOF
-
-      - name: Build TWA Android App
-        run: |
-          bubblewrap build || {
-            echo "❌ Bubblewrap build failed"
-            echo "Checking for APK files..."
-            find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
-            find . -name "*.aab" -type f 2>/dev/null || echo "No AAB files found"
-            exit 1
-          }
-
-      - name: List build outputs
-        run: |
-          echo "Listing all APK and AAB files:"
-          find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
-          find . -name "*.aab" -type f 2>/dev/null || echo "No AAB files found"
-
-      - name: Generate SHA256 fingerprint
-        run: |
-          keytool -list -v -keystore release-key.jks \
-            -alias key0 -storepass keypass123 -keypass keypass123 | \
-            grep SHA256: | sed 's/.*SHA256: //' | tr -d ':' > sha256.txt
-          cat sha256.txt
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: TWA-Release-APK
-          path: "*.apk"
-        continue-on-error: true
-
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: TWA-Release-AAB
-          path: "*.aab"
-        continue-on-error: true
-
-      - name: Upload SHA256 Fingerprint
-        uses: actions/upload-artifact@v4
-        with:
-          name: SHA256-Fingerprint
-          path: sha256.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "ℹ️ No changes to commit."
+          else
+            git commit -m "Auto-extract ZIP and update project files [skip ci]"
+            git push
+          fi
