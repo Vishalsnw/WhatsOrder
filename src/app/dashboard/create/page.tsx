@@ -149,8 +149,8 @@ export default function CreateFormPage() {
             name: p.name.trim(),
             price: Number(p.price),
             description: p.description || '',
-            image: imageUrl,
-            stock: isUnlim ? undefined : numStock,
+            image: imageUrl || '',
+            stock: isUnlim ? 9999 : numStock,
             isUnlimited: isUnlim,
             isOutOfStock: isOut,
             available: !isOut,
@@ -167,25 +167,25 @@ export default function CreateFormPage() {
 
       const currSymbol = getCurrencySymbol(currency);
 
-      const formData = {
+      const rawFormData = {
         businessName: businessName.trim(),
         phoneNumber: formattedPhone,
         whatsappNumber: formattedPhone,
         slug,
         currency,
         currencySymbol: currSymbol,
-        language,
-        defaultTemplateStyle,
+        language: language || 'en',
+        defaultTemplateStyle: defaultTemplateStyle || 'receipt',
         userId: user.uid,
         paymentMethods: paymentMethods || {},
         deliveryConfig: deliveryConfig || {},
         customization: {
-          welcomeMessage: welcomeMsg,
+          welcomeMessage: welcomeMsg || '',
           primaryColor: '#2563eb',
           currency,
           currencySymbol: currSymbol,
-          language,
-          defaultTemplateStyle,
+          language: language || 'en',
+          defaultTemplateStyle: defaultTemplateStyle || 'receipt',
         },
         products: processedProducts,
         createdAt: Timestamp.now(),
@@ -194,19 +194,38 @@ export default function CreateFormPage() {
         orders: 0
       };
 
+      // Helper to sanitize object for Firestore (remove undefined values)
+      const sanitizeObj = (obj: any): any => {
+        if (obj === null || obj === undefined) return null;
+        if (typeof obj !== 'object') return obj;
+        if (obj instanceof Timestamp) return obj;
+        if (Array.isArray(obj)) {
+          return obj.map(sanitizeObj).filter(v => v !== undefined);
+        }
+        const clean: Record<string, any> = {};
+        Object.keys(obj).forEach((key) => {
+          if (obj[key] !== undefined) {
+            clean[key] = sanitizeObj(obj[key]);
+          }
+        });
+        return clean;
+      };
+
+      const formData = sanitizeObj(rawFormData);
+
       // Save to user forms subcollection
       const userFormsRef = collection(db, 'users', user.uid, 'forms');
       const docRef = await addDoc(userFormsRef, formData);
 
       // Save to publicForms for sharing
       try {
-        await setDoc(doc(db, 'publicForms', docRef.id), {
+        await setDoc(doc(db, 'publicForms', docRef.id), sanitizeObj({
           ...formData,
           id: docRef.id,
           userId: user.uid,
           uid: user.uid,
           ownerId: user.uid,
-        });
+        }));
       } catch (err) {
         console.warn('Could not save to publicForms:', err);
       }

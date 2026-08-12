@@ -181,7 +181,7 @@ export default function EditFormPage() {
             name: product.name.trim(),
             price: Number(product.price),
             image: imageUrl || '',
-            stock: isUnlim ? undefined : numStock,
+            stock: isUnlim ? 9999 : numStock,
             isUnlimited: isUnlim,
             isOutOfStock: isOut,
             available: !isOut,
@@ -198,41 +198,49 @@ export default function EditFormPage() {
 
       const formattedPhone = '+' + formatWhatsAppNumber(whatsapp);
 
-      // Update in user's subcollection
-      await updateDoc(doc(db, 'users', user!.uid, 'forms', id!), {
+      // Helper to sanitize object for Firestore
+      const sanitizeObj = (obj: any): any => {
+        if (obj === null || obj === undefined) return null;
+        if (typeof obj !== 'object') return obj;
+        if (obj instanceof Date) return obj;
+        if (Array.isArray(obj)) {
+          return obj.map(sanitizeObj).filter(v => v !== undefined);
+        }
+        const clean: Record<string, any> = {};
+        Object.keys(obj).forEach((key) => {
+          if (obj[key] !== undefined) {
+            clean[key] = sanitizeObj(obj[key]);
+          }
+        });
+        return clean;
+      };
+
+      const updateData = sanitizeObj({
         businessName: bizName.trim(),
         phoneNumber: formattedPhone,
         whatsappNumber: formattedPhone,
         products: updatedProducts,
         currency,
         currencySymbol: currSymbol,
-        language,
-        defaultTemplateStyle,
+        language: language || 'en',
+        defaultTemplateStyle: defaultTemplateStyle || 'receipt',
         paymentMethods: paymentMethods || {},
         deliveryConfig: deliveryConfig || {},
         slug: slug,
         updatedAt: new Date(),
       });
 
+      // Update in user's subcollection
+      await updateDoc(doc(db, 'users', user!.uid, 'forms', id!), updateData);
+
       // Also update in public collection for sharing
       try {
-        await setDoc(doc(db, 'publicForms', id!), {
-          businessName: bizName.trim(),
-          phoneNumber: formattedPhone,
-          whatsappNumber: formattedPhone,
-          products: updatedProducts,
-          currency,
-          currencySymbol: currSymbol,
-          language,
-          defaultTemplateStyle,
-          paymentMethods: paymentMethods || {},
-          deliveryConfig: deliveryConfig || {},
-          slug: slug,
-          updatedAt: new Date(),
+        await setDoc(doc(db, 'publicForms', id!), sanitizeObj({
+          ...updateData,
           userId: user!.uid,
           uid: user!.uid,
           ownerId: user!.uid,
-        }, { merge: true });
+        }), { merge: true });
       } catch (publicUpdateError) {
         console.warn('Could not update public form:', publicUpdateError);
       }
