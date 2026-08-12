@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function OrderFormPage() {
@@ -93,23 +93,37 @@ export default function OrderFormPage() {
       setSaving(true);
 
       if (user?.uid) {
-        const docRef = await addDoc(collection(db, 'users', user.uid, 'forms'), {
+        const formDataToSave = {
           businessName: businessName.trim(),
           whatsappNumber: whatsappNumber.trim(),
+          phoneNumber: whatsappNumber.trim(),
           slug,
           products: validProducts,
           currency,
+          userId: user.uid,
+          uid: user.uid,
+          ownerId: user.uid,
           createdAt: serverTimestamp(),
-        });
+          views: 0,
+          orders: 0,
+        };
+
+        const docRef = await addDoc(collection(db, 'users', user.uid, 'forms'), formDataToSave);
+
+        try {
+          await setDoc(doc(db, 'publicForms', docRef.id), formDataToSave);
+        } catch (e) {
+          console.warn('Could not sync to publicForms:', e);
+        }
 
         alert('✅ Form saved successfully! Redirecting to preview...');
         
-        // Generate proper preview URL
+        // Generate proper preview URL with id and uid
         const encodedProducts = validProducts
           .map((p) => `${encodeURIComponent(p.name)}-${p.price}${p.image ? `-${encodeURIComponent(p.image)}` : ''}`)
           .join(',');
 
-        const previewUrl = `/preview/${slug}?biz=${encodeURIComponent(businessName.trim())}&phone=${encodeURIComponent(whatsappNumber.trim())}&products=${encodedProducts}&currency=${currency}`;
+        const previewUrl = `/preview/${slug}?id=${docRef.id}&uid=${user.uid}&biz=${encodeURIComponent(businessName.trim())}&phone=${encodeURIComponent(whatsappNumber.trim())}&products=${encodedProducts}&currency=${currency}`;
         
         setTimeout(() => router.push(previewUrl), 1500);
       }

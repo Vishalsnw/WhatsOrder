@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -216,7 +216,7 @@ export default function EditFormPage() {
 
       // Also update in public collection for sharing
       try {
-        await updateDoc(doc(db, 'publicForms', id!), {
+        await setDoc(doc(db, 'publicForms', id!), {
           businessName: bizName.trim(),
           phoneNumber: formattedPhone,
           whatsappNumber: formattedPhone,
@@ -230,7 +230,9 @@ export default function EditFormPage() {
           slug: slug,
           updatedAt: new Date(),
           userId: user!.uid,
-        });
+          uid: user!.uid,
+          ownerId: user!.uid,
+        }, { merge: true });
       } catch (publicUpdateError) {
         console.warn('Could not update public form:', publicUpdateError);
       }

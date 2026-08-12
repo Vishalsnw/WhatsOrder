@@ -309,15 +309,16 @@ export default function PreviewClient() {
       return;
     }
 
-    // Attempt to save order in Firestore if seller user ID exists
-    let sellerUid = formData?.userId || formData?.uid || formData?.ownerId;
+    // Attempt to save order in Firestore
+    const directUid = searchParams.get('uid') || searchParams.get('seller');
+    let sellerUid = formData?.userId || formData?.uid || formData?.ownerId || directUid || '';
 
     if (!sellerUid && formData?.id) {
       try {
         const publicSnap = await getDoc(doc(db, 'publicForms', formData.id));
         if (publicSnap.exists()) {
           const pData = publicSnap.data();
-          sellerUid = pData?.userId || pData?.uid || pData?.ownerId;
+          sellerUid = pData?.userId || pData?.uid || pData?.ownerId || '';
         }
       } catch (e) {
         console.warn('Could not fetch public form owner:', e);
@@ -332,63 +333,33 @@ export default function PreviewClient() {
         const snap = await getDocs(q);
         if (!snap.empty) {
           const pData = snap.docs[0].data();
-          sellerUid = pData?.userId || pData?.uid || pData?.ownerId;
+          sellerUid = pData?.userId || pData?.uid || pData?.ownerId || '';
         }
       } catch (e) {
         console.warn('Could not resolve sellerUid by slug:', e);
       }
     }
 
-    if (!sellerUid) {
-      // Deep fallback search across all users' forms subcollections
-      try {
-        const usersRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(usersRef);
-        for (const userDoc of usersSnapshot.docs) {
-          const userFormsRef = collection(db, 'users', userDoc.id, 'forms');
-          if (formData?.id) {
-            const docCheck = await getDoc(doc(db, 'users', userDoc.id, 'forms', formData.id));
-            if (docCheck.exists()) {
-              sellerUid = userDoc.id;
-              break;
-            }
-          }
-          if (slug || formData?.slug) {
-            const userFormsQuery = query(userFormsRef, where('slug', '==', slug || formData?.slug || ''));
-            const userFormsSnap = await getDocs(userFormsQuery);
-            if (!userFormsSnap.empty) {
-              sellerUid = userDoc.id;
-              break;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Fallback user forms search failed:', e);
-      }
-    }
-
     let createdOrderId = '';
-    if (sellerUid) {
-      try {
-        createdOrderId = await createOrder(sellerUid, {
-          customerName: name.trim(),
-          customerPhone: customerPhone ? '+' + formatWhatsAppNumber(customerPhone) : '',
-          items: itemsToOrder,
-          subtotal,
-          deliveryFee,
-          deliveryZone: selectedZoneObj?.name,
-          total,
-          currency: currency,
-          currencySymbol: currencySymbol,
-          fulfillmentType,
-          address: fullAddress,
-          formId: formData?.id || '',
-        });
-      } catch (err) {
-        console.error('Error recording order to database:', err);
-      }
-    } else {
-      console.warn('No seller UID found to record order to database.');
+    try {
+      createdOrderId = await createOrder(sellerUid, {
+        customerName: name.trim(),
+        customerPhone: customerPhone ? '+' + formatWhatsAppNumber(customerPhone) : '',
+        items: itemsToOrder,
+        subtotal,
+        deliveryFee,
+        deliveryZone: selectedZoneObj?.name,
+        total,
+        currency: currency,
+        currencySymbol: currencySymbol,
+        fulfillmentType,
+        address: fullAddress,
+        formId: formData?.id || '',
+        slug: slug || formData?.slug || '',
+        sellerUid: sellerUid,
+      });
+    } catch (err) {
+      console.error('Error recording order to database:', err);
     }
 
     const orderRecord: Order = {

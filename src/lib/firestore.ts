@@ -69,6 +69,8 @@ export interface Order {
     status?: 'pending' | 'confirmed' | 'shipped' | 'completed' | 'cancelled';
     createdAt: number; // Using number for ms timestamp
     formId?: string;
+    slug?: string;
+    sellerUid?: string;
 }
 
 // Form Type Definition
@@ -231,50 +233,89 @@ export const deleteOrderForm = async (
   await deleteDoc(publicFormRef);
 };
 
-// ✅ Create a new order for a user
-export const createOrder = async (uid: string, orderData: Omit<Order, 'id' | 'createdAt'>): Promise<string> => {
-    if (!uid) {
-      throw new Error('Seller UID is required to place an order');
+// ✅ Create a new order for a user / form
+export const createOrder = async (
+  uid: string,
+  orderData: Omit<Order, 'id' | 'createdAt'> & { slug?: string; sellerUid?: string }
+): Promise<string> => {
+    let resolvedUid = uid || orderData.sellerUid || '';
+
+    // If sellerUid is not passed, attempt lookup in publicForms by formId or slug
+    if (!resolvedUid) {
+      if (orderData.formId) {
+        try {
+          const publicSnap = await getDoc(doc(db, 'publicForms', orderData.formId));
+          if (publicSnap.exists()) {
+            const pData = publicSnap.data();
+            resolvedUid = pData?.userId || pData?.uid || pData?.ownerId || '';
+          }
+        } catch (e) {
+          console.warn('Could not resolve sellerUid from publicForms formId:', e);
+        }
+      }
+      if (!resolvedUid && orderData.slug) {
+        try {
+          const publicFormsRef = collection(db, 'publicForms');
+          const q = query(publicFormsRef, where('slug', '==', orderData.slug));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            const pData = snap.docs[0].data();
+            resolvedUid = pData?.userId || pData?.uid || pData?.ownerId || '';
+          }
+        } catch (e) {
+          console.warn('Could not resolve sellerUid from publicForms slug:', e);
+        }
+      }
     }
 
     const timestamp = Timestamp.now();
     const createdAtMs = Date.now();
+    let createdDocId = '';
 
-    // 1. Primary write to seller's orders subcollection
-    const ordersRef = collection(db, 'users', uid, 'orders');
-    const docRef = await addDoc(ordersRef, {
-        ...orderData,
-        sellerUid: uid,
-        createdAt: timestamp,
-        createdAtMs: createdAtMs,
-        status: orderData.status || 'pending', // Default status
-    });
+    const payload = {
+      ...orderData,
+      sellerUid: resolvedUid,
+      createdAt: timestamp,
+      createdAtMs: createdAtMs,
+      status: orderData.status || 'pending',
+    };
 
-    // 2. Mirror write to top-level orders collection for redundancy
-    try {
-      await addDoc(collection(db, 'orders'), {
-        ...orderData,
-        orderId: docRef.id,
-        sellerUid: uid,
-        createdAt: timestamp,
-        createdAtMs: createdAtMs,
-        status: orderData.status || 'pending',
-      });
-    } catch (e) {
-      console.warn('Could not mirror order to top-level collection:', e);
+    // 1. Primary write to seller's orders subcollection if resolvedUid exists
+    if (resolvedUid) {
+      try {
+        const ordersRef = collection(db, 'users', resolvedUid, 'orders');
+        const docRef = await addDoc(ordersRef, payload);
+        createdDocId = docRef.id;
+      } catch (e) {
+        console.warn('Could not write order to user subcollection:', e);
+      }
     }
 
-    // 3. Increment order counter on user form & public form safely
-    if (orderData.formId) {
+    // 2. Redundant write to top-level orders collection so no order is ever missed
+    try {
+      const topOrdersRef = collection(db, 'orders');
+      const topDocRef = await addDoc(topOrdersRef, {
+        ...payload,
+        orderId: createdDocId || undefined,
+      });
+      if (!createdDocId) {
+        createdDocId = topDocRef.id;
+      }
+    } catch (e) {
+      console.warn('Could not write order to top-level orders collection:', e);
+    }
+
+    // 3. Increment order counter and deduct inventory safely
+    if (resolvedUid && orderData.formId) {
       try {
-        const userFormRef = doc(db, 'users', uid, 'forms', orderData.formId);
+        const userFormRef = doc(db, 'users', resolvedUid, 'forms', orderData.formId);
         const formSnap = await getDoc(userFormRef);
         if (formSnap.exists()) {
           const currentOrders = Number(formSnap.data()?.orders || 0);
           await updateDoc(userFormRef, { orders: currentOrders + 1 });
         }
       } catch (e) {
-        console.warn('Could not update order count on form:', e);
+        console.warn('Could not update order count on user form:', e);
       }
 
       try {
@@ -288,17 +329,16 @@ export const createOrder = async (uid: string, orderData: Omit<Order, 'id' | 'cr
         console.warn('Could not update order count on public form:', e);
       }
 
-      // Auto deduct inventory if items exist
       if (orderData.items && orderData.items.length > 0) {
         try {
-          await deductFormInventory(orderData.formId, uid, orderData.items);
+          await deductFormInventory(orderData.formId, resolvedUid, orderData.items);
         } catch (e) {
           console.warn('Could not deduct inventory:', e);
         }
       }
     }
 
-    return docRef.id;
+    return createdDocId || `ORD-${Date.now().toString().slice(-6)}`;
 };
 
 // ✅ Deduct inventory stock for ordered items in a form
@@ -388,6 +428,8 @@ const mapDocToOrder = (docId: string, data: any): Order => {
     status: data.status || 'pending',
     createdAt: createdAtMs,
     formId: data.formId || '',
+    slug: data.slug || '',
+    sellerUid: data.sellerUid || '',
   };
 };
 
@@ -408,7 +450,7 @@ export const getOrders = async (uid: string): Promise<Order[]> => {
       console.error('Error fetching user orders subcollection:', e);
     }
 
-    // 2. Secondary fallback query: top-level orders where sellerUid == uid
+    // 2. Secondary query: top-level orders where sellerUid == uid
     try {
       const publicOrdersRef = collection(db, 'orders');
       const q = query(publicOrdersRef, where('sellerUid', '==', uid));
@@ -420,6 +462,29 @@ export const getOrders = async (uid: string): Promise<Order[]> => {
           ordersMap.set(orderId, mapDocToOrder(orderId, data));
         }
       });
+    } catch (e) {
+      // Ignore fallback error
+    }
+
+    // 3. Fallback: match by formId or slug belonging to user's forms
+    try {
+      const forms = await getUserForms(uid);
+      const formIds = forms.map(f => f.id).filter(Boolean);
+      const slugs = forms.map(f => f.slug).filter(Boolean);
+
+      if (formIds.length > 0 || slugs.length > 0) {
+        const publicOrdersRef = collection(db, 'orders');
+        const snap = await getDocs(publicOrdersRef);
+        snap.docs.forEach(d => {
+          const data = d.data();
+          const orderId = data.orderId || d.id;
+          if (!ordersMap.has(orderId)) {
+            if ((data.formId && formIds.includes(data.formId)) || (data.slug && slugs.includes(data.slug))) {
+              ordersMap.set(orderId, mapDocToOrder(orderId, data));
+            }
+          }
+        });
+      }
     } catch (e) {
       // Ignore fallback error
     }
@@ -439,23 +504,49 @@ export const subscribeToOrders = (
 ): (() => void) => {
   if (!uid) return () => {};
 
+  const unsubscribes: (() => void)[] = [];
+
+  const refreshAllOrders = async () => {
+    const orders = await getOrders(uid);
+    onOrdersUpdate(orders);
+  };
+
   try {
-    const ordersRef = collection(db, 'users', uid, 'orders');
-    return onSnapshot(
-      ordersRef,
-      (snapshot) => {
-        const ordersList = snapshot.docs.map(doc => mapDocToOrder(doc.id, doc.data()));
-        ordersList.sort((a, b) => b.createdAt - a.createdAt);
-        onOrdersUpdate(ordersList);
+    const userOrdersRef = collection(db, 'users', uid, 'orders');
+    const unsub1 = onSnapshot(
+      userOrdersRef,
+      () => {
+        refreshAllOrders();
       },
       (error) => {
-        console.error('Error in real-time orders subscription:', error);
+        console.error('Error in user orders snapshot listener:', error);
       }
     );
+    unsubscribes.push(unsub1);
   } catch (e) {
-    console.error('Failed to setup orders snapshot listener:', e);
-    return () => {};
+    console.error('Failed to setup user orders snapshot listener:', e);
   }
+
+  try {
+    const topOrdersRef = collection(db, 'orders');
+    const q = query(topOrdersRef, where('sellerUid', '==', uid));
+    const unsub2 = onSnapshot(
+      q,
+      () => {
+        refreshAllOrders();
+      },
+      (error) => {
+        console.error('Error in top orders snapshot listener:', error);
+      }
+    );
+    unsubscribes.push(unsub2);
+  } catch (e) {
+    console.error('Failed to setup top orders snapshot listener:', e);
+  }
+
+  return () => {
+    unsubscribes.forEach(unsub => unsub());
+  };
 };
 
 import { isTodayInTimezone, isThisMonthInTimezone, getUserBrowserTimezone } from './timezones';
