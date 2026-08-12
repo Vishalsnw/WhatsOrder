@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/hooks/useUser';
-import { getOrders, Order, getUserProfile, getUserForms } from '@/lib/firestore';
+import { getOrders, subscribeToOrders, Order, getUserProfile, getUserForms } from '@/lib/firestore';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -74,6 +74,14 @@ export default function OrdersPage() {
     }
 
     fetchOrders();
+
+    // Subscribe to real-time order updates
+    const unsubscribe = subscribeToOrders(user.uid, (updatedOrders) => {
+      setOrders(updatedOrders);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [user, authLoading, fetchOrders]);
 
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {

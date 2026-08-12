@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/hooks/useUser';
-import { getAnalyticsData, getOrders, getUserForms, getUserProfile, Order, Form } from '@/lib/firestore';
+import { getAnalyticsData, getOrders, subscribeToOrders, getUserForms, getUserProfile, Order, Form } from '@/lib/firestore';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Link from 'next/link';
 import { formatOrderTimestamp, COMMON_TIMEZONES, getCurrentTimeInTimezone } from '@/lib/timezones';
@@ -65,6 +65,13 @@ export default function AnalyticsPage() {
     }
 
     loadStats();
+
+    // Subscribe to real-time orders to re-calculate stats automatically
+    const unsubscribe = subscribeToOrders(user.uid, () => {
+      loadStats();
+    });
+
+    return () => unsubscribe();
   }, [user, authLoading, loadStats]);
 
   // Update live clock for seller local time

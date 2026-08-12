@@ -67,6 +67,7 @@ export default function PreviewClient() {
             const data = publicFormSnap.data();
             setFormData({
               ...data,
+              userId: data.userId || data.uid || data.ownerId,
               id: formId,
               createdAt: data.createdAt?.toDate() || new Date()
             });
@@ -315,10 +316,54 @@ export default function PreviewClient() {
       try {
         const publicSnap = await getDoc(doc(db, 'publicForms', formData.id));
         if (publicSnap.exists()) {
-          sellerUid = publicSnap.data()?.userId || publicSnap.data()?.uid;
+          const pData = publicSnap.data();
+          sellerUid = pData?.userId || pData?.uid || pData?.ownerId;
         }
       } catch (e) {
         console.warn('Could not fetch public form owner:', e);
+      }
+    }
+
+    if (!sellerUid && (slug || formData?.slug)) {
+      try {
+        const targetSlug = slug || formData?.slug;
+        const publicFormsRef = collection(db, 'publicForms');
+        const q = query(publicFormsRef, where('slug', '==', targetSlug));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const pData = snap.docs[0].data();
+          sellerUid = pData?.userId || pData?.uid || pData?.ownerId;
+        }
+      } catch (e) {
+        console.warn('Could not resolve sellerUid by slug:', e);
+      }
+    }
+
+    if (!sellerUid) {
+      // Deep fallback search across all users' forms subcollections
+      try {
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
+        for (const userDoc of usersSnapshot.docs) {
+          const userFormsRef = collection(db, 'users', userDoc.id, 'forms');
+          if (formData?.id) {
+            const docCheck = await getDoc(doc(db, 'users', userDoc.id, 'forms', formData.id));
+            if (docCheck.exists()) {
+              sellerUid = userDoc.id;
+              break;
+            }
+          }
+          if (slug || formData?.slug) {
+            const userFormsQuery = query(userFormsRef, where('slug', '==', slug || formData?.slug || ''));
+            const userFormsSnap = await getDocs(userFormsQuery);
+            if (!userFormsSnap.empty) {
+              sellerUid = userDoc.id;
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Fallback user forms search failed:', e);
       }
     }
 

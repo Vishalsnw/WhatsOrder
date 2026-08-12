@@ -13,6 +13,8 @@ import {
   Timestamp,
   query,
   orderBy,
+  where,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db, storage } from './firebase'; // Import storage
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // Import storage functions
@@ -231,16 +233,69 @@ export const deleteOrderForm = async (
 
 // ✅ Create a new order for a user
 export const createOrder = async (uid: string, orderData: Omit<Order, 'id' | 'createdAt'>): Promise<string> => {
+    if (!uid) {
+      throw new Error('Seller UID is required to place an order');
+    }
+
+    const timestamp = Timestamp.now();
+    const createdAtMs = Date.now();
+
+    // 1. Primary write to seller's orders subcollection
     const ordersRef = collection(db, 'users', uid, 'orders');
     const docRef = await addDoc(ordersRef, {
         ...orderData,
-        createdAt: Timestamp.now(),
-        status: 'pending', // Default status
+        sellerUid: uid,
+        createdAt: timestamp,
+        createdAtMs: createdAtMs,
+        status: orderData.status || 'pending', // Default status
     });
 
-    // Auto deduct inventory if formId exists
-    if (orderData.formId && orderData.items && orderData.items.length > 0) {
-      await deductFormInventory(orderData.formId, uid, orderData.items);
+    // 2. Mirror write to top-level orders collection for redundancy
+    try {
+      await addDoc(collection(db, 'orders'), {
+        ...orderData,
+        orderId: docRef.id,
+        sellerUid: uid,
+        createdAt: timestamp,
+        createdAtMs: createdAtMs,
+        status: orderData.status || 'pending',
+      });
+    } catch (e) {
+      console.warn('Could not mirror order to top-level collection:', e);
+    }
+
+    // 3. Increment order counter on user form & public form safely
+    if (orderData.formId) {
+      try {
+        const userFormRef = doc(db, 'users', uid, 'forms', orderData.formId);
+        const formSnap = await getDoc(userFormRef);
+        if (formSnap.exists()) {
+          const currentOrders = Number(formSnap.data()?.orders || 0);
+          await updateDoc(userFormRef, { orders: currentOrders + 1 });
+        }
+      } catch (e) {
+        console.warn('Could not update order count on form:', e);
+      }
+
+      try {
+        const publicFormRef = doc(db, 'publicForms', orderData.formId);
+        const publicFormSnap = await getDoc(publicFormRef);
+        if (publicFormSnap.exists()) {
+          const currentOrders = Number(publicFormSnap.data()?.orders || 0);
+          await updateDoc(publicFormRef, { orders: currentOrders + 1 });
+        }
+      } catch (e) {
+        console.warn('Could not update order count on public form:', e);
+      }
+
+      // Auto deduct inventory if items exist
+      if (orderData.items && orderData.items.length > 0) {
+        try {
+          await deductFormInventory(orderData.formId, uid, orderData.items);
+        } catch (e) {
+          console.warn('Could not deduct inventory:', e);
+        }
+      }
     }
 
     return docRef.id;
@@ -283,10 +338,18 @@ export const deductFormInventory = async (
     });
 
     if (updated) {
-      await updateDoc(publicFormRef, { products: updatedProducts, updatedAt: Timestamp.now() });
+      try {
+        await updateDoc(publicFormRef, { products: updatedProducts, updatedAt: Timestamp.now() });
+      } catch (e) {
+        console.warn('Could not update publicForm inventory:', e);
+      }
       if (sellerUid) {
-        const userFormRef = doc(db, 'users', sellerUid, 'forms', formId);
-        await updateDoc(userFormRef, { products: updatedProducts, updatedAt: Timestamp.now() });
+        try {
+          const userFormRef = doc(db, 'users', sellerUid, 'forms', formId);
+          await updateDoc(userFormRef, { products: updatedProducts, updatedAt: Timestamp.now() });
+        } catch (e) {
+          console.warn('Could not update userForm inventory:', e);
+        }
       }
     }
   } catch (err) {
@@ -294,43 +357,104 @@ export const deductFormInventory = async (
   }
 };
 
+// Helper function to map firestore doc to Order object
+const mapDocToOrder = (docId: string, data: any): Order => {
+  let createdAtMs = Date.now();
+  if (data.createdAt) {
+    if (typeof data.createdAt.toMillis === 'function') {
+      createdAtMs = data.createdAt.toMillis();
+    } else if (typeof data.createdAt === 'number') {
+      createdAtMs = data.createdAt;
+    } else if (data.createdAtMs) {
+      createdAtMs = Number(data.createdAtMs);
+    } else if (data.createdAt.seconds) {
+      createdAtMs = data.createdAt.seconds * 1000;
+    }
+  }
+  return {
+    id: docId,
+    customerName: data.customerName || 'Customer',
+    customerPhone: data.customerPhone || '',
+    items: Array.isArray(data.items) ? data.items : [],
+    subtotal: typeof data.subtotal === 'number' ? data.subtotal : Number(data.total) || 0,
+    deliveryFee: typeof data.deliveryFee === 'number' ? data.deliveryFee : 0,
+    deliveryZone: data.deliveryZone || '',
+    total: Number(data.total) || 0,
+    currency: data.currency || '',
+    currencySymbol: data.currencySymbol || '',
+    fulfillmentType: data.fulfillmentType || 'delivery',
+    paymentMethod: data.paymentMethod || 'standard',
+    address: data.address || '',
+    status: data.status || 'pending',
+    createdAt: createdAtMs,
+    formId: data.formId || '',
+  };
+};
+
 // ✅ Get all orders for a user
 export const getOrders = async (uid: string): Promise<Order[]> => {
+  if (!uid) return [];
   try {
-    const ordersRef = collection(db, 'users', uid, 'orders');
-    const snap = await getDocs(ordersRef);
-    const ordersList = snap.docs.map(doc => {
-      const data = doc.data();
-      let createdAtMs = Date.now();
-      if (data.createdAt) {
-        if (typeof data.createdAt.toMillis === 'function') {
-          createdAtMs = data.createdAt.toMillis();
-        } else if (typeof data.createdAt === 'number') {
-          createdAtMs = data.createdAt;
-        } else if (data.createdAt.seconds) {
-          createdAtMs = data.createdAt.seconds * 1000;
-        }
-      }
-      return {
-        id: doc.id,
-        customerName: data.customerName || 'Customer',
-        customerPhone: data.customerPhone || '',
-        items: data.items || [],
-        total: Number(data.total) || 0,
-        currency: data.currency || '',
-        currencySymbol: data.currencySymbol || '',
-        fulfillmentType: data.fulfillmentType || 'delivery',
-        address: data.address || '',
-        status: data.status || 'pending',
-        createdAt: createdAtMs,
-        formId: data.formId || '',
-      } as Order;
-    });
+    const ordersMap = new Map<string, Order>();
 
+    // 1. Primary query: seller's orders subcollection
+    try {
+      const ordersRef = collection(db, 'users', uid, 'orders');
+      const snap = await getDocs(ordersRef);
+      snap.docs.forEach(d => {
+        ordersMap.set(d.id, mapDocToOrder(d.id, d.data()));
+      });
+    } catch (e) {
+      console.error('Error fetching user orders subcollection:', e);
+    }
+
+    // 2. Secondary fallback query: top-level orders where sellerUid == uid
+    try {
+      const publicOrdersRef = collection(db, 'orders');
+      const q = query(publicOrdersRef, where('sellerUid', '==', uid));
+      const snap = await getDocs(q);
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const orderId = data.orderId || d.id;
+        if (!ordersMap.has(orderId)) {
+          ordersMap.set(orderId, mapDocToOrder(orderId, data));
+        }
+      });
+    } catch (e) {
+      // Ignore fallback error
+    }
+
+    const ordersList = Array.from(ordersMap.values());
     return ordersList.sort((a, b) => b.createdAt - a.createdAt);
   } catch (err) {
     console.error('Error fetching orders:', err);
     return [];
+  }
+};
+
+// ✅ Real-time subscriber for user's orders
+export const subscribeToOrders = (
+  uid: string,
+  onOrdersUpdate: (orders: Order[]) => void
+): (() => void) => {
+  if (!uid) return () => {};
+
+  try {
+    const ordersRef = collection(db, 'users', uid, 'orders');
+    return onSnapshot(
+      ordersRef,
+      (snapshot) => {
+        const ordersList = snapshot.docs.map(doc => mapDocToOrder(doc.id, doc.data()));
+        ordersList.sort((a, b) => b.createdAt - a.createdAt);
+        onOrdersUpdate(ordersList);
+      },
+      (error) => {
+        console.error('Error in real-time orders subscription:', error);
+      }
+    );
+  } catch (e) {
+    console.error('Failed to setup orders snapshot listener:', e);
+    return () => {};
   }
 };
 
