@@ -233,6 +233,21 @@ export const deleteOrderForm = async (
   await deleteDoc(publicFormRef);
 };
 
+// Helper to recursively remove undefined properties before sending object to Firestore
+const sanitizeForFirestore = (obj: Record<string, any>): Record<string, any> => {
+  const clean: Record<string, any> = {};
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] !== undefined) {
+      if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key]) && !(obj[key] instanceof Timestamp)) {
+        clean[key] = sanitizeForFirestore(obj[key]);
+      } else {
+        clean[key] = obj[key];
+      }
+    }
+  });
+  return clean;
+};
+
 // ✅ Create a new order for a user / form
 export const createOrder = async (
   uid: string,
@@ -272,13 +287,27 @@ export const createOrder = async (
     const createdAtMs = Date.now();
     let createdDocId = '';
 
-    const payload = {
-      ...orderData,
-      sellerUid: resolvedUid,
+    const rawPayload = {
+      customerName: orderData.customerName || 'Customer',
+      customerPhone: orderData.customerPhone || '',
+      items: orderData.items || [],
+      subtotal: orderData.subtotal || 0,
+      deliveryFee: orderData.deliveryFee || 0,
+      deliveryZone: orderData.deliveryZone || '',
+      total: orderData.total || 0,
+      currency: orderData.currency || 'USD',
+      currencySymbol: orderData.currencySymbol || '$',
+      fulfillmentType: orderData.fulfillmentType || 'delivery',
+      address: orderData.address || '',
+      formId: orderData.formId || '',
+      slug: orderData.slug || '',
+      sellerUid: resolvedUid || '',
+      status: orderData.status || 'pending',
       createdAt: timestamp,
       createdAtMs: createdAtMs,
-      status: orderData.status || 'pending',
     };
+
+    const payload = sanitizeForFirestore(rawPayload);
 
     // 1. Primary write to seller's orders subcollection if resolvedUid exists
     if (resolvedUid) {
@@ -294,10 +323,11 @@ export const createOrder = async (
     // 2. Redundant write to top-level orders collection so no order is ever missed
     try {
       const topOrdersRef = collection(db, 'orders');
-      const topDocRef = await addDoc(topOrdersRef, {
+      const topPayload = sanitizeForFirestore({
         ...payload,
-        orderId: createdDocId || undefined,
+        orderId: createdDocId || '',
       });
+      const topDocRef = await addDoc(topOrdersRef, topPayload);
       if (!createdDocId) {
         createdDocId = topDocRef.id;
       }

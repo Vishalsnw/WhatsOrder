@@ -191,7 +191,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Link 
-                        href={`/preview/${form.slug}?id=${form.id}`}
+                        href={`/preview/${form.slug}?id=${form.id}${user?.uid ? `&uid=${user.uid}` : ''}`}
                         className="material-button material-button-secondary"
                       >
                         Preview

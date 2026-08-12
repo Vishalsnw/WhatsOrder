@@ -200,7 +200,13 @@ export default function CreateFormPage() {
 
       // Save to publicForms for sharing
       try {
-        await setDoc(doc(db, 'publicForms', docRef.id), formData);
+        await setDoc(doc(db, 'publicForms', docRef.id), {
+          ...formData,
+          id: docRef.id,
+          userId: user.uid,
+          uid: user.uid,
+          ownerId: user.uid,
+        });
       } catch (err) {
         console.warn('Could not save to publicForms:', err);
       }

@@ -95,10 +95,10 @@ export default function MyFormsPage() {
   };
 
   const copyFormLink = async (slug: string, id: string) => {
-    const formUrl = `${window.location.origin}/preview/${slug}?id=${id}`;
+    const formUrl = `${window.location.origin}/preview/${slug}?id=${id}${user?.uid ? `&uid=${user.uid}` : ''}`;
     try {
       await navigator.clipboard.writeText(formUrl);
-      alert('✅ Form link copied to clipboard!');
+      alert('✅ Unique form link copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy link:', err);
       alert('❌ Failed to copy link. Please try again.');
@@ -106,7 +106,7 @@ export default function MyFormsPage() {
   };
 
   const shareToWhatsApp = (businessName: string, slug: string, id: string) => {
-    const formUrl = `${window.location.origin}/preview/${slug}?id=${id}`;
+    const formUrl = `${window.location.origin}/preview/${slug}?id=${id}${user?.uid ? `&uid=${user.uid}` : ''}`;
     const shareMessage = `🛍️ Check out ${businessName}'s order form!\n\nPlace your order easily: ${formUrl}\n\n#WhatsOrder`;
     const shareUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
     window.open(shareUrl, '_blank');

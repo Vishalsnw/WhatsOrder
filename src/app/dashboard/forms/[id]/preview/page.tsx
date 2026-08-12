@@ -106,13 +106,15 @@ export default function FormPreviewPage({ params }: { params: Promise<{ id: stri
   const currencySymbol = formData.currencySymbol || getCurrencySymbol(formData.currency || formData.customization?.currency || 'USD');
 
   const copyShareLink = () => {
-    const shareUrl = `${window.location.origin}/preview/${formData.slug}?id=${formData.id}`;
+    const ownerUid = user?.uid || formData.userId || formData.uid || '';
+    const shareUrl = `${window.location.origin}/preview/${formData.slug}?id=${formData.id}${ownerUid ? `&uid=${ownerUid}` : ''}`;
     navigator.clipboard.writeText(shareUrl);
     alert('Share link copied to clipboard!');
   };
 
   const shareToWhatsApp = () => {
-    const shareUrl = `${window.location.origin}/preview/${formData.slug}?id=${formData.id}`;
+    const ownerUid = user?.uid || formData.userId || formData.uid || '';
+    const shareUrl = `${window.location.origin}/preview/${formData.slug}?id=${formData.id}${ownerUid ? `&uid=${ownerUid}` : ''}`;
     const message = `Check out my order form: ${shareUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
